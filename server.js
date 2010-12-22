@@ -44,7 +44,7 @@ http.createServer(function (req, res) {
     }
     if (req.url == '/') {
       res.writeHead(200, {'Content-Type': 'text/html'});
-      jade.renderFile('templates/test.jade', {locals:{name: null, records: null, remote_address: remote_address}}, function(err, html) {
+      jade.renderFile('templates/index.jade', {locals:{name: null, records: null, remote_address: remote_address}}, function(err, html) {
           if (err) {
               console.log(err);
           }
@@ -54,7 +54,7 @@ http.createServer(function (req, res) {
       var records = Record.find({name: req.url.substring(1)}).sort(['name', ['updated_at', 'descending']]);
       records.all(function(records) {
         res.writeHead(200, {'Content-Type': 'text/html'});
-        jade.renderFile('templates/test.jade', {locals:{name: req.url.substring(1), records: records, remote_address: remote_address}}, function(err, html) {
+        jade.renderFile('templates/index.jade', {locals:{name: req.url.substring(1), records: records, remote_address: remote_address}}, function(err, html) {
             if (err) {
                 console.log(err);
             }
