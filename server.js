@@ -43,6 +43,7 @@ http.createServer(function (req, res) {
     if (req.url == '/favicon.ico' || req.url == '/robots.txt') {
       res.end();
     }
+    console.log(req.url + " " + remote_address);
     if (req.url == '/') {
       res.writeHead(200, {'Content-Type': 'text/html'});
       jade.renderFile('templates/index.jade', {locals:{name: null, records: null, remote_address: remote_address}}, function(err, html) {
