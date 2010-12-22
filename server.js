@@ -37,7 +37,7 @@ var db = mongoose.connect('mongodb://localhost/1amendment');
 var Record = db.model('Record');
 
 http.createServer(function (req, res) {
-  var remote_address = req.connection.remoteAddress;
+  var remote_address = req.headers['x-forwarded-for'];
 
   if (req.method == 'GET') {
     if (req.url == '/favicon.ico' || req.url == '/robots.txt') {
