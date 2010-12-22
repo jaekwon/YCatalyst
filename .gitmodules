@@ -1,0 +1,6 @@
+[submodule "vendor/jade"]
+	path = vendor/jade
+	url = https://github.com/visionmedia/jade.git
+[submodule "vendor/mongoose"]
+	path = vendor/mongoose
+	url = https://github.com/LearnBoost/mongoose.git

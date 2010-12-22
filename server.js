@@ -1,7 +1,8 @@
 var http = require('http');
-var jade = require('jade');
+require.paths.unshift('vendor/jade');
 require.paths.unshift('vendor/mongoose');
 require.paths.unshift('vendor/www-forms');
+var jade = require('jade');
 var mongoose = require('mongoose').Mongoose;
 var www_forms = require('www-forms');
 
