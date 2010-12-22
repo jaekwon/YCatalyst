@@ -1,0 +1,115 @@
+!!! 5
+html(lang="en")
+  head
+    title= "1amendment"
+    script(type="text/javascript", src="https://www.google.com/jsapi?key=ABQIAAAAV88HHyf8NBcAL3aio53OixSEBwhbzDd0F998UkbSll3boCkrihTFj2uO3yETr_J5z25r2aIc4YCVpQ")
+    script(type="text/javascript", src="https://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js")
+    script(type="text/javascript", src="https://ajax.googleapis.com/ajax/libs/webfont/1.0.17/webfont.js")
+  body
+    h1#header 1amendment
+      span.small &nbsp;the drat bastion
+
+    #goto
+      span website name: 
+      input(type="text", name="name")#goto_field
+      br
+      span.small e.g. amazon, hackernews, wikileaks
+
+    - if (records)
+      #records
+        - if (records.length > 0)
+          h3 records for 
+            span.name #{name}
+          table#records
+            - records.forEach(function(r) {
+              tr
+                td
+                  a(href="http://"+r.to).goto_link #{r.to}
+                td
+                  span.from #{r.from}
+                td
+                  span.date #{r.updated_at}
+            - })
+        - else
+          h3 no records for 
+            span.name #{name}
+
+    #create_record
+      h3 create a record
+      table#ip_form_table
+        form#ip_form(method="post", action="/", enctype="application/x-www-form-urlencoded")
+          tr
+            td
+              label name
+            td
+              input(type="text", name="name", value=name)
+          tr
+            td
+              label ip
+            td
+              input(type="text", name="ip")
+          tr
+            td
+              label your ip
+            td
+              input(type="text", name="from", value=remote_address, disabled="true")
+          tr
+            td(colspan="2")
+              input(type="submit")
+
+
+    #notice
+      p
+        | This server is hosted on Amazon EC2.
+        | You are connected from #{remote_address}
+
+  :sass
+    | body
+    |   :color black
+    |   :font-family Arial, Arial, Helvetica, sans-serif
+    |   :margin-left 20px
+    | #header
+    |   :font-size 30px
+    |   :color #369
+    |   :font-family 'UnifrakturMaguntia'
+    | .small
+    |   :font-size 0.8em
+    |   :color gray
+    | #goto_field
+    |   :width 200px
+    | h2, h3
+    |   :font-weight 100
+    | .name
+    |   :font-style italic
+    |   :font-size 20px
+    | .date
+    |   :color gray
+    |   :font-size 12px
+    | .from
+    |   :color green
+    |   :font-size 14px
+    | #create_record
+    |   :position absolute
+    |   :top 0px
+    |   :right 0px
+    |   :width 200px
+    |   label
+    |     :color gray
+    | #notice
+    |   :font-size 14px
+    |   :color gray
+
+  :javascript
+    | $(document).ready(function() {
+    |   $('#goto_field').bind('keypress', function(e) {
+    |     if (e.keyCode == 13) {
+    |       window.location = "/"+$(this).val();
+    |     }
+    |   });
+    | });
+    | WebFont.load({ //WebFontConfig = {
+    |   google: {
+    |     families: ['UnifrakturMaguntia']
+    |   }
+    | });
+
