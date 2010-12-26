@@ -5,32 +5,19 @@ html(lang="en")
     script(type="text/javascript", src="https://www.google.com/jsapi?key=ABQIAAAAV88HHyf8NBcAL3aio53OixSEBwhbzDd0F998UkbSll3boCkrihTFj2uO3yETr_J5z25r2aIc4YCVpQ")
     script(type="text/javascript", src="https://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js")
     script(type="text/javascript", src="https://ajax.googleapis.com/ajax/libs/webfont/1.0.17/webfont.js")
+    script(type="text/javascript", src="/static/underscore.js")
+    script(type="text/javascript", src="/static/backbone.js")
   body
 
-    - records.forEach(function(record) {
-      div.record(id=record._id, class=record.type)
-        p #{record.contents}
-    - })
-
-    form(id="eval_form", action="/", method="post")
-      input#id_field(name="id", type="text")
-      br
-      textarea(name="data", type="text")
-      br
-      input(type="submit")
+    #{root_id}
+    #{all[root_id]}
+    #{all[root_id].render()}
+    br
 
   :sass
     | body
     |   :color black
     |   :font-family Cantarell, Arial, Arial, Helvetica, sans-serif
-    | .key
-    |   :display inline-block
-    |   :color #369
-    |   :width 80px
-    |   :font-size 12px
-    | .value
-    |   :display inline-block
-    |   :color #333
     | .record
     |   :margin-bottom 10px
     |   :padding-left 10px

@@ -7,3 +7,6 @@
 [submodule "vendor/node"]
 	path = vendor/node
 	url = https://github.com/ry/node.git
+[submodule "vendor/sherpa"]
+	path = vendor/sherpa
+	url = https://github.com/joshbuddy/sherpa.git

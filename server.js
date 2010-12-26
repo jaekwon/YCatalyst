@@ -1,94 +1,72 @@
-var http = require('http');
 require.paths.unshift('vendor/jade');
-require.paths.unshift('vendor/mongoose');
-require.paths.unshift('vendor/www-forms');
+require.paths.unshift('vendor/sherpa/lib');
+
+var http = require('http');
 var jade = require('jade');
-var mongoose = require('mongoose').Mongoose;
-var www_forms = require('www-forms');
+var sherpa = require('sherpa/nodejs');
+var utils = require('./utils');
+var mongo = require('./mongo');
 
-var ipRE = (function() {
-  var octet = '(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9][0-9]|[0-9])';
-  var ip    = '(?:' + octet + '\\.){3}' + octet;
-  var quad  = '(?:\\[' + ip + '\\])|(?:' + ip + ')';
-  var ipRE  = new RegExp( '^(' + quad + ')$' );
-  return ipRE;
-})();
+// [{'type': 'div', 'attr': {}, 'contents': []]
+// {'type', 'id', 'attr', 'contents', 'style', 'script'}
 
-mongoose.model('Record', {
-  properties: ['from', 'name', 'to', 'updated_at'],
-  indexes: ['name', 'updated_at'],
-  methods: {
-    save: function(fn) {
-      this.updated_at = new Date();
-      this.__super__(fn);
-    }
-  },
-  setters: {
-    'to': function(v) {
-      if (!ipRE.test(v)) {
-        throw "InvalidIP";
-      }
-      return v;
-    }
-  }
-});
+http.createServer(utils.Rowt(new Sherpa.NodeJs([
 
-var db = mongoose.connect('mongodb://localhost/1amendment');
-var Record = db.model('Record');
-
-http.createServer(function (req, res) {
-  var remote_address = req.headers['x-forwarded-for'];
-
-  if (req.method == 'GET') {
-    if (req.url == '/favicon.ico' || req.url == '/robots.txt') {
-      res.end();
-    }
-    console.log(req.url + " " + remote_address);
-    if (req.url == '/') {
-      res.writeHead(200, {'Content-Type': 'text/html'});
-      jade.renderFile('templates/index.jade', {locals:{name: null, records: null, remote_address: remote_address}}, function(err, html) {
-          if (err) {
-              console.log(err);
-          }
-          res.end(html);
-      });
-    } else {
-      var records = Record.find({name: req.url.substring(1)}).sort(['name', ['updated_at', 'descending']]);
-      records.all(function(records) {
-        res.writeHead(200, {'Content-Type': 'text/html'});
-        jade.renderFile('templates/index.jade', {locals:{name: req.url.substring(1), records: records, remote_address: remote_address}}, function(err, html) {
+  ['/', function (req, res) {
+    if (req.method == 'GET') {
+      mongo.records.find(function(err, cursor) {
+        cursor.toArray(function(err, records) {
+          res.writeHead(200, {'status': 'ok'});
+          jade.renderFile('templates/index.jade', {locals: {records: records}}, function(err, html) {
             if (err) {
-                console.log(err);
+              console.log(err);
             }
             res.end(html);
+          });
         });
       });
-    }
-
-  } else if (req.method == 'POST') {
-    req.setEncoding('utf8');
-    req.addListener('data', function(chunk) {
-      var form = www_forms.decodeForm(chunk);
-      if (form.name && form.ip) {
-        try {
-          var r = new Record();
-          r.from = remote_address;
-          r.name = form.name;
-          r.to = form.ip;
-          r.save(function() {
-            console.log('saved');
+    } else if (req.method == 'POST') {
+      var data = JSON.parse(req.post_data.data),
+          target_id = req.post_data.id;
+      data._id = utils.randid();
+      if (target_id) {
+        mongo.records.findOne({'_id': target_id}, function(err, item) {
+          if (item.contents == undefined) {
+            item.contents = [];
+          }
+          item.contents.push(data);
+          mongo.records.save(item, function(err, stuff) {
+            res.writeHead(302, {'Location': '/'});
+            res.end();
           });
-        } catch (e) {
-          console.log(e);
-        }
-        res.writeHead(302, {'Location': 'http://1amendment.com/'+form.name});
-        res.end();
+        });
+      } else {
+        mongo.records.insert(data, function(data) {
+          res.writeHead(302, {'Location': '/'});
+          res.end();
+        });
       }
-    });
-  } else {
-    res.writeHead(404, {});
-    res.end();
-  }
-}).listen(8124, "127.0.0.1");
+    }
+  }],
+
+  ['/dev', function (req, res) {
+    if (req.method == 'POST') {
+      try {
+        res.writeHead(200, {'status': 'ok'});
+        var result = 
+          eval(req.post_data.command);
+        res.end(JSON.stringify({'result': result}));
+      } catch(e) {
+        res.writeHead(400, {'status': 'error'});
+        var result = ''+e;
+        res.end(JSON.stringify({'error': result}));
+      }
+    } else if (req.method == 'GET') {
+    }
+  }],
+
+  ['/e/:name', function (req, res) {
+  }],
+]).listener())).listen(8124, "127.0.0.1");
 
 console.log('Server running at http://127.0.0.1:8124/');
