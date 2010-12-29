@@ -1,0 +1,4 @@
+cd static
+coffee -c client.coffee
+coffee -c record.coffee
+sass main.sass main.css

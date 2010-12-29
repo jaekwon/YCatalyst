@@ -7,34 +7,20 @@ html(lang="en")
     script(type="text/javascript", src="https://ajax.googleapis.com/ajax/libs/webfont/1.0.17/webfont.js")
     script(type="text/javascript", src="/static/underscore.js")
     script(type="text/javascript", src="/static/backbone.js")
+    script(type="text/javascript", src=require('./utils').static_file("client.js"))
+    link(type="text/css", rel="stylesheet", href=require('./utils').static_file("main.css"))
   body
 
-    #{root_id}
-    #{all[root_id]}
-    #{all[root_id].render()}
-    br
+    !{root.render()}
 
   :sass
-    | body
-    |   :color black
-    |   :font-family Cantarell, Arial, Arial, Helvetica, sans-serif
-    | .record
-    |   :margin-bottom 10px
-    |   :padding-left 10px
-    |   :border 1px solid gray
-    |   &:hover
-    |     :background-color #EEF
+    |
 
   :javascript
     | $(document).ready(function() {
-    |   $('.record').each(function(i, e) {
-    |     $(e).click(function() {
-    |       window.location = '/r/'+this.id;
-    |     });
-    |   });
     | });
     | WebFont.load({ //WebFontConfig = {
     |   google: {
-    |     families: ['Cantarell']
+    |     families: []
     |   }
     | });
