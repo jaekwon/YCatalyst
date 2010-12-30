@@ -24,8 +24,8 @@
       lines.push("<span class=\"top_links\">" + (top_links.join(" | ")) + "</span>");
       lines.push("<p>" + (hE(this.object.comment)) + "</p>");
       lines.push("<a href=\"/r/" + this.object._id + "/reply\" class=\"reply\">reply</a>");
+      lines.push("<div class=\"children\">");
       if (this.children) {
-        lines.push("<div class=\"children\">");
         _ref = this.children;
         for (_i = 0, _len = _ref.length; _i < _len; _i++) {
           child = _ref[_i];
@@ -33,8 +33,8 @@
             is_root: false
           }));
         }
-        lines.push("</div>");
       }
+      lines.push("</div>");
       return "<div class=\"record\" id=\"" + this.object._id + "\" " + data_parents + " " + (is_root ? 'data-root="true"' : void 0) + ">\n  " + (lines.join("\n")) + "\n</div>";
     };
     Record.prototype.comment_url = function() {
@@ -75,5 +75,12 @@
   if (typeof exports != "undefined" && exports !== null) {
     exports.Record = Record;
     exports.dangle = dangle;
+  }
+  if (typeof window != "undefined" && window !== null) {
+    if (!(window.app != null)) {
+      window.app = {};
+    }
+    window.app.Record = Record;
+    window.app.dangle = dangle;
   }
 }).call(this);

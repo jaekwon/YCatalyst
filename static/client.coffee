@@ -4,45 +4,40 @@ include = (filename) ->
   script.type = 'text/javascript'
   $(document.head).append(script)
 
+poll_errors = 0 # counter to prevent server flooding
+
+# poll for updates for root and its near children
+poll = (root) ->
+  $.ajax {
+    cache: false,
+    type: "GET",
+    url: "/r/#{root.attr('id')}/recv",
+    dataType: "json",
+    error: ->
+      poll_errors += 1
+      setTimeout(poll, 10*1000)
+    success: (data) ->
+      try
+        poll_errors = 0
+        if data
+          for recdata in data
+            if $('#'+recdata.parent_id).length > 0 and $('#'+recdata._id).length == 0
+              # insert!
+              parent = $('#'+recdata.parent_id)
+              record = new window.app.Record(recdata)
+              parent.find('.children:eq(0)').prepend(record.render(is_root: false))
+        poll(root)
+      catch e
+        console.log(e)
+  }
+
 $(document).ready ->
   # include record.js
+  # TODO need to use jsonp or something
   include "/static/record.js"
   
+  # start longpoll'n
   if $('[data-root="true"]').length > 0
     root = $('[data-root="true"]:eq(0)')
-
-    $.ajax {
-      cache: false,
-      type: "GET",
-      url: "/r/#{root.attr('id')}/recv",
-      dataType: "json",
-      error: ->
-        alert("error")
-      success: (data) ->
-        if data
-          alert(data)
-    }
-
-#  //make another request
-#  $.ajax({ cache: false
-#         , type: "GET"
-#         , url: "/recv"
-#         , dataType: "json"
-#         , data: { since: CONFIG.last_message_time, id: CONFIG.id }
-#         , error: function () {
-#             addMessage("", "long poll error. trying again...", new Date(), "error");
-#             transmission_errors += 1;
-#             //don't flood the servers on error, wait 10 seconds before retrying
-#             setTimeout(longPoll, 10*1000);
-#           }
-#         , success: function (data) {
-#             transmission_errors = 0;
-#             //if everything went well, begin another request immediately
-#             //the server will take a long time to respond
-#             //how long? well, it will wait until there is another message
-#             //and then it will return it to us and close the connection.
-#             //since the connection is closed when we get data, we longPoll again
-#             longPoll(data);
-#           }
-#         });
-#
+    # http://stackoverflow.com/questions/2703861/chromes-loading-indicator-keeps-spinning-during-xmlhttprequest
+    setTimeout(( -> poll(root)), 500)

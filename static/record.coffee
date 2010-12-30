@@ -38,11 +38,12 @@ class Record
     lines.push("""
       <a href="/r/#{@object._id}/reply" class="reply">reply</a>
       """)
+    # children?
+    lines.push("""<div class="children">""")
     if @children
-      lines.push("""<div class="children">""")
       (lines.push(child.render(is_root: false)) for child in @children)
-      lines.push("""</div>""")
-    # here it is
+    lines.push("""</div>""")
+    # record
     """<div class="record" id="#{@object._id}" #{data_parents} #{'data-root="true"' if is_root}>
         #{lines.join("\n")}
       </div>"""
@@ -77,6 +78,14 @@ dangle = (records, root_id) ->
       parent.children.push(record)
   return root
 
+# if server-side
 if exports?
   exports.Record = Record
   exports.dangle = dangle
+
+# if client-side
+if window?
+  if not window.app?
+    window.app = {}
+  window.app.Record = Record
+  window.app.dangle = dangle

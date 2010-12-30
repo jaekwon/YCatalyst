@@ -139,7 +139,7 @@ http.createServer(utils.Rowt(new Sherpa.NodeJs([
         if not all_callbacks[key]
           all_callbacks[key] = []
         all_callbacks[key].push (records) ->
-          res.simpleJSON(200, [r.object for r in records])
+          res.simpleJSON(200, (r.object for r in records))
         console.log(all_callbacks)
   ]
 
