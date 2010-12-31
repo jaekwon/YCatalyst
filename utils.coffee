@@ -25,10 +25,16 @@ exports.Rowt = (fn) ->
       res.end(body)
     try
       if (req.method == 'POST')
+        called_back = false
         req.setEncoding 'utf8'
         req.addListener 'data', (chunk) ->
           req.post_data = www_forms.decodeForm(chunk)
+          called_back = true
           return fn(req, res)
+        req.addListener 'end', ->
+          if not called_back
+            called_back = true
+            return fn(req, res)
       else
         return fn(req, res)
     catch e

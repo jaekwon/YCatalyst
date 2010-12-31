@@ -9,10 +9,10 @@ body {
         color: #999999; }
     body .record p {
       margin: 2px 0px; }
-    body .record .top_links {
+    body .record .top_items {
       color: #999999;
       font-size: 0.8em; }
-      body .record .top_links a {
+      body .record .top_items a {
         color: #999999;
         text-decoration: none; }
     body .record .reply {

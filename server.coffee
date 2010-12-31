@@ -1,14 +1,14 @@
 require.paths.unshift 'vendor/jade'
-require.paths.unshift 'vendor/sherpa/lib'
 
 http = require 'http'
 jade = require 'jade'
-sherpa = require 'sherpa/nodejs'
 utils = require './utils'
 mongo = require './mongo'
 fu = require './fu'
 underscore = require './static/underscore'
 rec = require('./static/record')
+
+DEFAULT_DEPTH = 5
 
 #if false
 #  process.on 'uncaughtException', (err) ->
@@ -22,7 +22,10 @@ get_records = (root_id, level, fn) ->
     all[root_id] = new rec.Record(root)
     tofetch = [root_id]
     fetchmore = (i) ->
-      mongo.records.find parent_id: {$in: tofetch}, (err, cursor) ->
+      # NOTE: http://talklikeaduck.denhaven2.com/2009/04/15/ordered-hashes-in-ruby-1-9-and-javascript
+      # and   http://ejohn.org/blog/javascript-in-chrome/
+      # The side effect of sorting here is that the record.coffe/dangle method will automagically sort the children by points.
+      mongo.records.find {parent_id: {$in: tofetch}}, {sort: [['points', -1]]}, (err, cursor) ->
         cursor.toArray (err, records) ->
           tofetch = []
           for record in records
@@ -33,6 +36,13 @@ get_records = (root_id, level, fn) ->
           else
             fn(all)
     fetchmore(level)
+
+get_one_record = (rid, fn) ->
+  mongo.records.findOne _id: rid, (err, recdata) ->
+    if recdata
+      fn(new rec.Record(recdata))
+    else
+      fn(null)
 
 # a global hash from record id to [callbacks]
 all_callbacks = {}
@@ -98,7 +108,7 @@ http.createServer(utils.Rowt(new Sherpa.NodeJs([
     switch req.method
       when 'GET'
         root_id = req.sherpaResponse.params.id
-        get_records root_id, 10, (all) ->
+        get_records root_id, DEFAULT_DEPTH, (all) ->
           jade.renderFile 'templates/record.jade', locals: {root: rec.dangle(all, root_id), require: require}, (err, html) ->
             console.log err if err
             res.writeHead 200, status: 'ok'
@@ -109,16 +119,15 @@ http.createServer(utils.Rowt(new Sherpa.NodeJs([
     switch req.method
       when 'GET'
         parent_id = req.sherpaResponse.params.id
-        get_records parent_id, 0, (all) ->
-          jade.renderFile 'templates/reply.jade', locals: {parent: all[parent_id], require: require}, (err, html) ->
+        get_one_record parent_id, (parent) ->
+          jade.renderFile 'templates/reply.jade', locals: {parent: parent, require: require}, (err, html) ->
             console.log err if err
             res.writeHead 200, status: 'ok'
             res.end html
       when 'POST'
         parent_id = req.sherpaResponse.params.id
         comment = req.post_data.comment
-        get_records parent_id, 0, (all) ->
-          parent = all[parent_id]
+        get_one_record parent_id, (parent) ->
           if parent
             data = parent_id: parent_id, _id: utils.randid(), comment: comment
             record = rec.Record::create(data, parent)
@@ -141,6 +150,20 @@ http.createServer(utils.Rowt(new Sherpa.NodeJs([
         all_callbacks[key].push (records) ->
           res.simpleJSON(200, (r.object for r in records))
         console.log(all_callbacks)
+  ],
+
+  ['/r/:id/upvote', (req, res) ->
+    switch req.method
+      when 'POST'
+        rid = req.sherpaResponse.params.id
+        get_one_record rid, (record) ->
+          if not record.object.upvoters?
+            record.object.upvoters = []
+          if record.object.upvoters.indexOf('XXX') == -1
+            record.object.upvoters.push('XXX')
+          record.object.points = record.object.upvoters.length
+          mongo.records.save record.object, (err, stuff) ->
+            res.simpleJSON(200, status: 'ok', recdata: record.object)
   ]
 
 ]).listener())).listen 8124, '127.0.0.1'

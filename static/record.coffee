@@ -18,25 +18,37 @@ escape = hE = (html) ->
 class Record
   constructor: (object) ->
     @object = object
+    if not @object.points?
+      @object.points = 0
+    if not @object.num_children?
+      @object.num_children = 0
 
   # options:
   #   is_root -> default true, if false, doesn't show parent_link,
+  #   hide_upvote -> default false, if true, doesn't show the upvote button. 
   render: (options) ->
     is_root = not options? or options.is_root
+    hide_upvote = options?.hide_upvote
     lines = []
-    top_links = []
+    top_items = []
     data_parents = []
     if is_root
       data_parents = "data-parents=\"#{hE(JSON.stringify(@object.parents))}\""
+    top_items.push("""#{@object.points or 0} pts""")
     if is_root and @object.parent_id
-      top_links.push("""<a href="/r/#{@object.parent_id}" class="parent">parent</a>""")
-    top_links.push("""<a href="/r/#{@object._id}" class="link">link</a>""")
-    top_links.push("""#{hE(JSON.stringify(@object.parents))}""")
+      top_items.push("""<a href="/r/#{@object.parent_id}" class="parent">parent</a>""")
+    top_items.push("""<a href="/r/#{@object._id}" class="link">link</a>""")
+    upvote_line = """<a href="\#" onclick="app.upvote('#{hE(@object._id)}'); return false;" class="upvote">&spades;</a>""" if not hide_upvote
 
-    lines.push("""<span class="top_links">#{top_links.join(" | ")}</span>""")
-    lines.push("""<p>#{hE(@object.comment)}</p>""")
     lines.push("""
-      <a href="/r/#{@object._id}/reply" class="reply">reply</a>
+      <span class="top_items">
+        #{upvote_line or ''}
+        #{top_items.join(" | ")}
+      </span>
+      <p>
+        #{hE(@object.comment)}
+        <a href="/r/#{@object._id}/reply" class="reply">reply</a>
+      </p>
       """)
     # children?
     lines.push("""<div class="children">""")
@@ -65,6 +77,15 @@ class Record
     record = new Record(recdata)
     record.is_new = true
     return record
+
+  # client side #
+  # update the record (which already exists in the dom)
+  redraw: ->
+    old = $("\##{@object._id}")
+    old_is_root = old.attr('data-root')
+    children = old.find('.children:eq(0)').detach()
+    old.replaceWith(this.render(is_root: old_is_root))
+    $("\##{@object._id}").find('.children:eq(0)').replaceWith(children)
 
 # given a bunch of records and the root, organize it into a tree
 # returns the root, and children can be accessed w/ .children
