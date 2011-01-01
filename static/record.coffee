@@ -20,14 +20,13 @@ class Record
       @object.num_children = 0
 
   render_kup: ->
-    console.log "hide_upvote: #{@hide_upvote}"
-    div class: "record", id: @object._id, "data-parents": JSON.stringify(@object.parents), "data-root": @is_root, ->
+    div class: "record", id: @object._id, "data-parents": JSON.stringify(@object.parents), "data-root": is_root, ->
       span class: "top_items", ->
-        if not @hide_upvote
+        if not hide_upvote
           a class: "upvote", href: '#', onclick: "app.upvote('#{h(@object._id)}'); return false;", -> "&spades;"
         span -> " #{@object.points or 0} pts"
         text " | "
-        if @is_root and @object.parent_id
+        if is_root and @object.parent_id
           a class: "parent", href: "/r/#{@object.parent_id}", -> "parent"
           text " | "
         a class: "link", href: "/r/#{@object._id}", -> "link"
@@ -44,11 +43,11 @@ class Record
   #   is_root -> default true, if false, doesn't show parent_link,
   #   hide_upvote -> default false, if true, doesn't show the upvote button. 
   render: (options) ->
-    @is_root = not options? or options.is_root
-    @hide_upvote = options?.hide_upvote
+    is_root = not options? or options.is_root
+    hide_upvote = options?.hide_upvote
     if @object.upvoters? and @object.upvoters.indexOf(app.current_user) != -1
-      @hide_upvote = true
-    coffeekup.render @render_kup, context: this
+      hide_upvote = true
+    coffeekup.render @render_kup, context: this, locals: {is_root: is_root, hide_upvote: hide_upvote}, dynamic_locals: true
 
   comment_url: ->
     "/r/#{@object._id}/reply"

@@ -13,17 +13,17 @@
       }
     }
     Record.prototype.render_kup = function() {
-      console.log("hide_upvote: " + this.hide_upvote);
+      console.log("hide_upvote: " + hide_upvote);
       return div({
         "class": "record",
         id: this.object._id,
         "data-parents": JSON.stringify(this.object.parents),
-        "data-root": this.is_root
+        "data-root": is_root
       }, function() {
         span({
           "class": "top_items"
         }, function() {
-          if (!this.hide_upvote) {
+          if (!hide_upvote) {
             a({
               "class": "upvote",
               href: '#',
@@ -36,7 +36,7 @@
             return " " + (this.object.points || 0) + " pts";
           });
           text(" | ");
-          if (this.is_root && this.object.parent_id) {
+          if (is_root && this.object.parent_id) {
             a({
               "class": "parent",
               href: "/r/" + this.object.parent_id
@@ -81,13 +81,19 @@
       });
     };
     Record.prototype.render = function(options) {
-      this.is_root = !(options != null) || options.is_root;
-      this.hide_upvote = options != null ? options.hide_upvote : void 0;
+      var hide_upvote, is_root;
+      is_root = !(options != null) || options.is_root;
+      hide_upvote = options != null ? options.hide_upvote : void 0;
       if ((this.object.upvoters != null) && this.object.upvoters.indexOf(app.current_user) !== -1) {
-        this.hide_upvote = true;
+        hide_upvote = true;
       }
       return coffeekup.render(this.render_kup, {
-        context: this
+        context: this,
+        locals: {
+          is_root: is_root,
+          hide_upvote: hide_upvote
+        },
+        dynamic_locals: true
       });
     };
     Record.prototype.comment_url = function() {
