@@ -1,12 +1,8 @@
 # currently, any time we modify this file we need to ./static/compile and possibly restart the server :(
 
-# er, move this out
-escape = hE = (html) ->
-  String(html)
-    .replace(/&(?!\w+;)/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
+# we have to rename, otherwise coffeescript declares 'var CoffeeKup' which wipes the client side import
+coffeekup = if CoffeeKup? then CoffeeKup else require 'coffeekup'
+app = if window? then window.app else require '../app'
 
 # usage: 
 # r = new Record({record_data})
@@ -23,42 +19,36 @@ class Record
     if not @object.num_children?
       @object.num_children = 0
 
+  render_kup: ->
+    console.log "hide_upvote: #{@hide_upvote}"
+    div class: "record", id: @object._id, "data-parents": JSON.stringify(@object.parents), "data-root": @is_root, ->
+      span class: "top_items", ->
+        if not @hide_upvote
+          a class: "upvote", href: '#', onclick: "app.upvote('#{h(@object._id)}'); return false;", -> "&spades;"
+        span -> " #{@object.points or 0} pts"
+        text " | "
+        if @is_root and @object.parent_id
+          a class: "parent", href: "/r/#{@object.parent_id}", -> "parent"
+          text " | "
+        a class: "link", href: "/r/#{@object._id}", -> "link"
+      p ->
+        text h(@object.comment)
+        text " "
+        a class: "reply", href: "/r/#{@object._id}/reply", -> "reply"
+      div class: "children", ->
+        if @children
+          for child in @children
+            text child.render(is_root: false)
+
   # options:
   #   is_root -> default true, if false, doesn't show parent_link,
   #   hide_upvote -> default false, if true, doesn't show the upvote button. 
   render: (options) ->
-    is_root = not options? or options.is_root
-    hide_upvote = options?.hide_upvote
-    lines = []
-    top_items = []
-    data_parents = []
-    if is_root
-      data_parents = "data-parents=\"#{hE(JSON.stringify(@object.parents))}\""
-    top_items.push("""#{@object.points or 0} pts""")
-    if is_root and @object.parent_id
-      top_items.push("""<a href="/r/#{@object.parent_id}" class="parent">parent</a>""")
-    top_items.push("""<a href="/r/#{@object._id}" class="link">link</a>""")
-    upvote_line = """<a href="\#" onclick="app.upvote('#{hE(@object._id)}'); return false;" class="upvote">&spades;</a>""" if not hide_upvote
-
-    lines.push("""
-      <span class="top_items">
-        #{upvote_line or ''}
-        #{top_items.join(" | ")}
-      </span>
-      <p>
-        #{hE(@object.comment)}
-        <a href="/r/#{@object._id}/reply" class="reply">reply</a>
-      </p>
-      """)
-    # children?
-    lines.push("""<div class="children">""")
-    if @children
-      (lines.push(child.render(is_root: false)) for child in @children)
-    lines.push("""</div>""")
-    # record
-    """<div class="record" id="#{@object._id}" #{data_parents} #{'data-root="true"' if is_root}>
-        #{lines.join("\n")}
-      </div>"""
+    @is_root = not options? or options.is_root
+    @hide_upvote = options?.hide_upvote
+    if @object.upvoters? and @object.upvoters.indexOf(app.current_user) != -1
+      @hide_upvote = true
+    coffeekup.render @render_kup, context: this
 
   comment_url: ->
     "/r/#{@object._id}/reply"
@@ -82,7 +72,7 @@ class Record
   # update the record (which already exists in the dom)
   redraw: ->
     old = $("\##{@object._id}")
-    old_is_root = old.attr('data-root')
+    old_is_root = old.attr('data-root') == "true"
     children = old.find('.children:eq(0)').detach()
     old.replaceWith(this.render(is_root: old_is_root))
     $("\##{@object._id}").find('.children:eq(0)').replaceWith(children)
@@ -103,7 +93,6 @@ dangle = (records, root_id) ->
 if exports?
   exports.Record = Record
   exports.dangle = dangle
-
 # if client-side
 if window?
   if not window.app?

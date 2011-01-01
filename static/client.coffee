@@ -3,7 +3,7 @@ if not window.app?
 app = window.app
 
 # get the id of the current user
-app.current_user = undefined # XXX
+app.current_user = "XXX"
 
 # show a dialog with some challenge on it
 app.upvote = (rid) ->
@@ -56,10 +56,6 @@ app.poll = (root) ->
   }
 
 $(document).ready ->
-  # include record.js
-  # TODO need to use jsonp or something
-  app.include "/static/record.js"
-  
   # start longpoll'n
   if $('[data-root="true"]').length > 0
     root = $('[data-root="true"]:eq(0)')

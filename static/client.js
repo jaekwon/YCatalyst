@@ -4,7 +4,8 @@
     window.app = {};
   }
   app = window.app;
-  app.current_user = app.upvote = function(rid) {
+  app.current_user = "XXX";
+  app.upvote = function(rid) {
     return $.ajax({
       cache: false,
       type: "POST",
@@ -63,7 +64,6 @@
   };
   $(document).ready(function() {
     var root;
-    app.include("/static/record.js");
     if ($('[data-root="true"]').length > 0) {
       root = $('[data-root="true"]:eq(0)');
       return setTimeout((function() {

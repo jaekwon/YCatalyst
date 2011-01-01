@@ -1,7 +1,9 @@
 require.paths.unshift 'vendor/jade'
+require.paths.unshift 'vendor/sherpa/lib'
 
 http = require 'http'
 jade = require 'jade'
+sherpa = require 'sherpa/nodejs'
 utils = require './utils'
 mongo = require './mongo'
 fu = require './fu'
@@ -51,8 +53,11 @@ all_callbacks = {}
 # -> if record is new
 # -> if record was deleted
 # -> if record got voted on
+# 
 # TODO we need to keep track of more state
 trigger_update = (record) ->
+  if record.object.upvoters?
+    delete record.object.upvoters
   if record.is_new
     notify_keys = record.object.parents or []
   else
