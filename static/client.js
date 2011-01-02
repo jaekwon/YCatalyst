@@ -19,6 +19,12 @@
       success: function(data) {}
     });
   };
+  app.show_reply_box = function(rid) {
+    return app.Record.prototype.show_reply_box(rid);
+  };
+  app.post_reply = function(rid) {
+    return alert(rid);
+  };
   app.include = function(filename) {
     var script;
     script = document.createElement('script');
@@ -35,7 +41,9 @@
       dataType: "json",
       error: function() {
         app.poll_errors += 1;
-        return setTimeout(app.poll, 10 * 1000);
+        return setTimeout((function() {
+          return app.poll(root);
+        }), 10 * 1000);
       },
       success: function(data) {
         var hide_upvote, parent, recdata, record, _i, _len;
@@ -58,13 +66,41 @@
                 });
               }
             }
+            return app.poll(root);
+          } else {
+            app.poll_errors += 1;
+            return setTimeout((function() {
+              return app.poll(root);
+            }), 10 * 1000);
           }
-          return app.poll(root);
         } catch (e) {
           return console.log(e);
         }
       }
     });
+  };
+  app.make_autoresizable = function(textarea) {
+    var autoresize, cloned_textarea;
+    cloned_textarea = textarea.clone();
+    cloned_textarea.css({
+      minHeight: textarea.css('min-height'),
+      minWidth: textarea.css('min-width'),
+      fontFamily: textarea.css('font-family'),
+      fontSize: textarea.css('font-size'),
+      padding: textarea.css('padding'),
+      overflow: 'hidden'
+    });
+    cloned_textarea.css({
+      position: 'absolute',
+      left: '-1000000px',
+      disabled: true
+    });
+    $(document.body).prepend(cloned_textarea);
+    autoresize = function(event) {
+      cloned_textarea.val(textarea.val());
+      return textarea.css('height', cloned_textarea[0].scrollHeight);
+    };
+    return textarea.bind('keyup', autoresize);
   };
   $(document).ready(function() {
     var root;

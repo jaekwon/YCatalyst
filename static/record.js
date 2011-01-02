@@ -11,6 +11,9 @@
       if (!(this.object.num_children != null)) {
         this.object.num_children = 0;
       }
+      if (!(this.object.created_at != null)) {
+        this.object.created_at = new Date();
+      }
     }
     Record.prototype.render_kup = function() {
       return div({
@@ -51,12 +54,15 @@
             return "link";
           });
         });
-        p(function() {
+        p({
+          "class": "contents"
+        }, function() {
           text(h(this.object.comment));
           text(" ");
           return a({
             "class": "reply",
-            href: "/r/" + this.object._id + "/reply"
+            href: "/r/" + this.object._id + "/reply",
+            onclick: "app.show_reply_box('" + (h(this.object._id)) + "'); return false;"
           }, function() {
             return "reply";
           });
@@ -128,6 +134,42 @@
       options.is_root = old_is_root;
       old.replaceWith(this.render(options));
       return $("\#" + this.object._id).find('.children:eq(0)').replaceWith(children);
+    };
+    Record.prototype.show_reply_box = function(rid) {
+      var contents, kup, record_e;
+      record_e = $('#' + rid);
+      if (record_e.find('>.contents>.reply_box').length === 0) {
+        kup = function() {
+          return div({
+            "class": "reply_box"
+          }, function() {
+            textarea({
+              name: "comment"
+            });
+            br({
+              foo: 'bar'
+            });
+            button({
+              onclick: "$(this).parent().remove()"
+            }, function() {
+              return 'cancel';
+            });
+            return button({
+              onclick: "app.post_reply('" + rid + "')"
+            }, function() {
+              return 'post comment';
+            });
+          });
+        };
+        contents = record_e.find('>.contents').append(coffeekup.render(kup, {
+          context: this,
+          locals: {
+            rid: rid
+          },
+          dynamic_locals: true
+        }));
+        return app.make_autoresizable(contents.find('textarea'));
+      }
     };
     return Record;
   })();

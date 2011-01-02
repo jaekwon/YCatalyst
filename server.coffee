@@ -49,6 +49,21 @@ get_one_record = (rid, fn) ->
 # a global hash from record id to [callbacks]
 all_callbacks = {}
 
+# clear old callbacks
+# they can hang around for at most 30 seconds.
+setInterval (->
+  now = new Date()
+  num_purged = 0
+  num_seen = 0
+  for key, callbacks of all_callbacks
+    num_seen += callbacks.length
+    while (callbacks.length > 0 && now - callbacks[0].timestamp > 30*1000)
+      num_purged += 1
+      callbacks.shift().callback([])
+  if num_purged > 0
+    console.log "purged #{num_purged} of #{num_seen} in #{new Date() - now}"
+  ), 3000
+
 # given a record, tell clients that this record had been updated
 # -> if record is new
 # -> if record was deleted
@@ -64,7 +79,7 @@ trigger_update = (record) ->
     notify_keys = [record.object._id].concat (record.object.parents or [])
   for key in notify_keys
     for callback in all_callbacks[key] or []
-      callback([record])
+      callback.callback([record])
     delete all_callbacks[key]
 
 http.createServer(utils.Rowt(new Sherpa.NodeJs([
@@ -157,9 +172,10 @@ http.createServer(utils.Rowt(new Sherpa.NodeJs([
         key = req.sherpaResponse.params.key
         if not all_callbacks[key]
           all_callbacks[key] = []
-        all_callbacks[key].push (records) ->
-          res.simpleJSON(200, (r.object for r in records))
-        console.log(all_callbacks)
+        all_callbacks[key].push
+          callback: ((records) ->
+            res.simpleJSON(200, (r.object for r in records)))
+          timestamp: new Date()
   ],
 
   ['/r/:id/upvote', (req, res) ->

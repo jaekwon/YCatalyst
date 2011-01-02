@@ -18,6 +18,8 @@ class Record
       @object.points = 0
     if not @object.num_children?
       @object.num_children = 0
+    if not @object.created_at?
+      @object.created_at = new Date()
 
   render_kup: ->
     div class: "record", id: @object._id, "data-parents": JSON.stringify(@object.parents), "data-root": is_root, ->
@@ -30,10 +32,10 @@ class Record
           a class: "parent", href: "/r/#{@object.parent_id}", -> "parent"
           text " | "
         a class: "link", href: "/r/#{@object._id}", -> "link"
-      p ->
+      p class: "contents", ->
         text h(@object.comment)
         text " "
-        a class: "reply", href: "/r/#{@object._id}/reply", -> "reply"
+        a class: "reply", href: "/r/#{@object._id}/reply", onclick: "app.show_reply_box('#{h(@object._id)}'); return false;", -> "reply"
       div class: "children", ->
         if @children
           for child in @children
@@ -79,6 +81,20 @@ class Record
     options.is_root = old_is_root
     old.replaceWith(this.render(options))
     $("\##{@object._id}").find('.children:eq(0)').replaceWith(children)
+
+  # client side #
+  # static method #
+  show_reply_box: (rid) ->
+    record_e = $('#'+rid)
+    if record_e.find('>.contents>.reply_box').length == 0
+      kup = ->
+        div class: "reply_box", ->
+          textarea name: "comment"
+          br foo: 'bar' # dunno why just br doesn't work
+          button onclick: "$(this).parent().remove()", -> 'cancel'
+          button onclick: "app.post_reply('#{rid}')", -> 'post comment'
+      contents = record_e.find('>.contents').append(coffeekup.render kup, context: this, locals: {rid: rid}, dynamic_locals: true)
+      app.make_autoresizable contents.find('textarea')
 
 # given a bunch of records and the root, organize it into a tree
 # returns the root, and children can be accessed w/ .children

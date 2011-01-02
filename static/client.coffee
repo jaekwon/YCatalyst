@@ -23,6 +23,14 @@ app.upvote = (rid) ->
       # with longpolling below.
   }
 
+# show reply form inline with the record
+app.show_reply_box = (rid) ->
+  app.Record::show_reply_box rid
+
+# post the reply
+app.post_reply = (rid) ->
+  alert(rid)
+
 # include a javascript file TODO support jsonp
 app.include = (filename) ->
   script = document.createElement('script')
@@ -42,7 +50,7 @@ app.poll = (root) ->
     dataType: "json"
     error: ->
       app.poll_errors += 1
-      setTimeout(app.poll, 10*1000)
+      setTimeout(( -> app.poll(root)), 10*1000)
     success: (data) ->
       try
         app.poll_errors = 0
@@ -59,11 +67,33 @@ app.poll = (root) ->
               hide_upvote = app.upvoted.indexOf(recdata._id) != -1
               record = new window.app.Record(recdata)
               record.redraw(hide_upvote: hide_upvote)
-            
-        app.poll(root)
+          app.poll(root)
+        else
+          # might be a broken connection.
+          # ajax requests should at least come back with a {status}
+          app.poll_errors += 1
+          setTimeout(( -> app.poll(root)), 10*1000)
       catch e
         console.log(e)
   }
+
+# set up autoresize forms.
+app.make_autoresizable = (textarea) ->
+  cloned_textarea = textarea.clone()
+  cloned_textarea.css
+    minHeight: textarea.css('min-height')
+    minWidth: textarea.css('min-width')
+    fontFamily: textarea.css('font-family')
+    fontSize: textarea.css('font-size')
+    padding: textarea.css('padding')
+    overflow: 'hidden' # the cloned textarea's scrollbar causes an extra newline at the end sometimes
+  # hide it but don't actually hide it. 
+  cloned_textarea.css position: 'absolute', left: '-1000000px', disabled: true
+  $(document.body).prepend cloned_textarea
+  autoresize = (event) ->
+    cloned_textarea.val textarea.val()
+    textarea.css 'height', cloned_textarea[0].scrollHeight
+  textarea.bind('keyup', autoresize)
 
 $(document).ready ->
   # start longpoll'n
@@ -71,3 +101,4 @@ $(document).ready ->
     root = $('[data-root="true"]:eq(0)')
     # http://stackoverflow.com/questions/2703861/chromes-loading-indicator-keeps-spinning-during-xmlhttprequest
     setTimeout(( -> app.poll(root)), 500)
+

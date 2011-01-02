@@ -1,6 +1,13 @@
 body {
   color: black;
-  font-family: Arial, Helvetica, sans-serif; }
+  font-family: Verdana, Verdana, Geneva, sans-serif;
+  font-size: 14px; }
+  body textarea {
+    padding: 2px;
+    min-width: 460px;
+    min-height: 100px;
+    font-family: Verdana, Verdana, Geneva, sans-serif;
+    font-size: 14px; }
   body .record {
     margin: 10px 0px; }
     body .record a {
@@ -17,6 +24,10 @@ body {
         text-decoration: none; }
     body .record .reply {
       font-size: 0.8em; }
+    body .record .reply_box {
+      margin: 10px 0px; }
+      body .record .reply_box button {
+        margin-top: 5px; }
     body .record .children {
       border-left: 1px solid #eeeeee;
       margin-left: 10px;
