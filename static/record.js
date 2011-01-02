@@ -13,7 +13,6 @@
       }
     }
     Record.prototype.render_kup = function() {
-      console.log("hide_upvote: " + hide_upvote);
       return div({
         "class": "record",
         id: this.object._id,
@@ -65,17 +64,24 @@
         return div({
           "class": "children"
         }, function() {
-          var child, _i, _len, _ref, _results;
+          var child, loaded_children, _i, _len, _ref;
           if (this.children) {
             _ref = this.children;
-            _results = [];
             for (_i = 0, _len = _ref.length; _i < _len; _i++) {
               child = _ref[_i];
-              _results.push(text(child.render({
+              text(child.render({
                 is_root: false
-              })));
+              }));
             }
-            return _results;
+          }
+          loaded_children = this.children ? this.children.length : 0;
+          if (loaded_children < this.object.num_children) {
+            return a({
+              "class": "more",
+              href: "/r/" + this.object._id
+            }, function() {
+              return "" + (this.object.num_children - loaded_children) + " more replies";
+            });
           }
         });
       });
@@ -114,14 +120,13 @@
       record.is_new = true;
       return record;
     };
-    Record.prototype.redraw = function() {
+    Record.prototype.redraw = function(options) {
       var children, old, old_is_root;
       old = $("\#" + this.object._id);
       old_is_root = old.attr('data-root') === "true";
       children = old.find('.children:eq(0)').detach();
-      old.replaceWith(this.render({
-        is_root: old_is_root
-      }));
+      options.is_root = old_is_root;
+      old.replaceWith(this.render(options));
       return $("\#" + this.object._id).find('.children:eq(0)').replaceWith(children);
     };
     return Record;

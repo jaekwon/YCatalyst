@@ -139,6 +139,11 @@ http.createServer(utils.Rowt(new Sherpa.NodeJs([
             mongo.records.save record.object, (err, stuff) ->
               res.writeHead 302, Location: '/r/'+parent_id
               res.end()
+              # update the parent as well, specifically num_children
+              parent.object.num_children += 1
+              mongo.records.save parent.object, (err, stuff) ->
+                if err
+                  console.err "failed to update parent.num_children: #{parent_id}"
               # notify clients
               trigger_update record
           else
@@ -168,7 +173,9 @@ http.createServer(utils.Rowt(new Sherpa.NodeJs([
             record.object.upvoters.push('XXX')
           record.object.points = record.object.upvoters.length
           mongo.records.save record.object, (err, stuff) ->
-            res.simpleJSON(200, status: 'ok', recdata: record.object)
+            res.simpleJSON(200, status: 'ok')
+            # notify clients
+            trigger_update record
   ]
 
 ]).listener())).listen 8124, '127.0.0.1'

@@ -38,6 +38,9 @@ class Record
         if @children
           for child in @children
             text child.render(is_root: false)
+        loaded_children = if @children then @children.length else 0
+        if loaded_children < @object.num_children
+          a class: "more", href: "/r/#{@object._id}", -> "#{@object.num_children - loaded_children} more replies"
 
   # options:
   #   is_root -> default true, if false, doesn't show parent_link,
@@ -69,11 +72,12 @@ class Record
 
   # client side #
   # update the record (which already exists in the dom)
-  redraw: ->
+  redraw: (options) ->
     old = $("\##{@object._id}")
     old_is_root = old.attr('data-root') == "true"
     children = old.find('.children:eq(0)').detach()
-    old.replaceWith(this.render(is_root: old_is_root))
+    options.is_root = old_is_root
+    old.replaceWith(this.render(options))
     $("\##{@object._id}").find('.children:eq(0)').replaceWith(children)
 
 # given a bunch of records and the root, organize it into a tree

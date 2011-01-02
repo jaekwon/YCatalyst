@@ -5,8 +5,12 @@ app = window.app
 # get the id of the current user
 app.current_user = "XXX"
 
+# list of all newly upvoted records
+app.upvoted = []
+
 # show a dialog with some challenge on it
 app.upvote = (rid) ->
+  app.upvoted.push(rid)
   $.ajax {
     cache: false
     type: "POST"
@@ -15,9 +19,8 @@ app.upvote = (rid) ->
     error: ->
       console.log('meh')
     success: (data) ->
-      # update the new record
-      record = new window.app.Record(data.recdata)
-      record.redraw()
+      # updating the new record happens 
+      # with longpolling below.
   }
 
 # include a javascript file TODO support jsonp
@@ -45,11 +48,18 @@ app.poll = (root) ->
         app.poll_errors = 0
         if data
           for recdata in data
+            # if we need to insert a new record
             if $('#'+recdata.parent_id).length > 0 and $('#'+recdata._id).length == 0
               # insert!
               parent = $('#'+recdata.parent_id)
               record = new window.app.Record(recdata)
               parent.find('.children:eq(0)').prepend(record.render(is_root: false))
+            # otherwise we're updating possibly an existing record
+            else
+              hide_upvote = app.upvoted.indexOf(recdata._id) != -1
+              record = new window.app.Record(recdata)
+              record.redraw(hide_upvote: hide_upvote)
+            
         app.poll(root)
       catch e
         console.log(e)

@@ -5,7 +5,9 @@
   }
   app = window.app;
   app.current_user = "XXX";
+  app.upvoted = [];
   app.upvote = function(rid) {
+    app.upvoted.push(rid);
     return $.ajax({
       cache: false,
       type: "POST",
@@ -14,11 +16,7 @@
       error: function() {
         return console.log('meh');
       },
-      success: function(data) {
-        var record;
-        record = new window.app.Record(data.recdata);
-        return record.redraw();
-      }
+      success: function(data) {}
     });
   };
   app.include = function(filename) {
@@ -40,7 +38,7 @@
         return setTimeout(app.poll, 10 * 1000);
       },
       success: function(data) {
-        var parent, recdata, record, _i, _len;
+        var hide_upvote, parent, recdata, record, _i, _len;
         try {
           app.poll_errors = 0;
           if (data) {
@@ -52,6 +50,12 @@
                 parent.find('.children:eq(0)').prepend(record.render({
                   is_root: false
                 }));
+              } else {
+                hide_upvote = app.upvoted.indexOf(recdata._id) !== -1;
+                record = new window.app.Record(recdata);
+                record.redraw({
+                  hide_upvote: hide_upvote
+                });
               }
             }
           }
