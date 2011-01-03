@@ -80,13 +80,15 @@ class Record
     
   # client side #
   # update the record (which already exists in the dom)
+  # is_leaf: default false. if true, renders the new num_children
   redraw: (options) ->
     old = $("\##{@object._id}")
     old_is_root = old.attr('data-root') == "true"
     children = old.find('.children:eq(0)').detach()
     options.is_root = old_is_root
     old.replaceWith(this.render(options))
-    $("\##{@object._id}").find('.children:eq(0)').replaceWith(children)
+    if not options? or not options.is_leaf
+      $("\##{@object._id}").find('.children:eq(0)').replaceWith(children)
 
   # client side #
   # static method #

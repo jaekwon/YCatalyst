@@ -7,7 +7,7 @@ sherpa = require 'sherpa/nodejs'
 utils = require './utils'
 mongo = require './mongo'
 fu = require './fu'
-underscore = require './static/underscore'
+_ = require './static/underscore'
 rec = require('./static/record')
 
 DEFAULT_DEPTH = 5
@@ -19,6 +19,7 @@ DEFAULT_DEPTH = 5
 #    console.log "FIX THIS ASAP, http://debuggable.com/posts/node-js-dealing-with-uncaught-exceptions:4c933d54-1428-443c-928d-4e1ecbdd56cb"
 
 get_records = (root_id, level, fn) ->
+  now = new Date()
   mongo.records.findOne _id: root_id, (err, root) ->
     all = {}
     all[root_id] = new rec.Record(root)
@@ -36,6 +37,7 @@ get_records = (root_id, level, fn) ->
           if i > 1
             fetchmore(i-1)
           else
+            console.log "get_records in #{new Date() - now}"
             fn(all)
     fetchmore(level)
 
@@ -64,22 +66,29 @@ setInterval (->
     console.log "purged #{num_purged} of #{num_seen} in #{new Date() - now}"
   ), 3000
 
-# given a record, tell clients that this record had been updated
+# given records, tell clients that this record had been updated
 # -> if record is new
 # -> if record was deleted
 # -> if record got voted on
+# -> if record has new number of children
 # 
 # TODO we need to keep track of more state
-trigger_update = (record) ->
-  if record.object.upvoters?
-    delete record.object.upvoters
-  if record.is_new
-    notify_keys = record.object.parents or []
-  else
-    notify_keys = [record.object._id].concat (record.object.parents or [])
+# NOTE it is assumed that the records are in proximity to each other,
+# specifically that the union of r.object.parents is small in size.
+trigger_update = (records) ->
+  # compute the keys to notify
+  notify_keys = []
+  for record in records
+    if record.object.upvoters?
+      delete record.object.upvoters
+    if not record.is_new
+      notify_keys.push(record.object._id)
+    notify_keys = notify_keys.concat(record.object.parents or [])
+  notify_keys = _.uniq(notify_keys)
+
   for key in notify_keys
     for callback in all_callbacks[key] or []
-      callback.callback([record])
+      callback.callback(records)
     delete all_callbacks[key]
 
 http.createServer(utils.Rowt(new Sherpa.NodeJs([
@@ -163,7 +172,7 @@ http.createServer(utils.Rowt(new Sherpa.NodeJs([
                 if err
                   console.err "failed to update parent.num_children: #{parent_id}"
               # notify clients
-              trigger_update record
+              trigger_update [parent, record]
           else
             res.writeHead 404, status: 'error'
             res.end html
@@ -194,7 +203,7 @@ http.createServer(utils.Rowt(new Sherpa.NodeJs([
           mongo.records.save record.object, (err, stuff) ->
             res.simpleJSON(200, status: 'ok')
             # notify clients
-            trigger_update record
+            trigger_update [record]
   ]
 
 ]).listener())).listen 8124, '127.0.0.1'

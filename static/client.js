@@ -5,6 +5,7 @@
   }
   app = window.app;
   app.current_user = "XXX";
+  app.DEFAULT_DEPTH = 5;
   app.upvoted = [];
   app.include = function(filename) {
     var script;
@@ -27,23 +28,27 @@
         }), 10 * 1000);
       },
       success: function(data) {
-        var hide_upvote, parent, recdata, record, _i, _len;
+        var hide_upvote, is_leaf, parent, recdata, record, _i, _len;
         try {
           app.poll_errors = 0;
           if (data) {
             for (_i = 0, _len = data.length; _i < _len; _i++) {
               recdata = data[_i];
+              parent = $('#' + recdata.parent_id);
               if ($('#' + recdata.parent_id).length > 0 && $('#' + recdata._id).length === 0) {
-                parent = $('#' + recdata.parent_id);
-                record = new window.app.Record(recdata);
-                parent.find('.children:eq(0)').prepend(record.render({
-                  is_root: false
-                }));
+                if (parent.parents('.record').length >= app.DEFAULT_DEPTH) {} else {
+                  record = new window.app.Record(recdata);
+                  parent.find('.children:eq(0)').prepend(record.render({
+                    is_root: false
+                  }));
+                }
               } else {
                 hide_upvote = app.upvoted.indexOf(recdata._id) !== -1;
+                is_leaf = parent.parents('.record').length >= (app.DEFAULT_DEPTH - 1);
                 record = new window.app.Record(recdata);
                 record.redraw({
-                  hide_upvote: hide_upvote
+                  hide_upvote: hide_upvote,
+                  is_leaf: is_leaf
                 });
               }
             }

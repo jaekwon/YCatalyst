@@ -140,7 +140,9 @@
       children = old.find('.children:eq(0)').detach();
       options.is_root = old_is_root;
       old.replaceWith(this.render(options));
-      return $("\#" + this.object._id).find('.children:eq(0)').replaceWith(children);
+      if (!(options != null) || !options.is_leaf) {
+        return $("\#" + this.object._id).find('.children:eq(0)').replaceWith(children);
+      }
     };
     Record.prototype.upvote = function(rid) {
       app.upvoted.push(rid);

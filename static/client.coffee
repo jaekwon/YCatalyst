@@ -5,6 +5,9 @@ app = window.app
 # get the id of the current user
 app.current_user = "XXX"
 
+# depth of comments to show
+app.DEFAULT_DEPTH = 5
+
 # list of all newly upvoted records
 app.upvoted = []
 
@@ -33,17 +36,25 @@ app.poll = (root) ->
         app.poll_errors = 0
         if data
           for recdata in data
+            parent = $('#'+recdata.parent_id)
             # if we need to insert a new record
             if $('#'+recdata.parent_id).length > 0 and $('#'+recdata._id).length == 0
-              # insert!
-              parent = $('#'+recdata.parent_id)
-              record = new window.app.Record(recdata)
-              parent.find('.children:eq(0)').prepend(record.render(is_root: false))
+              # insert if parent is not a leaf node
+              if parent.parents('.record').length >= app.DEFAULT_DEPTH
+                # this is too far. skip it.
+                # instead, the parent should be in the data as well 
+                # and that, updated w/ is_root option, should display 
+                # the new number of children
+              else
+                # render it
+                record = new window.app.Record(recdata)
+                parent.find('.children:eq(0)').prepend(record.render(is_root: false))
             # otherwise we're updating possibly an existing record
             else
               hide_upvote = app.upvoted.indexOf(recdata._id) != -1
+              is_leaf = parent.parents('.record').length >= (app.DEFAULT_DEPTH-1)
               record = new window.app.Record(recdata)
-              record.redraw(hide_upvote: hide_upvote)
+              record.redraw(hide_upvote: hide_upvote, is_leaf: is_leaf)
           app.poll(root)
         else
           # might be a broken connection.
