@@ -6,25 +6,6 @@
   app = window.app;
   app.current_user = "XXX";
   app.upvoted = [];
-  app.upvote = function(rid) {
-    app.upvoted.push(rid);
-    return $.ajax({
-      cache: false,
-      type: "POST",
-      url: "/r/" + rid + "/upvote",
-      dataType: "json",
-      error: function() {
-        return console.log('meh');
-      },
-      success: function(data) {}
-    });
-  };
-  app.show_reply_box = function(rid) {
-    return app.Record.prototype.show_reply_box(rid);
-  };
-  app.post_reply = function(rid) {
-    return alert(rid);
-  };
   app.include = function(filename) {
     var script;
     script = document.createElement('script');

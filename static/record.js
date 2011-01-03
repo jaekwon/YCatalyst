@@ -1,7 +1,14 @@
 (function() {
   var Record, app, coffeekup, dangle;
   coffeekup = typeof CoffeeKup != "undefined" && CoffeeKup !== null ? CoffeeKup : require('coffeekup');
-  app = typeof window != "undefined" && window !== null ? window.app : require('../app');
+  if (typeof window != "undefined" && window !== null) {
+    if (!(window.app != null)) {
+      window.app = {};
+    }
+    app = window.app;
+  } else {
+    app = require('../app');
+  }
   Record = (function() {
     function Record(object) {
       this.object = object;
@@ -135,6 +142,19 @@
       old.replaceWith(this.render(options));
       return $("\#" + this.object._id).find('.children:eq(0)').replaceWith(children);
     };
+    Record.prototype.upvote = function(rid) {
+      app.upvoted.push(rid);
+      return $.ajax({
+        cache: false,
+        type: "POST",
+        url: "/r/" + rid + "/upvote",
+        dataType: "json",
+        error: function() {
+          return console.log('meh');
+        },
+        success: function(data) {}
+      });
+    };
     Record.prototype.show_reply_box = function(rid) {
       var contents, kup, record_e;
       record_e = $('#' + rid);
@@ -150,14 +170,14 @@
               foo: 'bar'
             });
             button({
-              onclick: "$(this).parent().remove()"
-            }, function() {
-              return 'cancel';
-            });
-            return button({
               onclick: "app.post_reply('" + rid + "')"
             }, function() {
               return 'post comment';
+            });
+            return button({
+              onclick: "$(this).parent().remove()"
+            }, function() {
+              return 'cancel';
             });
           });
         };
@@ -170,6 +190,26 @@
         }));
         return app.make_autoresizable(contents.find('textarea'));
       }
+    };
+    Record.prototype.post_reply = function(rid) {
+      var comment, record_e;
+      record_e = $('#' + rid);
+      comment = record_e.find('>.contents>.reply_box>textarea').val();
+      return $.ajax({
+        cache: false,
+        type: "POST",
+        url: "/r/" + rid + "/reply",
+        data: {
+          comment: comment
+        },
+        dataType: "json",
+        error: function() {
+          return console.log('meh');
+        },
+        success: function(data) {
+          return record_e.find('>.contents>.reply_box').remove();
+        }
+      });
     };
     return Record;
   })();
@@ -193,10 +233,10 @@
     exports.dangle = dangle;
   }
   if (typeof window != "undefined" && window !== null) {
-    if (!(window.app != null)) {
-      window.app = {};
-    }
-    window.app.Record = Record;
-    window.app.dangle = dangle;
+    app.Record = Record;
+    app.upvote = Record.prototype.upvote;
+    app.show_reply_box = Record.prototype.show_reply_box;
+    app.post_reply = Record.prototype.post_reply;
+    app.dangle = dangle;
   }
 }).call(this);

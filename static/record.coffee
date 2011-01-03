@@ -2,7 +2,12 @@
 
 # we have to rename, otherwise coffeescript declares 'var CoffeeKup' which wipes the client side import
 coffeekup = if CoffeeKup? then CoffeeKup else require 'coffeekup'
-app = if window? then window.app else require '../app'
+if window?
+  if not window.app?
+    window.app = {}
+  app = window.app
+else
+  app = require '../app'
 
 # usage: 
 # r = new Record({record_data})
@@ -72,6 +77,7 @@ class Record
     record.is_new = true
     return record
 
+    
   # client side #
   # update the record (which already exists in the dom)
   redraw: (options) ->
@@ -84,6 +90,23 @@ class Record
 
   # client side #
   # static method #
+  # show a dialog with some challenge on it
+  upvote: (rid) ->
+    app.upvoted.push(rid)
+    $.ajax {
+      cache: false
+      type: "POST"
+      url: "/r/#{rid}/upvote"
+      dataType: "json"
+      error: ->
+        console.log('meh')
+      success: (data) ->
+        # updating the new record happens 
+        # with longpolling below.
+    }
+
+  # client side #
+  # static method #
   show_reply_box: (rid) ->
     record_e = $('#'+rid)
     if record_e.find('>.contents>.reply_box').length == 0
@@ -91,10 +114,26 @@ class Record
         div class: "reply_box", ->
           textarea name: "comment"
           br foo: 'bar' # dunno why just br doesn't work
-          button onclick: "$(this).parent().remove()", -> 'cancel'
           button onclick: "app.post_reply('#{rid}')", -> 'post comment'
+          button onclick: "$(this).parent().remove()", -> 'cancel'
       contents = record_e.find('>.contents').append(coffeekup.render kup, context: this, locals: {rid: rid}, dynamic_locals: true)
       app.make_autoresizable contents.find('textarea')
+
+  # client side #
+  # static method #
+  post_reply: (rid) ->
+    record_e = $('#'+rid)
+    comment = record_e.find('>.contents>.reply_box>textarea').val()
+    $.ajax
+      cache: false
+      type: "POST"
+      url: "/r/#{rid}/reply"
+      data: {comment: comment}
+      dataType: "json"
+      error: ->
+        console.log('meh')
+      success: (data) ->
+        record_e.find('>.contents>.reply_box').remove()
 
 # given a bunch of records and the root, organize it into a tree
 # returns the root, and children can be accessed w/ .children
@@ -114,7 +153,8 @@ if exports?
   exports.dangle = dangle
 # if client-side
 if window?
-  if not window.app?
-    window.app = {}
-  window.app.Record = Record
-  window.app.dangle = dangle
+  app.Record = Record
+  app.upvote = Record::upvote
+  app.show_reply_box = Record::show_reply_box
+  app.post_reply = Record::post_reply
+  app.dangle = dangle

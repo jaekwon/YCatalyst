@@ -8,29 +8,6 @@ app.current_user = "XXX"
 # list of all newly upvoted records
 app.upvoted = []
 
-# show a dialog with some challenge on it
-app.upvote = (rid) ->
-  app.upvoted.push(rid)
-  $.ajax {
-    cache: false
-    type: "POST"
-    url: "/r/#{rid}/upvote"
-    dataType: "json"
-    error: ->
-      console.log('meh')
-    success: (data) ->
-      # updating the new record happens 
-      # with longpolling below.
-  }
-
-# show reply form inline with the record
-app.show_reply_box = (rid) ->
-  app.Record::show_reply_box rid
-
-# post the reply
-app.post_reply = (rid) ->
-  alert(rid)
-
 # include a javascript file TODO support jsonp
 app.include = (filename) ->
   script = document.createElement('script')

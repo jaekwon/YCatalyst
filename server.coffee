@@ -152,8 +152,11 @@ http.createServer(utils.Rowt(new Sherpa.NodeJs([
             data = parent_id: parent_id, _id: utils.randid(), comment: comment
             record = rec.Record::create(data, parent)
             mongo.records.save record.object, (err, stuff) ->
-              res.writeHead 302, Location: '/r/'+parent_id
-              res.end()
+              if req.headers['x-requested-with'] == 'XMLHttpRequest'
+                res.simpleJSON 200, status: 'ok'
+              else
+                res.writeHead 302, Location: '/r/'+parent_id
+                res.end()
               # update the parent as well, specifically num_children
               parent.object.num_children += 1
               mongo.records.save parent.object, (err, stuff) ->
