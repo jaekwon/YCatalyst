@@ -10,26 +10,4 @@ html(lang="en")
     link(type="text/css", rel="stylesheet", href=require('./utils').static_file("main.css"))
   body
 
-    !{parent.render({is_root: true, current_user: current_user})}
-
-    form(action=parent.comment_url(), method="post")
-      textarea(name="comment")
-      br 
-      input(type="submit", value="add comment")
-
-  :sass
-    | body
-    |   :color black
-    |   :font-family Arial, Arial, Helvetica, sans-serif
-    | .record
-    |   :margin-bottom 10px
-    |   :padding-left 10px
-
-  :javascript
-    | $(document).ready(function() {
-    | });
-    | WebFont.load({ //WebFontConfig = {
-    |   google: {
-    |     families: []
-    |   }
-    | });
+    p #{message}

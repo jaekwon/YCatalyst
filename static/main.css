@@ -2,6 +2,12 @@ body {
   color: black;
   font-family: Verdana, Verdana, Geneva, sans-serif;
   font-size: 14px; }
+  body #headerbar {
+    background-color: black;
+    padding: 4px;
+    color: #ffaaaa; }
+    body #headerbar .username {
+      font-weight: 900; }
   body textarea {
     padding: 2px;
     min-width: 460px;
@@ -36,3 +42,6 @@ body {
         color: #999999;
         text-decoration: none;
         font-size: 0.8em; }
+  body label {
+    font-size: 0.8em;
+    color: gray; }

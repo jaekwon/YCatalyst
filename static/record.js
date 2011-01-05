@@ -26,13 +26,13 @@
       return div({
         "class": "record",
         id: this.object._id,
-        "data-parents": JSON.stringify(this.object.parents),
-        "data-root": is_root
+        "data-root": is_root,
+        "data-upvoted": upvoted
       }, function() {
         span({
           "class": "top_items"
         }, function() {
-          if (!hide_upvote) {
+          if ((typeof current_user != "undefined" && current_user !== null) && !upvoted) {
             a({
               "class": "upvote",
               href: '#',
@@ -42,7 +42,12 @@
             });
           }
           span(function() {
-            return " " + (this.object.points || 0) + " pts";
+            return " " + (this.object.points || 0) + " pts by ";
+          });
+          a({
+            href: "/user/" + (h(this.object.created_by))
+          }, function() {
+            return h(this.object.created_by);
           });
           text(" | ");
           if (is_root && this.object.parent_id) {
@@ -64,7 +69,7 @@
         p({
           "class": "contents"
         }, function() {
-          text(h(this.object.comment));
+          text(h(this.object.comment).replace(/\n/g, '<br/>'));
           text(" ");
           return a({
             "class": "reply",
@@ -83,7 +88,8 @@
             for (_i = 0, _len = _ref.length; _i < _len; _i++) {
               child = _ref[_i];
               text(child.render({
-                is_root: false
+                is_root: false,
+                current_user: current_user
               }));
             }
           }
@@ -100,17 +106,18 @@
       });
     };
     Record.prototype.render = function(options) {
-      var hide_upvote, is_root;
+      var current_user, is_root, upvoted;
       is_root = !(options != null) || options.is_root;
-      hide_upvote = options != null ? options.hide_upvote : void 0;
-      if ((this.object.upvoters != null) && this.object.upvoters.indexOf(app.current_user) !== -1) {
-        hide_upvote = true;
+      if (options != null) {
+        current_user = options.current_user;
       }
+      upvoted = typeof window != "undefined" && window !== null ? app.upvoted.indexOf(this.object._id) !== -1 : current_user != null ? (this.object.upvoters != null) && this.object.upvoters.indexOf(current_user._id) !== -1 : void 0;
       return coffeekup.render(this.render_kup, {
         context: this,
         locals: {
           is_root: is_root,
-          hide_upvote: hide_upvote
+          upvoted: upvoted,
+          current_user: current_user
         },
         dynamic_locals: true
       });
@@ -128,6 +135,7 @@
           parents = [parent.object._id];
         }
       }
+      recdata.created_at = new Date();
       recdata.parents = parents;
       record = new Record(recdata);
       record.is_new = true;
@@ -209,7 +217,11 @@
           return console.log('meh');
         },
         success: function(data) {
-          return record_e.find('>.contents>.reply_box').remove();
+          if (data != null) {
+            return record_e.find('>.contents>.reply_box').remove();
+          } else {
+            return alert('uh oh, server might be down. try again later?');
+          }
         }
       });
     };

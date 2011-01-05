@@ -4,9 +4,9 @@
     window.app = {};
   }
   app = window.app;
-  app.current_user = "XXX";
+  app.current_user = null;
   app.DEFAULT_DEPTH = 5;
-  app.upvoted = [];
+  app.upvoted = null;
   app.include = function(filename) {
     var script;
     script = document.createElement('script');
@@ -28,7 +28,7 @@
         }), 10 * 1000);
       },
       success: function(data) {
-        var hide_upvote, is_leaf, parent, recdata, record, _i, _len;
+        var is_leaf, parent, recdata, record, _i, _len;
         try {
           app.poll_errors = 0;
           if (data) {
@@ -39,15 +39,14 @@
                 if (parent.parents('.record').length >= app.DEFAULT_DEPTH) {} else {
                   record = new window.app.Record(recdata);
                   parent.find('.children:eq(0)').prepend(record.render({
-                    is_root: false
+                    is_root: false,
+                    current_user: app.current_user
                   }));
                 }
               } else {
-                hide_upvote = app.upvoted.indexOf(recdata._id) !== -1;
                 is_leaf = parent.parents('.record').length >= (app.DEFAULT_DEPTH - 1);
                 record = new window.app.Record(recdata);
                 record.redraw({
-                  hide_upvote: hide_upvote,
                   is_leaf: is_leaf
                 });
               }
@@ -90,11 +89,18 @@
   };
   $(document).ready(function() {
     var root;
+    app.current_user = $('#current_user').length > 0 ? {
+      _id: $("#current_user").attr('data-id'),
+      username: $("#current_user").attr('data-username')
+    } : null;
     if ($('[data-root="true"]').length > 0) {
       root = $('[data-root="true"]:eq(0)');
-      return setTimeout((function() {
+      setTimeout((function() {
         return app.poll(root);
       }), 500);
     }
+    return app.upvoted = $.map($('.record[data-upvoted="true"]'), function(e) {
+      return e.id;
+    });
   });
 }).call(this);

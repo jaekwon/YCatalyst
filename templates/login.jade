@@ -1,0 +1,61 @@
+!!! 5
+html(lang="en")
+  head
+    title= "1amendment"
+    script(type="text/javascript", src="https://www.google.com/jsapi?key=ABQIAAAAV88HHyf8NBcAL3aio53OixSEBwhbzDd0F998UkbSll3boCkrihTFj2uO3yETr_J5z25r2aIc4YCVpQ")
+    script(type="text/javascript", src="https://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js")
+    script(type="text/javascript", src="https://ajax.googleapis.com/ajax/libs/webfont/1.0.17/webfont.js")
+    script(type="text/javascript", src="/static/underscore.js")
+    script(type="text/javascript", src="/static/backbone.js")
+    script(type="text/javascript", src=require('./utils').static_file("client.js"))
+    link(type="text/css", rel="stylesheet", href=require('./utils').static_file("main.css"))
+  body
+
+    p login here
+
+    form(action: "/login", method: "POST")
+      table
+        tr
+          td
+            label username
+          td
+            input(name: "username")
+        tr
+          td
+            label password
+          td
+            input(name: "password", type: "password")
+        tr
+          td(colspan: 2)
+            input(type: "submit", value: "login")
+
+    p 
+      | new user?
+      br 
+      | register if you have an invite code
+
+    form(action: "/register", method: "POST")
+      table
+        tr
+          td
+            label desired username
+          td
+            input(name: "username")
+        tr
+          td
+            label desired password
+          td
+            input(name: "password", type: "password")
+        tr
+          td
+            label email
+          td
+            input(name: "email")
+        tr
+          td
+            label invite code
+          td
+            input(name: "invite")
+        tr
+          td(colspan: 2)
+            input(type: "submit", value: "register")

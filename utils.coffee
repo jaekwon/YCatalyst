@@ -57,3 +57,10 @@ exports.static_file = (filepath) ->
   nonce = require('hashlib').md5(require('fs').statSync(filepath).mtime)[1..10]
   console.log("XXX static_file, nonce = #{nonce}")
   return "/#{filepath}?v=#{nonce}"
+
+crypto = require('crypto')
+exports.passhash = (password, salt, times) ->
+  hashed = crypto.createHash('md5').update(password).digest('base64')
+  for i in [1..times]
+    hashed = crypto.createHash('md5').update(hashed).digest('base64')
+  return hashed

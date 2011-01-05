@@ -1,3 +1,4 @@
 *.swp
 *.bak
 .sass-cache
+test.coffee

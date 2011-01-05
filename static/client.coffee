@@ -2,14 +2,14 @@ if not window.app?
   window.app = {}
 app = window.app
 
-# get the id of the current user
-app.current_user = "XXX"
+# gets set at document.ready
+app.current_user = null
 
 # depth of comments to show
 app.DEFAULT_DEPTH = 5
 
 # list of all newly upvoted records
-app.upvoted = []
+app.upvoted = null
 
 # include a javascript file TODO support jsonp
 app.include = (filename) ->
@@ -48,13 +48,12 @@ app.poll = (root) ->
               else
                 # render it
                 record = new window.app.Record(recdata)
-                parent.find('.children:eq(0)').prepend(record.render(is_root: false))
+                parent.find('.children:eq(0)').prepend(record.render(is_root: false, current_user: app.current_user))
             # otherwise we're updating possibly an existing record
             else
-              hide_upvote = app.upvoted.indexOf(recdata._id) != -1
               is_leaf = parent.parents('.record').length >= (app.DEFAULT_DEPTH-1)
               record = new window.app.Record(recdata)
-              record.redraw(hide_upvote: hide_upvote, is_leaf: is_leaf)
+              record.redraw(is_leaf: is_leaf)
           app.poll(root)
         else
           # might be a broken connection.
@@ -84,9 +83,18 @@ app.make_autoresizable = (textarea) ->
   textarea.bind('keyup', autoresize)
 
 $(document).ready ->
+  # get the id of the current user
+  app.current_user = 
+    if $('#current_user').length > 0
+      _id: $("#current_user").attr('data-id'), username: $("#current_user").attr('data-username')
+    else
+      null
+
   # start longpoll'n
   if $('[data-root="true"]').length > 0
     root = $('[data-root="true"]:eq(0)')
     # http://stackoverflow.com/questions/2703861/chromes-loading-indicator-keeps-spinning-during-xmlhttprequest
     setTimeout(( -> app.poll(root)), 500)
 
+  # find all upvoted records
+  app.upvoted = $.map($('.record[data-upvoted="true"]'), (e) -> e.id)

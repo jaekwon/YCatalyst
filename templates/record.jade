@@ -12,7 +12,17 @@ html(lang="en")
     link(type="text/css", rel="stylesheet", href=require('./utils').static_file("main.css"))
   body
 
-    !{root.render()}
+    div#headerbar
+      - if (current_user)
+        span.username #{current_user.username}
+      - else
+        span.username anonymous
+
+    - render_options = {current_user: current_user, is_root: true}
+    !{root.render(render_options)}
+
+    - if (current_user)
+      div#current_user(style: "display: none", 'data-id': current_user._id, 'data-username': current_user.username)
 
   :sass
     |

@@ -1,5 +1,7 @@
 require.paths.unshift 'vendor/jade'
 require.paths.unshift 'vendor/sherpa/lib'
+require.paths.unshift 'vendor'
+require.paths.unshift 'vendor/validator'
 
 http = require 'http'
 jade = require 'jade'
@@ -8,7 +10,11 @@ utils = require './utils'
 mongo = require './mongo'
 fu = require './fu'
 _ = require './static/underscore'
-rec = require('./static/record')
+rec = require './static/record'
+cookie = require 'cookie-node'
+_v = require 'validator'
+
+cookie.secret = "supersecretbanananana"
 
 DEFAULT_DEPTH = 5
 
@@ -91,6 +97,18 @@ trigger_update = (records) ->
       callback.callback(records)
     delete all_callbacks[key]
 
+# get current user
+http.IncomingMessage.prototype.get_current_user = ->
+  user_c = this.getSecureCookie('user')
+  if user_c? and user_c.length > 0
+    return JSON.parse(user_c)
+  return null
+
+# redirect
+http.ServerResponse.prototype.redirect = (url) ->
+  this.writeHead(302, Location: url)
+  this.end()
+
 http.createServer(utils.Rowt(new Sherpa.NodeJs([
 
   ['/static/:filepath', (req, res) ->
@@ -137,19 +155,33 @@ http.createServer(utils.Rowt(new Sherpa.NodeJs([
     switch req.method
       when 'GET'
         root_id = req.sherpaResponse.params.id
+        current_user = req.get_current_user()
         get_records root_id, DEFAULT_DEPTH, (all) ->
-          jade.renderFile 'templates/record.jade', locals: {root: rec.dangle(all, root_id), require: require}, (err, html) ->
+          jade.renderFile 'templates/record.jade', locals: {root: rec.dangle(all, root_id), require: require, current_user: current_user}, (err, html) ->
             console.log err if err
             res.writeHead 200, status: 'ok'
             res.end html
   ],
 
+  ['/r/:id/watching', (req, res) ->
+    switch req.method
+      when 'GET'
+        rid = req.sherpaResponse.params.id
+        watching = if all_callbacks[rid]? then (cb.username for cb in (all_callbacks[rid] or [])) else []
+        res.simpleJSON(200, watching)
+  ],
+
   ['/r/:id/reply', (req, res) ->
+    current_user = req.get_current_user()
+    if not current_user?
+      res.writeHead 401, status: 'login_error'
+      res.end 'not logged in'
+      return
     switch req.method
       when 'GET'
         parent_id = req.sherpaResponse.params.id
         get_one_record parent_id, (parent) ->
-          jade.renderFile 'templates/reply.jade', locals: {parent: parent, require: require}, (err, html) ->
+          jade.renderFile 'templates/reply.jade', locals: {parent: parent, current_user: current_user, require: require}, (err, html) ->
             console.log err if err
             res.writeHead 200, status: 'ok'
             res.end html
@@ -158,7 +190,7 @@ http.createServer(utils.Rowt(new Sherpa.NodeJs([
         comment = req.post_data.comment
         get_one_record parent_id, (parent) ->
           if parent
-            data = parent_id: parent_id, _id: utils.randid(), comment: comment
+            data = parent_id: parent_id, _id: utils.randid(), comment: comment, created_by: current_user.username
             record = rec.Record::create(data, parent)
             mongo.records.save record.object, (err, stuff) ->
               if req.headers['x-requested-with'] == 'XMLHttpRequest'
@@ -179,6 +211,7 @@ http.createServer(utils.Rowt(new Sherpa.NodeJs([
   ],
 
   ['/r/:key/recv', (req, res) ->
+    current_user = req.get_current_user()
     switch req.method
       when 'GET'
         key = req.sherpaResponse.params.key
@@ -188,22 +221,77 @@ http.createServer(utils.Rowt(new Sherpa.NodeJs([
           callback: ((records) ->
             res.simpleJSON(200, (r.object for r in records)))
           timestamp: new Date()
+          username: current_user.username if current_user?
   ],
 
   ['/r/:id/upvote', (req, res) ->
+    current_user = req.get_current_user()
+    if not current_user?
+      res.writeHead 401, status: 'login_error'
+      res.end 'not logged in'
+      return
     switch req.method
       when 'POST'
         rid = req.sherpaResponse.params.id
         get_one_record rid, (record) ->
           if not record.object.upvoters?
             record.object.upvoters = []
-          if record.object.upvoters.indexOf('XXX') == -1
-            record.object.upvoters.push('XXX')
+          if record.object.upvoters.indexOf(current_user._id) == -1
+            record.object.upvoters.push(current_user._id)
           record.object.points = record.object.upvoters.length
           mongo.records.save record.object, (err, stuff) ->
             res.simpleJSON(200, status: 'ok')
             # notify clients
             trigger_update [record]
+  ],
+
+  ['/login', (req, res) ->
+    switch req.method
+      when 'GET'
+        jade.renderFile 'templates/login.jade', locals: {require: require}, (err, html) ->
+          res.writeHead 200, status: 'ok'
+          res.end html
+  ],
+
+  ['/register', (req, res) ->
+    switch req.method
+      when 'POST'
+        form_error = (error) ->
+          jade.renderFile 'templates/message.jade', locals: {require: require, message: error}, (err, html) ->
+            res.writeHead 200, status: 'ok'
+            res.end html
+
+        # validate data
+        data = req.post_data
+        try
+          _v.check(data.username, 'username must be alphanumeric, 2 to 12 characters').len(2,12).isAlphanumeric()
+          _v.check(data.password, 'password must be 5 to 20 characters').len(5,20)
+          _v.check(data.email).isEmail()
+        catch e
+          form_error(''+e)
+        if not data.invite?
+          form_error("no invite specified")
+
+        mongo.invites.findOne _id: data.invite, (err, invite) ->
+          if err or not invite?
+            form_error("invalid invite")
+          else if invite.claimed_by?
+            form_error("invite code already used")
+          else
+            # create the user
+            user = data
+            user._id = utils.randid()
+            salt = utils.randid()
+            hashtimes = 10000 # runs about 80ms on my laptop
+            user.password = [utils.passhash(user.password, salt, hashtimes), salt, hashtimes]
+            mongo.users.save user, (err, stuff) ->
+              # set the user in session
+              res.setSecureCookie 'user', JSON.stringify(user)
+              res.redirect '/'
+              # update the invite
+              invite.claimed_by = [user._id]
+              mongo.invites.save invite, (err, stuff) ->
+                #pass
   ]
 
 ]).listener())).listen 8124, '127.0.0.1'

@@ -27,37 +27,40 @@ class Record
       @object.created_at = new Date()
 
   render_kup: ->
-    div class: "record", id: @object._id, "data-parents": JSON.stringify(@object.parents), "data-root": is_root, ->
+    div class: "record", id: @object._id, "data-root": is_root, "data-upvoted": upvoted, ->
       span class: "top_items", ->
-        if not hide_upvote
+        if current_user? and not upvoted
           a class: "upvote", href: '#', onclick: "app.upvote('#{h(@object._id)}'); return false;", -> "&spades;"
-        span -> " #{@object.points or 0} pts"
+        span -> " #{@object.points or 0} pts by "
+        a href: "/user/#{h(@object.created_by)}", -> h(@object.created_by)
         text " | "
         if is_root and @object.parent_id
           a class: "parent", href: "/r/#{@object.parent_id}", -> "parent"
           text " | "
         a class: "link", href: "/r/#{@object._id}", -> "link"
       p class: "contents", ->
-        text h(@object.comment)
+        text h(@object.comment).replace(/\n/g, '<br/>')
         text " "
         a class: "reply", href: "/r/#{@object._id}/reply", onclick: "app.show_reply_box('#{h(@object._id)}'); return false;", -> "reply"
       div class: "children", ->
         if @children
           for child in @children
-            text child.render(is_root: false)
+            text child.render(is_root: false, current_user: current_user)
         loaded_children = if @children then @children.length else 0
         if loaded_children < @object.num_children
           a class: "more", href: "/r/#{@object._id}", -> "#{@object.num_children - loaded_children} more replies"
 
   # options:
   #   is_root -> default true, if false, doesn't show parent_link,
-  #   hide_upvote -> default false, if true, doesn't show the upvote button. 
   render: (options) ->
     is_root = not options? or options.is_root
-    hide_upvote = options?.hide_upvote
-    if @object.upvoters? and @object.upvoters.indexOf(app.current_user) != -1
-      hide_upvote = true
-    coffeekup.render @render_kup, context: this, locals: {is_root: is_root, hide_upvote: hide_upvote}, dynamic_locals: true
+    current_user = options.current_user if options?
+    upvoted =
+      if window?
+        app.upvoted.indexOf(@object._id) != -1
+      else if current_user?
+        @object.upvoters? and @object.upvoters.indexOf(current_user._id) != -1
+    coffeekup.render @render_kup, context: this, locals: {is_root: is_root, upvoted: upvoted, current_user: current_user}, dynamic_locals: true
 
   comment_url: ->
     "/r/#{@object._id}/reply"
@@ -72,6 +75,7 @@ class Record
         parents = [parent.object._id].concat(parent.object.parents[0..5])
       else
         parents = [parent.object._id]
+    recdata.created_at = new Date()
     recdata.parents = parents
     record = new Record(recdata)
     record.is_new = true
@@ -135,7 +139,10 @@ class Record
       error: ->
         console.log('meh')
       success: (data) ->
-        record_e.find('>.contents>.reply_box').remove()
+        if data?
+          record_e.find('>.contents>.reply_box').remove()
+        else
+          alert 'uh oh, server might be down. try again later?'
 
 # given a bunch of records and the root, organize it into a tree
 # returns the root, and children can be accessed w/ .children
