@@ -9,9 +9,9 @@ sherpa = require 'sherpa/nodejs'
 utils = require './utils'
 mongo = require './mongo'
 fu = require './fu'
-_ = require './static/underscore'
 rec = require './static/record'
 cookie = require 'cookie-node'
+_ = require './static/underscore'
 _v = require 'validator'
 
 cookie.secret = "supersecretbanananana"
@@ -251,6 +251,31 @@ http.createServer(utils.Rowt(new Sherpa.NodeJs([
         jade.renderFile 'templates/login.jade', locals: {require: require}, (err, html) ->
           res.writeHead 200, status: 'ok'
           res.end html
+      when 'POST'
+        form_error = (error) ->
+          jade.renderFile 'templates/message.jade', locals: {require: require, message: error}, (err, html) ->
+            res.writeHead 200, status: 'ok'
+            res.end html
+        try
+          _v.check(req.post_data.username, 'username must be alphanumeric, 2 to 12 characters').len(2,12).isAlphanumeric()
+          _v.check(req.post_data.password, 'password must be 5 to 20 characters').len(5,20)
+        catch e
+          form_error(''+e)
+          return
+        # get user
+        mongo.users.find username: req.post_data.username, (err, user) ->
+          if err or not user? or not user.password?
+            form_error('error, no such user?')
+            return
+          # check password
+          hashtimes = 10000 # runs about 80ms on my laptop
+          if user.password[0] == utils.passhash(req.post_data.password, user.password[1], hashtimes)
+            # set the user in session
+            res.setSecureCookie 'user', JSON.stringify(user)
+            res.redirect '/'
+          else
+            form_error('wrong password')
+            return
   ],
 
   ['/register', (req, res) ->

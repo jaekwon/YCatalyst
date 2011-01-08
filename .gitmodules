@@ -13,9 +13,9 @@
 [submodule "vendor/connect-auth"]
 	path = vendor/connect-auth
 	url = http://github.com/ciaranj/connect-auth.git
-[submodule "vendor/cookie-node"]
-	path = vendor/cookie-node
-	url = https://github.com/jed/cookie-node.git
 [submodule "vendor/validator"]
 	path = vendor/validator
 	url = https://github.com/chriso/node-validator.git
+[submodule "vendor/cookie-node"]
+	path = vendor/cookie-node
+	url = https://github.com/jaekwon/cookie-node.git
