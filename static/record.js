@@ -1,6 +1,7 @@
 (function() {
-  var Record, app, coffeekup, dangle;
+  var Record, app, coffeekup, dangle, markz;
   coffeekup = typeof CoffeeKup != "undefined" && CoffeeKup !== null ? CoffeeKup : require('coffeekup');
+  markz = typeof Markz != "undefined" && Markz !== null ? Markz : require('./markz').Markz;
   if (typeof window != "undefined" && window !== null) {
     if (!(window.app != null)) {
       window.app = {};
@@ -69,7 +70,9 @@
         p({
           "class": "contents"
         }, function() {
-          text(h(this.object.comment).replace(/\n/g, '<br/>'));
+          if (this.object.comment != null) {
+            text(markz.prototype.markup(this.object.comment));
+          }
           text(" ");
           return a({
             "class": "reply",
@@ -115,6 +118,7 @@
       return coffeekup.render(this.render_kup, {
         context: this,
         locals: {
+          markz: markz,
           is_root: is_root,
           upvoted: upvoted,
           current_user: current_user

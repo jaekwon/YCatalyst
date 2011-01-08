@@ -78,6 +78,4 @@ if exports?
   exports.Markz = Markz
 # if client-side
 if window?
-  if not window.app?
-    window.app = {}
-  window.app.Markz = Markz
+  window.Markz = Markz

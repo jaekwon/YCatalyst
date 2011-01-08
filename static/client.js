@@ -47,7 +47,8 @@
                 is_leaf = parent.parents('.record').length >= (app.DEFAULT_DEPTH - 1);
                 record = new window.app.Record(recdata);
                 record.redraw({
-                  is_leaf: is_leaf
+                  is_leaf: is_leaf,
+                  current_user: app.current_user
                 });
               }
             }

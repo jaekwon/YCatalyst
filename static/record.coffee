@@ -2,6 +2,7 @@
 
 # we have to rename, otherwise coffeescript declares 'var CoffeeKup' which wipes the client side import
 coffeekup = if CoffeeKup? then CoffeeKup else require 'coffeekup'
+markz = if Markz? then Markz else require('./markz').Markz
 if window?
   if not window.app?
     window.app = {}
@@ -39,7 +40,7 @@ class Record
           text " | "
         a class: "link", href: "/r/#{@object._id}", -> "link"
       p class: "contents", ->
-        text h(@object.comment).replace(/\n/g, '<br/>')
+        text markz::markup(@object.comment) if @object.comment?
         text " "
         a class: "reply", href: "/r/#{@object._id}/reply", onclick: "app.show_reply_box('#{h(@object._id)}'); return false;", -> "reply"
       div class: "children", ->
@@ -60,7 +61,7 @@ class Record
         app.upvoted.indexOf(@object._id) != -1
       else if current_user?
         @object.upvoters? and @object.upvoters.indexOf(current_user._id) != -1
-    coffeekup.render @render_kup, context: this, locals: {is_root: is_root, upvoted: upvoted, current_user: current_user}, dynamic_locals: true
+    coffeekup.render @render_kup, context: this, locals: {markz: markz, is_root: is_root, upvoted: upvoted, current_user: current_user}, dynamic_locals: true
 
   comment_url: ->
     "/r/#{@object._id}/reply"
@@ -85,6 +86,7 @@ class Record
   # client side #
   # update the record (which already exists in the dom)
   # is_leaf: default false. if true, renders the new num_children
+  # current_user: the current user XXX find better way
   redraw: (options) ->
     old = $("\##{@object._id}")
     old_is_root = old.attr('data-root') == "true"
