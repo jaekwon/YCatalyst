@@ -56,6 +56,18 @@ get_one_record = (rid, fn) ->
 
 # a global hash from record id to [callbacks]
 all_callbacks = {}
+# a global hash from record id to {username: {timestamp}}
+all_sessions = {}
+
+# create or update the session for key/username
+touch_session = (key, username) ->
+  sessions = all_sessions[key]
+  if not sessions?
+    sessions = all_sessions[key] = {}
+  s = sessions[username]
+  if not s?
+    s = sessions[username] = {}
+  s.timestamp = new Date()
 
 # clear old callbacks
 # they can hang around for at most 30 seconds.
@@ -68,9 +80,32 @@ setInterval (->
     while (callbacks.length > 0 && now - callbacks[0].timestamp > 30*1000)
       num_purged += 1
       callbacks.shift().callback([])
+    if callbacks.length == 0
+      delete all_callbacks[key]
   if num_purged > 0
     console.log "purged #{num_purged} of #{num_seen} in #{new Date() - now}"
   ), 3000
+
+# clear old sessions after 60 secondsish
+setInterval (->
+  now = new Date()
+  num_cleared = 0
+  num_seen = 0
+  for key, sessions of all_sessions
+    # we count the number of sessions per key, cuz javascript has no suitable object.length
+    num_seen_for_key = 0
+    for username, session of sessions
+      # TODO this is stupid. replace with a better dict implementation with length
+      continue if username == '_fake_length'
+      num_seen_for_key += 1
+      if now - session.timestamp > 60*1000
+        num_cleared += 1
+        delete sessions[username]
+    sessions._fake_length = num_seen_for_key
+    num_seen += num_seen_for_key
+  if num_cleared > 0
+    console.log "cleared #{num_cleared} of #{num_seen} in #{new Date() - now} sessions"
+  ), 15000
 
 # given records, tell clients that this record had been updated
 # -> if record is new
@@ -123,32 +158,35 @@ http.createServer(utils.Rowt(new Sherpa.NodeJs([
           fu.staticHandler(filepath)(req, res)
   ]
 
+  # get the most viewed sessions
+  # TODO cache this
   ['/', (req, res) ->
     switch req.method
       when 'GET'
-        mongo.records.find (err, cursor) ->
+        current_user = req.get_current_user()
+        views = [] # list of [record id, num viewers]
+        for key, sessions of all_sessions
+          if key != '_fake_length' # see why it's stupid?
+            views.push( [key, sessions._fake_length] )
+        console.log "\n---<<\n"
+        console.log views
+        console.log "\n---\n"
+        console.log all_sessions
+        console.log "\n--->>\n"
+        views.sort( (a, b) -> b[1] - a[1] )
+        rids = (v[0] for v in views)
+        mongo.records.find {_id: {$in: rids}}, (err, cursor) ->
           cursor.toArray (err, records) ->
-            records = (new rec.Record(record) for record in records)
-            res.writeHead 200, status: 'ok'
-            jade.renderFile 'templates/index.jade', locals: {records: records, require: require}, (err, html) ->
-              if err
-                console.log err
-              res.end html
-      when 'POST'
-        parent_id = req.post_data.parent_id
-        comment = req.post_data.comment
-        data = parent_id: parent_id, _id: utils.randid(), comment: comment
-        if parent_id
-          mongo.records.findOne _id: parent_id, (err, item) ->
+            records = (new rec.Record(r) for r in records)
             if err
               console.log err
-            else
-              # good, it exists!
-              mongo.records.save data, (err, stuff) ->
-                res.writeHead 302, Location: '/r/'+stuff._id
-                res.end()
-        else
-          console.log 'no parent? wheres ur dad?'
+              return
+            jade.renderFile 'templates/index.jade', locals: {require: require, records: records, current_user: current_user}, (err, html) ->
+              if err
+                console.log err
+                return
+              res.writeHead 200, status: 'ok'
+              res.end html
   ]
 
   ['/r/:id', (req, res) ->
@@ -167,7 +205,7 @@ http.createServer(utils.Rowt(new Sherpa.NodeJs([
     switch req.method
       when 'GET'
         rid = req.sherpaResponse.params.id
-        watching = if all_callbacks[rid]? then (cb.username for cb in (all_callbacks[rid] or [])) else []
+        watching = if all_sessions[rid]? then (username for username, session of (all_sessions[rid] or {})) else []
         res.simpleJSON(200, watching)
   ],
 
@@ -222,6 +260,8 @@ http.createServer(utils.Rowt(new Sherpa.NodeJs([
             res.simpleJSON(200, (r.object for r in records)))
           timestamp: new Date()
           username: current_user.username if current_user?
+        if current_user?
+          touch_session(key, current_user.username)
   ],
 
   ['/r/:id/upvote', (req, res) ->
@@ -263,7 +303,7 @@ http.createServer(utils.Rowt(new Sherpa.NodeJs([
           form_error(''+e)
           return
         # get user
-        mongo.users.find username: req.post_data.username, (err, user) ->
+        mongo.users.findOne username: req.post_data.username, (err, user) ->
           if err or not user? or not user.password?
             form_error('error, no such user?')
             return

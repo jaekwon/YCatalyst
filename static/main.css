@@ -8,6 +8,9 @@ body {
     color: #ffaaaa; }
     body #headerbar .username {
       font-weight: 900; }
+    body #headerbar a {
+      color: #ffaaaa;
+      text-decoration: none; }
   body textarea {
     padding: 2px;
     min-width: 460px;
@@ -20,6 +23,9 @@ body {
       color: #666666; }
       body .record a:visited {
         color: #999999; }
+    body .record a.contents {
+      text-decoration: none;
+      color: black; }
     body .record p {
       margin: 2px 0px; }
     body .record .top_items {
@@ -28,6 +34,8 @@ body {
       body .record .top_items a {
         color: #999999;
         text-decoration: none; }
+        body .record .top_items a:hover {
+          text-decoration: underline; }
     body .record .reply {
       font-size: 0.8em; }
     body .record .reply_box {
@@ -42,6 +50,17 @@ body {
         color: #999999;
         text-decoration: none;
         font-size: 0.8em; }
+    body .record .contents {
+      position: relative;
+      top: -1px; }
   body label {
     font-size: 0.8em;
     color: gray; }
+  body ol, body ul {
+    color: #aaaaff;
+    padding-left: 20px;
+    margin: 0px;
+    list-style-type: square; }
+    body ol li, body ul li {
+      padding: 0px;
+      margin: 0px; }

@@ -126,6 +126,43 @@
         dynamic_locals: true
       });
     };
+    Record.prototype.render_headline_kup = function() {
+      return div({
+        "class": "record",
+        id: this.object._id
+      }, function() {
+        span({
+          "class": "top_items"
+        }, function() {
+          span(function() {
+            return " " + (this.object.points || 0) + " pts by ";
+          });
+          return a({
+            href: "/user/" + (h(this.object.created_by))
+          }, function() {
+            return h(this.object.created_by);
+          });
+        });
+        br;
+        return a({
+          href: "/r/" + this.object._id,
+          "class": "contents"
+        }, function() {
+          if (this.object.comment != null) {
+            return text(markz.prototype.markup(this.object.comment));
+          }
+        });
+      });
+    };
+    Record.prototype.render_headline = function(options) {
+      return coffeekup.render(this.render_headline_kup, {
+        context: this,
+        locals: {
+          markz: markz
+        },
+        dynamic_locals: true
+      });
+    };
     Record.prototype.comment_url = function() {
       return "/r/" + this.object._id + "/reply";
     };

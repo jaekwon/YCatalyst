@@ -63,6 +63,18 @@ class Record
         @object.upvoters? and @object.upvoters.indexOf(current_user._id) != -1
     coffeekup.render @render_kup, context: this, locals: {markz: markz, is_root: is_root, upvoted: upvoted, current_user: current_user}, dynamic_locals: true
 
+  render_headline_kup: ->
+    div class: "record", id: @object._id, ->
+      span class: "top_items", ->
+        span -> " #{@object.points or 0} pts by "
+        a href: "/user/#{h(@object.created_by)}", -> h(@object.created_by)
+      br
+      a href: "/r/#{@object._id}", class: "contents", ->
+        text markz::markup(@object.comment) if @object.comment?
+
+  render_headline: (options) ->
+    coffeekup.render @render_headline_kup, context: this, locals: {markz: markz}, dynamic_locals: true
+
   comment_url: ->
     "/r/#{@object._id}/reply"
 

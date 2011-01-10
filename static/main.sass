@@ -1,5 +1,5 @@
 $dark_link: #666
-$light_link: #999
+$light_text: #999
 $the_font: Verdana, Verdana, Geneva, sans-serif
 
 body
@@ -13,6 +13,9 @@ body
     color: #FAA
     .username
       font-weight: 900
+    a
+      color: #FAA
+      text-decoration: none
 
   textarea
     padding: 2px
@@ -26,15 +29,20 @@ body
     a
       color: $dark_link
       &:visited
-        color: $light_link
+        color: $light_text
+    a.contents
+      text-decoration: none
+      color: black
     p
       margin: 2px 0px
     .top_items
-      color: $light_link
+      color: $light_text
       font-size: 0.8em
       a
-        color: $light_link
+        color: $light_text
         text-decoration: none
+        &:hover
+          text-decoration: underline
     .reply
       font-size: 0.8em
     .reply_box
@@ -48,10 +56,24 @@ body
       margin-left: 10px
       padding-left: 10px
       .more
-        color: $light_link
+        color: $light_text
         text-decoration: none
         font-size: 0.8em
+
+    // very slightly squeeze a record, especially on the front page
+    .contents
+      position: relative
+      top: -1px
 
   label
     font-size: 0.8em
     color: gray
+
+  ol, ul
+    color: #AAF
+    padding-left: 20px
+    margin: 0px
+    list-style-type: square
+    li
+      padding: 0px
+      margin: 0px
