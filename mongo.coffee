@@ -3,7 +3,7 @@ Connection = require('mongodb').Connection
 Server = require('mongodb').Server
 BSON = require('mongodb').BSONNative
 
-dbname = '1amendment'
+dbname = 'glyphtree'
 host = 'localhost'
 port = 27017
 
