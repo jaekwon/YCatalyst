@@ -68,7 +68,7 @@ class Record
       span class: "top_items", ->
         span -> " #{@object.points or 0} pts by "
         a href: "/user/#{h(@object.created_by)}", -> h(@object.created_by)
-      br
+      br foo: "bar"
       a href: "/r/#{@object._id}", class: "contents", ->
         text markz::markup(@object.comment) if @object.comment?
 

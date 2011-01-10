@@ -28,6 +28,9 @@ get_records = (root_id, level, fn) ->
   now = new Date()
   mongo.records.findOne _id: root_id, (err, root) ->
     all = {}
+    if not root?
+      fn(err, null)
+      return
     all[root_id] = new rec.Record(root)
     tofetch = [root_id]
     fetchmore = (i) ->
@@ -44,15 +47,15 @@ get_records = (root_id, level, fn) ->
             fetchmore(i-1)
           else
             console.log "get_records in #{new Date() - now}"
-            fn(all)
+            fn(err, all)
     fetchmore(level)
 
 get_one_record = (rid, fn) ->
   mongo.records.findOne _id: rid, (err, recdata) ->
     if recdata
-      fn(new rec.Record(recdata))
+      fn(err, new rec.Record(recdata))
     else
-      fn(null)
+      fn(err, null)
 
 # a global hash from record id to [callbacks]
 all_callbacks = {}
@@ -168,11 +171,6 @@ http.createServer(utils.Rowt(new Sherpa.NodeJs([
         for key, sessions of all_sessions
           if key != '_fake_length' # see why it's stupid?
             views.push( [key, sessions._fake_length] )
-        console.log "\n---<<\n"
-        console.log views
-        console.log "\n---\n"
-        console.log all_sessions
-        console.log "\n--->>\n"
         views.sort( (a, b) -> b[1] - a[1] )
         rids = (v[0] for v in views)
         mongo.records.find {_id: {$in: rids}}, (err, cursor) ->
@@ -194,7 +192,11 @@ http.createServer(utils.Rowt(new Sherpa.NodeJs([
       when 'GET'
         root_id = req.sherpaResponse.params.id
         current_user = req.get_current_user()
-        get_records root_id, DEFAULT_DEPTH, (all) ->
+        get_records root_id, DEFAULT_DEPTH, (err, all) ->
+          if err? or not all?
+            res.writeHead 404, status: 'error'
+            res.end()
+            return
           jade.renderFile 'templates/record.jade', locals: {root: rec.dangle(all, root_id), require: require, current_user: current_user}, (err, html) ->
             console.log err if err
             res.writeHead 200, status: 'ok'
@@ -218,7 +220,7 @@ http.createServer(utils.Rowt(new Sherpa.NodeJs([
     switch req.method
       when 'GET'
         parent_id = req.sherpaResponse.params.id
-        get_one_record parent_id, (parent) ->
+        get_one_record parent_id, (err, parent) ->
           jade.renderFile 'templates/reply.jade', locals: {parent: parent, current_user: current_user, require: require}, (err, html) ->
             console.log err if err
             res.writeHead 200, status: 'ok'
@@ -226,7 +228,7 @@ http.createServer(utils.Rowt(new Sherpa.NodeJs([
       when 'POST'
         parent_id = req.sherpaResponse.params.id
         comment = req.post_data.comment
-        get_one_record parent_id, (parent) ->
+        get_one_record parent_id, (err, parent) ->
           if parent
             data = parent_id: parent_id, _id: utils.randid(), comment: comment, created_by: current_user.username
             record = rec.Record::create(data, parent)
@@ -273,7 +275,7 @@ http.createServer(utils.Rowt(new Sherpa.NodeJs([
     switch req.method
       when 'POST'
         rid = req.sherpaResponse.params.id
-        get_one_record rid, (record) ->
+        get_one_record rid, (err, record) ->
           if not record.object.upvoters?
             record.object.upvoters = []
           if record.object.upvoters.indexOf(current_user._id) == -1

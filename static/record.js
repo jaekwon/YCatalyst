@@ -143,7 +143,9 @@
             return h(this.object.created_by);
           });
         });
-        br;
+        br({
+          foo: "bar"
+        });
         return a({
           href: "/r/" + this.object._id,
           "class": "contents"
