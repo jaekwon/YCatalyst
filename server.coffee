@@ -135,19 +135,7 @@ trigger_update = (records) ->
       callback.callback(records)
     delete all_callbacks[key]
 
-# get current user
-http.IncomingMessage.prototype.get_current_user = ->
-  user_c = this.getSecureCookie('user')
-  if user_c? and user_c.length > 0
-    return JSON.parse(user_c)
-  return null
-
-# redirect
-http.ServerResponse.prototype.redirect = (url) ->
-  this.writeHead(302, Location: url)
-  this.end()
-
-http.createServer(utils.Rowt(new Sherpa.NodeJs([
+server = http.createServer(utils.Rowt(new Sherpa.NodeJs([
 
   ['/static/:filepath', (req, res) ->
     switch req.method
@@ -361,6 +349,6 @@ http.createServer(utils.Rowt(new Sherpa.NodeJs([
                 #pass
   ]
 
-]).listener())).listen 8124, '127.0.0.1'
-
-console.log 'Server running at http://127..0.1:8124'
+]).listener()))
+server.listen 8126, '127.0.0.1'
+console.log 'Server running at http://127.0.0.1:8126'

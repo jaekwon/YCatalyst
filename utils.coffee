@@ -1,5 +1,7 @@
 require.paths.unshift 'vendor/www-forms'
 www_forms = require 'www-forms'
+http = require 'http'
+fs = require 'fs'
 
 exports.ipRE = (() ->
   octet = '(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9][0-9]|[0-9])'
@@ -16,13 +18,42 @@ exports.dir = (object) ->
         methods.push(z)
     return methods.join(', ')
 
+
+SERVER_LOG = fs.createWriteStream('./log/server.log', flags: 'a', encoding: 'utf8')
+
+# get current user
+# sorry, node doesn't actually have a ServerRequest class?? TODO fix
+# http.ServerRequest.prototype.get_current_user = -> 
+http.IncomingMessage.prototype.get_current_user = ->
+  user_c = this.getSecureCookie('user')
+  if user_c? and user_c.length > 0
+    return JSON.parse(user_c)
+  return null
+
+# respond with JSON
+http.ServerResponse.prototype.simpleJSON = (code, obj) ->
+  body = new Buffer(JSON.stringify(obj))
+  this.writeHead(code, { "Content-Type": "text/json", "Content-Length": body.length })
+  this.end(body)
+
+# redirect
+http.ServerResponse.prototype.redirect = (url) ->
+  this.writeHead(302, Location: url)
+  this.end()
+
+# emit an event so we can log w/ req below in Rowt
+_o_writeHead = http.ServerResponse.prototype.writeHead
+http.ServerResponse.prototype.writeHead = (statusCode) ->
+  this.emit('writeHead', statusCode)
+  _o_writeHead.apply(this, arguments)
+
 exports.Rowt = (fn) ->
   return (req, res) ->
-    # TODO this could do better elsewhere
-    res.simpleJSON = (code, obj) ->
-      body = new Buffer(JSON.stringify(obj))
-      res.writeHead(code, { "Content-Type": "text/json", "Content-Length": body.length })
-      res.end(body)
+    SERVER_LOG.write("#{(''+new Date()).substr(0,24)} #{req.headers['x-real-ip'] or req.connection.remoteAddress} #{req.httpVersion} #{req.method} #{req.url} #{req.headers.referer} \n")
+    SERVER_LOG.flush()
+    res.addListener 'writeHead', (statusCode) ->
+      SERVER_LOG.write("#{(''+new Date()).substr(0,24)} #{req.headers['x-real-ip'] or req.connection.remoteAddress} #{req.httpVersion} #{req.method} #{req.url} --> #{statusCode} \n")
+      SERVER_LOG.flush()
     try
       if (req.method == 'POST')
         called_back = false
