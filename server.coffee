@@ -58,9 +58,12 @@ get_one_record = (rid, fn) ->
       fn(err, null)
 
 # given a record object, return an object we can return to the client
+# any time you need to send a record to the client through ajax, 
+# scrub it here
 scrubbed_recdata = (record) ->
-  object = record.object
-  
+  object = utils.deep_clone(record.object)
+  delete object.upvoters
+  return object
 
 # a global hash from record id to [callbacks]
 all_callbacks = {}
@@ -128,16 +131,16 @@ trigger_update = (records) ->
   # compute the keys to notify
   notify_keys = []
   for record in records
-    if record.object.upvoters?
-      delete record.object.upvoters
     if not record.is_new
       notify_keys.push(record.object._id)
     notify_keys = notify_keys.concat(record.object.parents or [])
   notify_keys = _.uniq(notify_keys)
 
+  recdatas = (scrubbed_recdata(record) for record in records)
+
   for key in notify_keys
     for callback in all_callbacks[key] or []
-      callback.callback(records)
+      callback.callback(recdatas)
     delete all_callbacks[key]
 
 server = http.createServer(utils.Rowt(new Sherpa.NodeJs([
@@ -188,7 +191,8 @@ server = http.createServer(utils.Rowt(new Sherpa.NodeJs([
         # requested from json, just return a single record
         if req.headers['x-requested-with'] == 'XMLHttpRequest'
           get_one_record root_id, (err, record) ->
-           
+            res.simpleJSON 200, record: scrubbed_recdata(record)
+            return
         else
           get_records root_id, DEFAULT_DEPTH, (err, all) ->
             if err? or not all?
@@ -199,6 +203,7 @@ server = http.createServer(utils.Rowt(new Sherpa.NodeJs([
               console.log err if err
               res.writeHead 200, status: 'ok'
               res.end html
+              return
       when 'POST'
         # updating
         get_one_record root_id, (err, record) ->
@@ -206,13 +211,14 @@ server = http.createServer(utils.Rowt(new Sherpa.NodeJs([
             res.writeHead 404, status: 'error'
             res.end()
             return
-          if record.created_by != current_user.username
+          if record.object.created_by != current_user.username
             res.simpleJSON 400, status: 'unauthorized'
             return
-          record.comment = req.post_data.comment
-          record.updated_at = new Date()
-          mongo.records.save record, (err, stuff) ->
+          record.object.comment = req.post_data.comment
+          record.object.updated_at = new Date()
+          mongo.records.save record.object, (err, stuff) ->
             res.simpleJSON 200, status: 'ok'
+            trigger_update [record]
   ],
 
   ['/r/:id/watching', (req, res) ->
@@ -270,8 +276,8 @@ server = http.createServer(utils.Rowt(new Sherpa.NodeJs([
         if not all_callbacks[key]
           all_callbacks[key] = []
         all_callbacks[key].push
-          callback: ((records) ->
-            res.simpleJSON(200, (r.object for r in records)))
+          callback: ((recdatas) ->
+            res.simpleJSON(200, recdatas))
           timestamp: new Date()
           username: current_user.username if current_user?
         if current_user?

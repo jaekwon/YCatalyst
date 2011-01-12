@@ -270,39 +270,54 @@
       }
     };
     Record.prototype.show_edit_box = function(rid) {
-      var container, kup, record_e;
+      var record_e;
       record_e = $('#' + rid);
       if (record_e.find('>.contents>.edit_box_container>.edit_box').length === 0) {
-        kup = function() {
-          return div({
-            "class": "edit_box"
-          }, function() {
-            textarea({
-              name: "comment"
-            });
-            br({
-              foo: 'bar'
-            });
-            button({
-              onclick: "app.post_edit('" + rid + "')"
-            }, function() {
-              return 'update';
-            });
-            return button({
-              onclick: "$(this).parent().remove()"
-            }, function() {
-              return 'cancel';
-            });
-          });
-        };
-        container = record_e.find('>.contents>.edit_box_container').append(coffeekup.render(kup, {
-          context: this,
-          locals: {
-            rid: rid
+        return $.ajax({
+          cache: false,
+          type: "GET",
+          url: "/r/" + rid,
+          dataType: "json",
+          error: function() {
+            return console.log('meh');
           },
-          dynamic_locals: true
-        }));
-        return app.make_autoresizable(container.find('textarea'));
+          success: function(data) {
+            var container, kup;
+            kup = function() {
+              return div({
+                "class": "edit_box"
+              }, function() {
+                textarea({
+                  name: "comment"
+                }, function() {
+                  return hE(data.record.comment);
+                });
+                br({
+                  foo: 'bar'
+                });
+                button({
+                  onclick: "app.post_edit('" + rid + "')"
+                }, function() {
+                  return 'update';
+                });
+                return button({
+                  onclick: "$(this).parent().remove()"
+                }, function() {
+                  return 'cancel';
+                });
+              });
+            };
+            container = record_e.find('>.contents>.edit_box_container').append(coffeekup.render(kup, {
+              context: this,
+              locals: {
+                rid: rid,
+                data: data
+              },
+              dynamic_locals: true
+            }));
+            return app.make_autoresizable(container.find('textarea'));
+          }
+        });
       }
     };
     Record.prototype["delete"] = function(rid) {
@@ -326,6 +341,30 @@
         success: function(data) {
           if (data != null) {
             return record_e.find('>.contents>.reply_box_container>.reply_box').remove();
+          } else {
+            return alert('uh oh, server might be down. try again later?');
+          }
+        }
+      });
+    };
+    Record.prototype.post_edit = function(rid) {
+      var comment, record_e;
+      record_e = $('#' + rid);
+      comment = record_e.find('>.contents>.edit_box_container>.edit_box>textarea').val();
+      return $.ajax({
+        cache: false,
+        type: "POST",
+        url: "/r/" + rid,
+        data: {
+          comment: comment
+        },
+        dataType: "json",
+        error: function() {
+          return console.log('meh');
+        },
+        success: function(data) {
+          if (data != null) {
+            return record_e.find('>.contents>.edit_box_container>.edit_box').remove();
           } else {
             return alert('uh oh, server might be down. try again later?');
           }
@@ -359,6 +398,7 @@
     app.show_reply_box = Record.prototype.show_reply_box;
     app.show_edit_box = Record.prototype.show_edit_box;
     app.post_reply = Record.prototype.post_reply;
+    app.post_edit = Record.prototype.post_edit;
     app.dangle = dangle;
   }
 }).call(this);

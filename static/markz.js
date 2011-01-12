@@ -91,8 +91,10 @@
   })();
   if (typeof exports != "undefined" && exports !== null) {
     exports.Markz = Markz;
+    exports.hE = hE;
   }
   if (typeof window != "undefined" && window !== null) {
     window.Markz = Markz;
+    window.hE = hE;
   }
 }).call(this);

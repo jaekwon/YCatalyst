@@ -153,14 +153,24 @@ class Record
   show_edit_box: (rid) ->
     record_e = $('#'+rid)
     if record_e.find('>.contents>.edit_box_container>.edit_box').length == 0
-      kup = ->
-        div class: "edit_box", ->
-          textarea name: "comment"
-          br foo: 'bar' # dunno why just br doesn't work
-          button onclick: "app.post_edit('#{rid}')", -> 'update'
-          button onclick: "$(this).parent().remove()", -> 'cancel'
-      container = record_e.find('>.contents>.edit_box_container').append(coffeekup.render kup, context: this, locals: {rid: rid}, dynamic_locals: true)
-      app.make_autoresizable container.find('textarea')
+      # get the record data
+      $.ajax
+        cache: false
+        type: "GET"
+        url: "/r/#{rid}"
+        dataType: "json"
+        error: ->
+          console.log('meh')
+        success: (data) ->
+          kup = ->
+            div class: "edit_box", ->
+              textarea name: "comment", -> hE(data.record.comment)
+              br foo: 'bar' # dunno why just br doesn't work
+              button onclick: "app.post_edit('#{rid}')", -> 'update'
+              button onclick: "$(this).parent().remove()", -> 'cancel'
+          container = record_e.find('>.contents>.edit_box_container').
+            append(coffeekup.render kup, context: this, locals: {rid: rid, data: data}, dynamic_locals: true)
+          app.make_autoresizable container.find('textarea')
 
   # client side #
   # static method #
@@ -183,6 +193,25 @@ class Record
       success: (data) ->
         if data?
           record_e.find('>.contents>.reply_box_container>.reply_box').remove()
+        else
+          alert 'uh oh, server might be down. try again later?'
+
+  # client side #
+  # static method #
+  post_edit: (rid) ->
+    record_e = $('#'+rid)
+    comment = record_e.find('>.contents>.edit_box_container>.edit_box>textarea').val()
+    $.ajax
+      cache: false
+      type: "POST"
+      url: "/r/#{rid}"
+      data: {comment: comment}
+      dataType: "json"
+      error: ->
+        console.log('meh')
+      success: (data) ->
+        if data?
+          record_e.find('>.contents>.edit_box_container>.edit_box').remove()
         else
           alert 'uh oh, server might be down. try again later?'
 
@@ -209,4 +238,5 @@ if window?
   app.show_reply_box = Record::show_reply_box
   app.show_edit_box = Record::show_edit_box
   app.post_reply = Record::post_reply
+  app.post_edit = Record::post_edit
   app.dangle = dangle

@@ -95,3 +95,12 @@ exports.passhash = (password, salt, times) ->
   for i in [1..times]
     hashed = crypto.createHash('md5').update(hashed).digest('base64')
   return hashed
+
+exports.deep_clone = deep_clone = (obj) ->
+  newObj = if (this instanceof Array) then [] else {}
+  for own key, value of obj
+    if typeof value == 'object'
+      newObj[key] = deep_clone(value)
+    else
+      newObj[key] = value
+  return newObj

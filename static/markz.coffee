@@ -79,6 +79,8 @@ class Markz
 # if server-side
 if exports?
   exports.Markz = Markz
+  exports.hE = hE
 # if client-side
 if window?
   window.Markz = Markz
+  window.hE = hE
