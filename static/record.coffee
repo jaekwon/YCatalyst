@@ -39,10 +39,18 @@ class Record
           a class: "parent", href: "/r/#{@object.parent_id}", -> "parent"
           text " | "
         a class: "link", href: "/r/#{@object._id}", -> "link"
-      p class: "contents", ->
+        if current_user? and @object.created_by == current_user.username
+          text " | "
+          a class: "edit", href: "#", onclick: "app.show_edit_box('#{h(@object._id)}'); return false;", -> "edit"
+          text " | "
+          a class: "delete", href: "#", onclick: "app.delete('#{h(@object._id)}'); return false;", -> "delete"
+      div class: "contents", ->
         text markz::markup(@object.comment) if @object.comment?
         text " "
         a class: "reply", href: "/r/#{@object._id}/reply", onclick: "app.show_reply_box('#{h(@object._id)}'); return false;", -> "reply"
+        # placeholders
+        div class: "edit_box_container"
+        div class: "reply_box_container"
       div class: "children", ->
         if @children
           for child in @children
@@ -129,21 +137,41 @@ class Record
   # static method #
   show_reply_box: (rid) ->
     record_e = $('#'+rid)
-    if record_e.find('>.contents>.reply_box').length == 0
+    window.qwe = record_e
+    if record_e.find('>.contents>.reply_box_container>.reply_box').length == 0
       kup = ->
         div class: "reply_box", ->
           textarea name: "comment"
           br foo: 'bar' # dunno why just br doesn't work
           button onclick: "app.post_reply('#{rid}')", -> 'post comment'
           button onclick: "$(this).parent().remove()", -> 'cancel'
-      contents = record_e.find('>.contents').append(coffeekup.render kup, context: this, locals: {rid: rid}, dynamic_locals: true)
-      app.make_autoresizable contents.find('textarea')
+      container = record_e.find('>.contents>.reply_box_container').append(coffeekup.render kup, context: this, locals: {rid: rid}, dynamic_locals: true)
+      app.make_autoresizable container.find('textarea')
+
+  # client side #
+  # static method #
+  show_edit_box: (rid) ->
+    record_e = $('#'+rid)
+    if record_e.find('>.contents>.edit_box_container>.edit_box').length == 0
+      kup = ->
+        div class: "edit_box", ->
+          textarea name: "comment"
+          br foo: 'bar' # dunno why just br doesn't work
+          button onclick: "app.post_edit('#{rid}')", -> 'update'
+          button onclick: "$(this).parent().remove()", -> 'cancel'
+      container = record_e.find('>.contents>.edit_box_container').append(coffeekup.render kup, context: this, locals: {rid: rid}, dynamic_locals: true)
+      app.make_autoresizable container.find('textarea')
+
+  # client side #
+  # static method #
+  delete: (rid) ->
+    alert 'not implemented yet'
 
   # client side #
   # static method #
   post_reply: (rid) ->
     record_e = $('#'+rid)
-    comment = record_e.find('>.contents>.reply_box>textarea').val()
+    comment = record_e.find('>.contents>.reply_box_container>.reply_box>textarea').val()
     $.ajax
       cache: false
       type: "POST"
@@ -154,7 +182,7 @@ class Record
         console.log('meh')
       success: (data) ->
         if data?
-          record_e.find('>.contents>.reply_box').remove()
+          record_e.find('>.contents>.reply_box_container>.reply_box').remove()
         else
           alert 'uh oh, server might be down. try again later?'
 
@@ -179,5 +207,6 @@ if window?
   app.Record = Record
   app.upvote = Record::upvote
   app.show_reply_box = Record::show_reply_box
+  app.show_edit_box = Record::show_edit_box
   app.post_reply = Record::post_reply
   app.dangle = dangle

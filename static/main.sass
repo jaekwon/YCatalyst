@@ -30,11 +30,14 @@ body
       color: $dark_link
       &:visited
         color: $light_text
+    // very slightly squeeze a record, especially on the front page
+    .contents
+      position: relative
+      top: -1px
+      margin: 2px 0px
     a.contents
       text-decoration: none
       color: black
-    p
-      margin: 2px 0px
     .top_items
       color: $light_text
       font-size: 0.8em
@@ -45,10 +48,14 @@ body
           text-decoration: underline
     .reply
       font-size: 0.8em
-    .reply_box
+    .edit_box
       margin: 10px 0px
-      textarea
-        // pass
+      button
+        margin-top: 5px
+    .reply_box
+      margin: 10px 0px 10px 10px
+      padding-left: 10px
+      border-left: 1px solid #eee
       button
         margin-top: 5px
     .children
@@ -59,11 +66,6 @@ body
         color: $light_text
         text-decoration: none
         font-size: 0.8em
-
-    // very slightly squeeze a record, especially on the front page
-    .contents
-      position: relative
-      top: -1px
 
   label
     font-size: 0.8em

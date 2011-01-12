@@ -1,8 +1,9 @@
 (function() {
-  var Markz, REPLACE_LOOKUP, coffeekup, hE, re_bold, re_email, re_newline, re_url;
+  var Markz, REPLACE_LOOKUP, coffeekup, hE, re_bold, re_email, re_link, re_newline, re_url;
   coffeekup = typeof CoffeeKup != "undefined" && CoffeeKup !== null ? CoffeeKup : require('coffeekup');
   re_email = /(?:[\w\!\#\$\%\&\'\*\+\-\/\=\?\^\`\{\|\}\~]+\.)*[\w\!\#\$\%\&\'\*\+\-\/\=\?\^\`\{\|\}\~]+@(?:(?:(?:[a-zA-Z0-9](?:[a-zA-Z0-9\-](?!\.)){0,61}[a-zA-Z0-9]?\.)+[a-zA-Z0-9](?:[a-zA-Z0-9\-](?!$)){0,61}[a-zA-Z0-9]?)|(?:\[(?:(?:[01]?\d{1,2}|2[0-4]\d|25[0-5])\.){3}(?:[01]?\d{1,2}|2[0-4]\d|25[0-5])\]))/;
   re_url = /(?:(?:ht|f)tp(?:s?)\:\/\/|~\/|\/)?(?:\w+:\w+@)?((?:(?:[-\w\d{1-3}]+\.)+(?:com|org|net|gov|mil|biz|info|mobi|name|aero|jobs|edu|co\.uk|ac\.uk|it|fr|tv|museum|asia|local|travel|[a-z]{2}))|((\b25[0-5]\b|\b[2][0-4][0-9]\b|\b[0-1]?[0-9]?[0-9]\b)(\.(\b25[0-5]\b|\b[2][0-4][0-9]\b|\b[0-1]?[0-9]?[0-9]\b)){3}))(?::[\d]{1,5})?(?:(?:(?:\/(?:[-\w~!$+|.,=]|%[a-f\d]{2})+)+|\/)+|\?|#)?(?:(?:\?(?:[-\w~!$+|.,*:]|%[a-f\d{2}])+=?(?:[-\w~!$+|.,*:=]|%[a-f\d]{2})*)(?:&(?:[-\w~!$+|.,*:]|%[a-f\d{2}])+=?(?:[-\w~!$+|.,*:=]|%[a-f\d]{2})*)*)*(?:#(?:[-\w~!$ |\/.,*:;=]|%[a-f\d]{2})*)?/;
+  re_link = /\[([^\n]+)\] *\(([^\n]+)(?: +"([^\n]+)")?\)/;
   re_bold = /\*([^\*\n]+)\*/;
   re_newline = /\n/;
   hE = function(text) {
@@ -11,6 +12,10 @@
   };
   REPLACE_LOOKUP = [
     [
+      'link', re_link, function(match) {
+        return "<a href=\"" + (hE(match[2])) + "\" title=\"" + (hE(match[3] || '')) + "\">" + (hE(match[1])) + "</a>";
+      }
+    ], [
       'url', re_url, function(match) {
         return "<a href=\"" + (hE(match[0])) + "\">" + (hE(match[0])) + "</a>";
       }

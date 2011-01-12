@@ -60,26 +60,50 @@
             });
             text(" | ");
           }
-          return a({
+          a({
             "class": "link",
             href: "/r/" + this.object._id
           }, function() {
             return "link";
           });
+          if ((typeof current_user != "undefined" && current_user !== null) && this.object.created_by === current_user.username) {
+            text(" | ");
+            a({
+              "class": "edit",
+              href: "#",
+              onclick: "app.show_edit_box('" + (h(this.object._id)) + "'); return false;"
+            }, function() {
+              return "edit";
+            });
+            text(" | ");
+            return a({
+              "class": "delete",
+              href: "#",
+              onclick: "app.delete('" + (h(this.object._id)) + "'); return false;"
+            }, function() {
+              return "delete";
+            });
+          }
         });
-        p({
+        div({
           "class": "contents"
         }, function() {
           if (this.object.comment != null) {
             text(markz.prototype.markup(this.object.comment));
           }
           text(" ");
-          return a({
+          a({
             "class": "reply",
             href: "/r/" + this.object._id + "/reply",
             onclick: "app.show_reply_box('" + (h(this.object._id)) + "'); return false;"
           }, function() {
             return "reply";
+          });
+          div({
+            "class": "edit_box_container"
+          });
+          return div({
+            "class": "reply_box_container"
           });
         });
         return div({
@@ -209,9 +233,10 @@
       });
     };
     Record.prototype.show_reply_box = function(rid) {
-      var contents, kup, record_e;
+      var container, kup, record_e;
       record_e = $('#' + rid);
-      if (record_e.find('>.contents>.reply_box').length === 0) {
+      window.qwe = record_e;
+      if (record_e.find('>.contents>.reply_box_container>.reply_box').length === 0) {
         kup = function() {
           return div({
             "class": "reply_box"
@@ -234,20 +259,59 @@
             });
           });
         };
-        contents = record_e.find('>.contents').append(coffeekup.render(kup, {
+        container = record_e.find('>.contents>.reply_box_container').append(coffeekup.render(kup, {
           context: this,
           locals: {
             rid: rid
           },
           dynamic_locals: true
         }));
-        return app.make_autoresizable(contents.find('textarea'));
+        return app.make_autoresizable(container.find('textarea'));
       }
+    };
+    Record.prototype.show_edit_box = function(rid) {
+      var container, kup, record_e;
+      record_e = $('#' + rid);
+      if (record_e.find('>.contents>.edit_box_container>.edit_box').length === 0) {
+        kup = function() {
+          return div({
+            "class": "edit_box"
+          }, function() {
+            textarea({
+              name: "comment"
+            });
+            br({
+              foo: 'bar'
+            });
+            button({
+              onclick: "app.post_edit('" + rid + "')"
+            }, function() {
+              return 'update';
+            });
+            return button({
+              onclick: "$(this).parent().remove()"
+            }, function() {
+              return 'cancel';
+            });
+          });
+        };
+        container = record_e.find('>.contents>.edit_box_container').append(coffeekup.render(kup, {
+          context: this,
+          locals: {
+            rid: rid
+          },
+          dynamic_locals: true
+        }));
+        return app.make_autoresizable(container.find('textarea'));
+      }
+    };
+    Record.prototype["delete"] = function(rid) {
+      return alert('not implemented yet');
     };
     Record.prototype.post_reply = function(rid) {
       var comment, record_e;
       record_e = $('#' + rid);
-      comment = record_e.find('>.contents>.reply_box>textarea').val();
+      comment = record_e.find('>.contents>.reply_box_container>.reply_box>textarea').val();
       return $.ajax({
         cache: false,
         type: "POST",
@@ -261,7 +325,7 @@
         },
         success: function(data) {
           if (data != null) {
-            return record_e.find('>.contents>.reply_box').remove();
+            return record_e.find('>.contents>.reply_box_container>.reply_box').remove();
           } else {
             return alert('uh oh, server might be down. try again later?');
           }
@@ -293,6 +357,7 @@
     app.Record = Record;
     app.upvote = Record.prototype.upvote;
     app.show_reply_box = Record.prototype.show_reply_box;
+    app.show_edit_box = Record.prototype.show_edit_box;
     app.post_reply = Record.prototype.post_reply;
     app.dangle = dangle;
   }

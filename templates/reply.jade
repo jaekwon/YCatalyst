@@ -10,7 +10,8 @@ html(lang="en")
     link(type="text/css", rel="stylesheet", href=require('./utils').static_file("main.css"))
   body
 
-    !{parent.render({is_root: true, current_user: current_user})}
+    - options = {is_root: true, current_user: current_user}
+    !{parent.render(options)}
 
     form(action=parent.comment_url(), method="post")
       textarea(name="comment")

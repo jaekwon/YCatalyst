@@ -57,6 +57,11 @@ get_one_record = (rid, fn) ->
     else
       fn(err, null)
 
+# given a record object, return an object we can return to the client
+scrubbed_recdata = (record) ->
+  object = record.object
+  
+
 # a global hash from record id to [callbacks]
 all_callbacks = {}
 # a global hash from record id to {username: {timestamp}}
@@ -176,19 +181,38 @@ server = http.createServer(utils.Rowt(new Sherpa.NodeJs([
   ]
 
   ['/r/:id', (req, res) ->
+    current_user = req.get_current_user()
+    root_id = req.sherpaResponse.params.id
     switch req.method
       when 'GET'
-        root_id = req.sherpaResponse.params.id
-        current_user = req.get_current_user()
-        get_records root_id, DEFAULT_DEPTH, (err, all) ->
-          if err? or not all?
+        # requested from json, just return a single record
+        if req.headers['x-requested-with'] == 'XMLHttpRequest'
+          get_one_record root_id, (err, record) ->
+           
+        else
+          get_records root_id, DEFAULT_DEPTH, (err, all) ->
+            if err? or not all?
+              res.writeHead 404, status: 'error'
+              res.end()
+              return
+            jade.renderFile 'templates/record.jade', locals: {root: rec.dangle(all, root_id), require: require, current_user: current_user}, (err, html) ->
+              console.log err if err
+              res.writeHead 200, status: 'ok'
+              res.end html
+      when 'POST'
+        # updating
+        get_one_record root_id, (err, record) ->
+          if err? or not record?
             res.writeHead 404, status: 'error'
             res.end()
             return
-          jade.renderFile 'templates/record.jade', locals: {root: rec.dangle(all, root_id), require: require, current_user: current_user}, (err, html) ->
-            console.log err if err
-            res.writeHead 200, status: 'ok'
-            res.end html
+          if record.created_by != current_user.username
+            res.simpleJSON 400, status: 'unauthorized'
+            return
+          record.comment = req.post_data.comment
+          record.updated_at = new Date()
+          mongo.records.save record, (err, stuff) ->
+            res.simpleJSON 200, status: 'ok'
   ],
 
   ['/r/:id/watching', (req, res) ->

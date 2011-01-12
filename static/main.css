@@ -23,11 +23,13 @@ body {
       color: #666666; }
       body .record a:visited {
         color: #999999; }
+    body .record .contents {
+      position: relative;
+      top: -1px;
+      margin: 2px 0px; }
     body .record a.contents {
       text-decoration: none;
       color: black; }
-    body .record p {
-      margin: 2px 0px; }
     body .record .top_items {
       color: #999999;
       font-size: 0.8em; }
@@ -38,8 +40,14 @@ body {
           text-decoration: underline; }
     body .record .reply {
       font-size: 0.8em; }
-    body .record .reply_box {
+    body .record .edit_box {
       margin: 10px 0px; }
+      body .record .edit_box button {
+        margin-top: 5px; }
+    body .record .reply_box {
+      margin: 10px 0px 10px 10px;
+      padding-left: 10px;
+      border-left: 1px solid #eeeeee; }
       body .record .reply_box button {
         margin-top: 5px; }
     body .record .children {
@@ -50,9 +58,6 @@ body {
         color: #999999;
         text-decoration: none;
         font-size: 0.8em; }
-    body .record .contents {
-      position: relative;
-      top: -1px; }
   body label {
     font-size: 0.8em;
     color: gray; }
