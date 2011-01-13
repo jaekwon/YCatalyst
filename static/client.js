@@ -76,6 +76,11 @@
       padding: textarea.css('padding'),
       overflow: 'hidden'
     });
+    cloned_textarea.css({
+      position: 'absolute',
+      left: '-1000000px',
+      disabled: true
+    });
     $(document.body).prepend(cloned_textarea);
     autoresize = function(event) {
       var line, _i, _len, _ref;
