@@ -76,11 +76,6 @@
       padding: textarea.css('padding'),
       overflow: 'hidden'
     });
-    cloned_textarea.css({
-      position: 'absolute',
-      left: '-1000000px',
-      disabled: true
-    });
     $(document.body).prepend(cloned_textarea);
     autoresize = function(event) {
       var line, _i, _len, _ref;
@@ -95,6 +90,7 @@
         cloned_textarea.append(hE(line));
         cloned_textarea.append('<br/>');
       }
+      cloned_textarea.append('<br/>');
       return textarea.css('height', cloned_textarea[0].scrollHeight);
     };
     textarea.bind('keyup', autoresize);

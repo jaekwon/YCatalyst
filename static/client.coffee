@@ -77,7 +77,7 @@ app.make_autoresizable = (textarea) ->
     padding: textarea.css('padding')
     overflow: 'hidden' # the cloned textarea's scrollbar causes an extra newline at the end sometimes
   # hide it but don't actually hide it. 
-  cloned_textarea.css position: 'absolute', left: '-1000000px', disabled: true
+  #cloned_textarea.css position: 'absolute', left: '-1000000px', disabled: true
   $(document.body).prepend cloned_textarea
   autoresize = (event) ->
     cloned_textarea.css
@@ -87,6 +87,7 @@ app.make_autoresizable = (textarea) ->
     for line in textarea.val().split("\n")
       cloned_textarea.append(hE(line))
       cloned_textarea.append('<br/>')
+    cloned_textarea.append('<br/>')
     textarea.css 'height', cloned_textarea[0].scrollHeight
   textarea.bind('keyup', autoresize)
   # force autoresize right now
