@@ -67,7 +67,7 @@
   };
   app.make_autoresizable = function(textarea) {
     var autoresize, cloned_textarea;
-    cloned_textarea = textarea.clone();
+    cloned_textarea = $(document.createElement('div'));
     cloned_textarea.css({
       minHeight: textarea.css('min-height'),
       minWidth: textarea.css('min-width'),
@@ -83,10 +83,22 @@
     });
     $(document.body).prepend(cloned_textarea);
     autoresize = function(event) {
-      cloned_textarea.val(textarea.val());
+      var line, _i, _len, _ref;
+      cloned_textarea.css({
+        width: textarea.css('width')
+      });
+      console.log(textarea.css('height'));
+      cloned_textarea.text('');
+      _ref = textarea.val().split("\n");
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        line = _ref[_i];
+        cloned_textarea.append(hE(line));
+        cloned_textarea.append('<br/>');
+      }
       return textarea.css('height', cloned_textarea[0].scrollHeight);
     };
-    return textarea.bind('keyup', autoresize);
+    textarea.bind('keyup', autoresize);
+    return setTimeout(autoresize, 0);
   };
   $(document).ready(function() {
     var root;

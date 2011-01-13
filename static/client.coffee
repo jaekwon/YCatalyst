@@ -66,7 +66,9 @@ app.poll = (root) ->
 
 # set up autoresize forms.
 app.make_autoresizable = (textarea) ->
-  cloned_textarea = textarea.clone()
+  # we don't use a textarea because chrome has issues with undo's not working
+  # when you interlace edits on multiple textareas.
+  cloned_textarea = $(document.createElement('div')); #textarea.clone()
   cloned_textarea.css
     minHeight: textarea.css('min-height')
     minWidth: textarea.css('min-width')
@@ -78,13 +80,21 @@ app.make_autoresizable = (textarea) ->
   cloned_textarea.css position: 'absolute', left: '-1000000px', disabled: true
   $(document.body).prepend cloned_textarea
   autoresize = (event) ->
-    cloned_textarea.val textarea.val()
+    cloned_textarea.css
+      width: textarea.css('width')
+    console.log(textarea.css('height'))
+    cloned_textarea.text('')
+    for line in textarea.val().split("\n")
+      cloned_textarea.append(hE(line))
+      cloned_textarea.append('<br/>')
     textarea.css 'height', cloned_textarea[0].scrollHeight
   textarea.bind('keyup', autoresize)
+  # force autoresize right now
+  setTimeout(autoresize, 0)
 
 $(document).ready ->
   # get the id of the current user
-  app.current_user = 
+  app.current_user =
     if $('#current_user').length > 0
       _id: $("#current_user").attr('data-id'), username: $("#current_user").attr('data-username')
     else
