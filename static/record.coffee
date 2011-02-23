@@ -17,7 +17,15 @@ else
 #
 # child = Record.create({child_data}, r)
 # child.is_new # true
+#
+# We keep the recdata seperate from the Record, so
+# as to not pollute the db fields.
+# Probably a better way to handle this with prototypes :/
 class Record
+
+  # uses object(recdata) to hydrate a new Record instance.
+  # if you want to add a Record to the DB, you want to call
+  # logic.records.create_record()
   constructor: (object) ->
     @object = object
     if not @object.points?
@@ -31,7 +39,7 @@ class Record
     div class: "record", id: @object._id, "data-root": is_root, "data-upvoted": upvoted, ->
       span class: "top_items", ->
         if current_user? and not upvoted
-          a class: "upvote", href: '#', onclick: "app.upvote('#{h(@object._id)}'); return false;", -> "&spades;"
+          a class: "upvote", href: '#', onclick: "app.upvote('#{h(@object._id)}'); return false;", -> "&#9650;"
         span -> " #{@object.points or 0} pts by "
         a href: "/user/#{h(@object.created_by)}", -> h(@object.created_by)
         text " | "
@@ -86,23 +94,6 @@ class Record
   comment_url: ->
     "/r/#{@object._id}/reply"
 
-  # static method #
-  # recdata: the record data object
-  # parent: the data object for the parent
-  create: (recdata, parent) ->
-    parents = []
-    if parent?
-      if parent.object.parents?
-        parents = [parent.object._id].concat(parent.object.parents[0..5])
-      else
-        parents = [parent.object._id]
-    recdata.created_at = new Date()
-    recdata.parents = parents
-    record = new Record(recdata)
-    record.is_new = true
-    return record
-
-    
   # client side #
   # update the record (which already exists in the dom)
   # is_leaf: default false. if true, renders the new num_children
@@ -215,22 +206,9 @@ class Record
         else
           alert 'uh oh, server might be down. try again later?'
 
-# given a bunch of records and the root, organize it into a tree
-# returns the root, and children can be accessed w/ .children
-dangle = (records, root_id) ->
-  root = records[root_id]
-  for id, record of records
-    parent = records[record.object.parent_id]
-    if parent
-      if not parent.children
-        parent.children = []
-      parent.children.push(record)
-  return root
-
 # if server-side
 if exports?
   exports.Record = Record
-  exports.dangle = dangle
 # if client-side
 if window?
   app.Record = Record
@@ -239,4 +217,3 @@ if window?
   app.show_edit_box = Record::show_edit_box
   app.post_reply = Record::post_reply
   app.post_edit = Record::post_edit
-  app.dangle = dangle

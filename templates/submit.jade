@@ -1,15 +1,16 @@
 !!! 5
 html(lang="en")
   head
-    title= "glyphtree"
+    title= "YCatalyst - Submit News"
     script(type="text/javascript", src="https://www.google.com/jsapi?key=ABQIAAAAV88HHyf8NBcAL3aio53OixSEBwhbzDd0F998UkbSll3boCkrihTFj2uO3yETr_J5z25r2aIc4YCVpQ")
     script(type="text/javascript", src="https://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js")
     script(type="text/javascript", src="https://ajax.googleapis.com/ajax/libs/webfont/1.0.17/webfont.js")
+    script(type="text/javascript", src="/static/underscore.js")
     link(type="text/css", rel="stylesheet", href=require('./utils').static_file("main.css"))
   body
 
     div#headerbar
-      span.logo YCatalyst News
+      span.logo YCatalyst - Submit News
       div(style: "float: right")
         - if (current_user)
           span.username #{current_user.username}
@@ -20,26 +21,30 @@ html(lang="en")
           text &nbsp;|&nbsp;
           a.login(href: "/login") login
 
-    ul.records
-      - records.forEach(function(record) {
-        li
-          !{record.render_headline()}
-      - })
-
-  :sass
-    | body
-    |   .login
-    |     :float right
-    |   .record
-    |     :margin 0px 0px
-    |   ul.records
-    |     :margin 10px 0px
-
-  :javascript
-    | $(document).ready(function() {
-    | });
-    | WebFont.load({ //WebFontConfig = {
-    |   google: {
-    |     families: []
-    |   }
-    | });
+    def#contents
+      &nbsp;
+      form(action: "/submit", method: "POST")
+        table
+          tr
+            th
+              span title
+            td
+              input(type: "text", name: "title")
+          tr
+            th
+              span url
+            td
+              input(type: "text", name: "url")
+          tr
+            th
+            td
+              span(style: "font-weight: bold; color: gray") and/or
+          tr
+            th
+              span text
+            td
+              textarea(name: "text")
+          tr
+            th
+            td
+              input(type: "submit")

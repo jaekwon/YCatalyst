@@ -11,6 +11,13 @@ body {
     body #headerbar a {
       color: #ffaaaa;
       text-decoration: none; }
+  body #contents {
+    padding-top: 20px; }
+  body input[type=text] {
+    width: 460px;
+    padding: 2px;
+    font-family: Verdana, Verdana, Geneva, sans-serif;
+    font-size: 14px; }
   body textarea {
     padding: 2px;
     min-width: 460px;
@@ -30,6 +37,8 @@ body {
     body .record a.contents {
       text-decoration: none;
       color: black; }
+    body .record a.upvote {
+      font-size: 0.8em; }
     body .record .top_items {
       color: #999999;
       font-size: 0.8em; }
@@ -69,3 +78,6 @@ body {
     body ol li, body ul li {
       padding: 0px;
       margin: 0px; }
+  body table th {
+    font-weight: 200;
+    color: gray; }

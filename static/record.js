@@ -1,5 +1,5 @@
 (function() {
-  var Record, app, coffeekup, dangle, markz;
+  var Record, app, coffeekup, markz;
   coffeekup = typeof CoffeeKup != "undefined" && CoffeeKup !== null ? CoffeeKup : require('coffeekup');
   markz = typeof Markz != "undefined" && Markz !== null ? Markz : require('./markz').Markz;
   if (typeof window != "undefined" && window !== null) {
@@ -39,7 +39,7 @@
               href: '#',
               onclick: "app.upvote('" + (h(this.object._id)) + "'); return false;"
             }, function() {
-              return "&spades;";
+              return "&#9650;";
             });
           }
           span(function() {
@@ -191,22 +191,6 @@
     };
     Record.prototype.comment_url = function() {
       return "/r/" + this.object._id + "/reply";
-    };
-    Record.prototype.create = function(recdata, parent) {
-      var parents, record;
-      parents = [];
-      if (parent != null) {
-        if (parent.object.parents != null) {
-          parents = [parent.object._id].concat(parent.object.parents.slice(0, 6));
-        } else {
-          parents = [parent.object._id];
-        }
-      }
-      recdata.created_at = new Date();
-      recdata.parents = parents;
-      record = new Record(recdata);
-      record.is_new = true;
-      return record;
     };
     Record.prototype.redraw = function(options) {
       var children, old, old_is_root;
@@ -373,24 +357,8 @@
     };
     return Record;
   })();
-  dangle = function(records, root_id) {
-    var id, parent, record, root;
-    root = records[root_id];
-    for (id in records) {
-      record = records[id];
-      parent = records[record.object.parent_id];
-      if (parent) {
-        if (!parent.children) {
-          parent.children = [];
-        }
-        parent.children.push(record);
-      }
-    }
-    return root;
-  };
   if (typeof exports != "undefined" && exports !== null) {
     exports.Record = Record;
-    exports.dangle = dangle;
   }
   if (typeof window != "undefined" && window !== null) {
     app.Record = Record;
@@ -399,6 +367,5 @@
     app.show_edit_box = Record.prototype.show_edit_box;
     app.post_reply = Record.prototype.post_reply;
     app.post_edit = Record.prototype.post_edit;
-    app.dangle = dangle;
   }
 }).call(this);

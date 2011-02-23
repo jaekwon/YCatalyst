@@ -13,6 +13,7 @@ rec = require './static/record'
 cookie = require 'cookie-node'
 _ = require './static/underscore'
 _v = require 'validator'
+logic = require './logic/logic'
 
 cookie.secret = "supersecretbanananana"
 
@@ -23,47 +24,6 @@ DEFAULT_DEPTH = 5
 #    console.log "XXX HOLY SHIT"
 #    console.log err
 #    console.log "FIX THIS ASAP, http://debuggable.com/posts/node-js-dealing-with-uncaught-exceptions:4c933d54-1428-443c-928d-4e1ecbdd56cb"
-
-get_records = (root_id, level, fn) ->
-  now = new Date()
-  mongo.records.findOne _id: root_id, (err, root) ->
-    all = {}
-    if not root?
-      fn(err, null)
-      return
-    all[root_id] = new rec.Record(root)
-    tofetch = [root_id]
-    fetchmore = (i) ->
-      # NOTE: http://talklikeaduck.denhaven2.com/2009/04/15/ordered-hashes-in-ruby-1-9-and-javascript
-      # and   http://ejohn.org/blog/javascript-in-chrome/
-      # The side effect of sorting here is that the record.coffe/dangle method will automagically sort the children by points.
-      mongo.records.find {parent_id: {$in: tofetch}}, {sort: [['points', -1]]}, (err, cursor) ->
-        cursor.toArray (err, records) ->
-          tofetch = []
-          for record in records
-            tofetch.push(record._id)
-            all[record._id] = new rec.Record(record)
-          if i > 1
-            fetchmore(i-1)
-          else
-            console.log "get_records in #{new Date() - now}"
-            fn(err, all)
-    fetchmore(level)
-
-get_one_record = (rid, fn) ->
-  mongo.records.findOne _id: rid, (err, recdata) ->
-    if recdata
-      fn(err, new rec.Record(recdata))
-    else
-      fn(err, null)
-
-# given a record object, return an object we can return to the client
-# any time you need to send a record to the client through ajax, 
-# scrub it here
-scrubbed_recdata = (record) ->
-  object = utils.deep_clone(record.object)
-  delete object.upvoters
-  return object
 
 # a global hash from record id to [callbacks]
 all_callbacks = {}
@@ -136,7 +96,7 @@ trigger_update = (records) ->
     notify_keys = notify_keys.concat(record.object.parents or [])
   notify_keys = _.uniq(notify_keys)
 
-  recdatas = (scrubbed_recdata(record) for record in records)
+  recdatas = (logic.records.scrubbed_recdata(record) for record in records)
 
   for key in notify_keys
     for callback in all_callbacks[key] or []
@@ -190,23 +150,23 @@ server = http.createServer(utils.Rowt(new Sherpa.NodeJs([
       when 'GET'
         # requested from json, just return a single record
         if req.headers['x-requested-with'] == 'XMLHttpRequest'
-          get_one_record root_id, (err, record) ->
-            res.simpleJSON 200, record: scrubbed_recdata(record)
+          logic.records.get_one_record root_id, (err, record) ->
+            res.simpleJSON 200, record: logic.records.scrubbed_recdata(record)
             return
         else
-          get_records root_id, DEFAULT_DEPTH, (err, all) ->
+          logic.records.get_records root_id, DEFAULT_DEPTH, (err, all) ->
             if err? or not all?
               res.writeHead 404, status: 'error'
               res.end()
               return
-            jade.renderFile 'templates/record.jade', locals: {root: rec.dangle(all, root_id), require: require, current_user: current_user}, (err, html) ->
+            jade.renderFile 'templates/record.jade', locals: {root: logic.records.dangle(all, root_id), require: require, current_user: current_user}, (err, html) ->
               console.log err if err
               res.writeHead 200, status: 'ok'
               res.end html
               return
       when 'POST'
         # updating
-        get_one_record root_id, (err, record) ->
+        logic.records.get_one_record root_id, (err, record) ->
           if err? or not record?
             res.writeHead 404, status: 'error'
             res.end()
@@ -238,7 +198,7 @@ server = http.createServer(utils.Rowt(new Sherpa.NodeJs([
     switch req.method
       when 'GET'
         parent_id = req.sherpaResponse.params.id
-        get_one_record parent_id, (err, parent) ->
+        logic.records.get_one_record parent_id, (err, parent) ->
           jade.renderFile 'templates/reply.jade', locals: {parent: parent, current_user: current_user, require: require}, (err, html) ->
             console.log err if err
             res.writeHead 200, status: 'ok'
@@ -246,10 +206,10 @@ server = http.createServer(utils.Rowt(new Sherpa.NodeJs([
       when 'POST'
         parent_id = req.sherpaResponse.params.id
         comment = req.post_data.comment
-        get_one_record parent_id, (err, parent) ->
+        logic.records.get_one_record parent_id, (err, parent) ->
           if parent
-            data = parent_id: parent_id, _id: utils.randid(), comment: comment, created_by: current_user.username
-            record = rec.Record::create(data, parent)
+            recdata = _id: utils.randid(), comment: comment, created_by: current_user.username
+            record = logic.records.create_record(data, parent)
             mongo.records.save record.object, (err, stuff) ->
               if req.headers['x-requested-with'] == 'XMLHttpRequest'
                 res.simpleJSON 200, status: 'ok'
@@ -293,7 +253,7 @@ server = http.createServer(utils.Rowt(new Sherpa.NodeJs([
     switch req.method
       when 'POST'
         rid = req.sherpaResponse.params.id
-        get_one_record rid, (err, record) ->
+        logic.records.get_one_record rid, (err, record) ->
           if not record.object.upvoters?
             record.object.upvoters = []
           if record.object.upvoters.indexOf(current_user._id) == -1
@@ -303,6 +263,45 @@ server = http.createServer(utils.Rowt(new Sherpa.NodeJs([
             res.simpleJSON(200, status: 'ok')
             # notify clients
             trigger_update [record]
+  ],
+
+  ['/submit', (req, res) ->
+    current_user = req.get_current_user()
+    if not current_user?
+      res.writeHead 401, status: 'login_error'
+      res.end 'not logged in'
+      return
+    switch req.method
+      when 'GET'
+        jade.renderFile 'templates/submit.jade', locals: {current_user: current_user, require: require}, (err, html) ->
+          res.writeHead 200, status: 'ok'
+          res.end html
+      when 'POST'
+        data = req.post_data
+        # validate data
+        try
+          if data.title or data.url
+            _v.check(data.title, 'title must be 2 to 200 characters').len(2, 200)
+            _v.check(data.url, 'url must be a valid http(s):// url.').isUrl()
+          if data.text
+            _v.check(data.text, 'text must be less than 10K characters for now').len(0, 10000)
+          if not data.title and not data.text
+            throw 'nothing submitted'
+        catch e
+          jade.renderFile 'templates/message.jade', locals: {require: require, message: ''+e}, (err, html) ->
+            res.writeHead 200, status: 'ok'
+            res.end html
+          return
+        # create new record
+        recdata = {created_by: current_user.username}
+        if data.title or data.url
+          recdata.title = data.title
+          recdata.url = data.url
+        if data.text
+          recdata.comment = data.text
+        record = logic.records.create_record(recdata)
+        mongo.records.save record.object, (err, stuff) ->
+          res.redirect "/r/#{stuff._id}"
   ],
 
   ['/login', (req, res) ->
