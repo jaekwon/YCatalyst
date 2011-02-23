@@ -211,8 +211,16 @@
           href: "/r/" + this.object._id,
           "class": "contents"
         }, function() {
-          if (this.object.comment != null) {
-            return text(markz.prototype.markup(this.object.comment));
+          if (this.object.title != null) {
+            return span({
+              "class": "title"
+            }, function() {
+              return this.object.title;
+            });
+          } else {
+            if (this.object.comment != null) {
+              return text(markz.prototype.markup(this.object.comment));
+            }
           }
         });
       });

@@ -1,41 +1,16 @@
-!!! 5
-html(lang="en")
-  head
-    title= "YCatalyst"
-    script(type="text/javascript", src="https://www.google.com/jsapi?key=ABQIAAAAV88HHyf8NBcAL3aio53OixSEBwhbzDd0F998UkbSll3boCkrihTFj2uO3yETr_J5z25r2aIc4YCVpQ")
-    script(type="text/javascript", src="https://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js")
-    link(type="text/css", rel="stylesheet", href=require('./utils').static_file("main.css"))
-  body
+ul.records
+  - records.forEach(function(record) {
+    li
+      !{record.render_headline()}
+  - })
 
-    div#headerbar
-      span.logo YCatalyst News
+:sass
+  | body
+  |   .record
+  |     :margin 0px 0px
+  |   ul.records
+  |     :margin 10px 0px
 
-      span.links
-        a(href: "/submit") submit
-
-      div(style: "float: right")
-        - if (current_user)
-          span.username #{current_user.username}
-          text &nbsp;|&nbsp;
-          a.logout(href: "/logout") logout
-        - else
-          span.username anonymous
-          text &nbsp;|&nbsp;
-          a.login(href: "/login") login
-
-    ul.records
-      - records.forEach(function(record) {
-        li
-          !{record.render_headline()}
-      - })
-
-  :sass
-    | body
-    |   .record
-    |     :margin 0px 0px
-    |   ul.records
-    |     :margin 10px 0px
-
-  :javascript
-    | $(document).ready(function() {
-    | });
+:javascript
+  | $(document).ready(function() {
+  | });

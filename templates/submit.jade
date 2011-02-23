@@ -1,50 +1,34 @@
-!!! 5
-html(lang="en")
-  head
-    title= "YCatalyst - Submit News"
-    script(type="text/javascript", src="https://www.google.com/jsapi?key=ABQIAAAAV88HHyf8NBcAL3aio53OixSEBwhbzDd0F998UkbSll3boCkrihTFj2uO3yETr_J5z25r2aIc4YCVpQ")
-    script(type="text/javascript", src="https://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js")
-    script(type="text/javascript", src="https://ajax.googleapis.com/ajax/libs/webfont/1.0.17/webfont.js")
-    script(type="text/javascript", src="/static/underscore.js")
-    link(type="text/css", rel="stylesheet", href=require('./utils').static_file("main.css"))
-  body
+form(action: "/submit", method: "POST")
+  table
+    tr
+      th
+        span title
+      td
+        input(type: "text", name: "title")
+      td
+        i(style: "color: gray") required
+  br
+  table
+    tr
+      th
+        span url
+      td
+        input(type: "text", name: "url")
+    tr
+      th
+      td
+        span(style: "font-weight: bold; color: gray") and/or
+    tr
+      th(valign: "top")
+        span text
+      td
+        textarea(name: "text")
+    tr
+      th
+      td
+        input(type: "submit", value: "submit")
 
-    div#headerbar
-      span.logo YCatalyst - Submit News
-      div(style: "float: right")
-        - if (current_user)
-          span.username #{current_user.username}
-          text &nbsp;|&nbsp;
-          a.logout(href: "/logout") logout
-        - else
-          span.username anonymous
-          text &nbsp;|&nbsp;
-          a.login(href: "/login") login
-
-    def#contents
-      &nbsp;
-      form(action: "/submit", method: "POST")
-        table
-          tr
-            th
-              span title
-            td
-              input(type: "text", name: "title")
-          tr
-            th
-              span url
-            td
-              input(type: "text", name: "url")
-          tr
-            th
-            td
-              span(style: "font-weight: bold; color: gray") and/or
-          tr
-            th
-              span text
-            td
-              textarea(name: "text")
-          tr
-            th
-            td
-              input(type: "submit")
+:javascript
+  | $(document).ready(function() {
+  |   app.make_autoresizable($('textarea'));
+  | });

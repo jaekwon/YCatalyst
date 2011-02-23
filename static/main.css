@@ -15,8 +15,8 @@ body {
       font-weight: 700; }
     body #headerbar .links {
       margin: 0px 20px; }
-  body #contents {
-    padding-top: 20px; }
+  body #body_contents {
+    margin-top: 10px; }
   body input[type=text] {
     width: 460px;
     padding: 2px;

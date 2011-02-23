@@ -25,10 +25,11 @@ SERVER_LOG = fs.createWriteStream('./log/server.log', flags: 'a', encoding: 'utf
 # sorry, node doesn't actually have a ServerRequest class?? TODO fix
 # http.ServerRequest.prototype.get_current_user = -> 
 http.IncomingMessage.prototype.get_current_user = ->
-  user_c = this.getSecureCookie('user')
-  if user_c? and user_c.length > 0
-    return JSON.parse(user_c)
-  return null
+  if not @_current_user?
+    user_c = this.getSecureCookie('user')
+    if user_c? and user_c.length > 0
+      @_current_user = JSON.parse(user_c)
+  return @_current_user
 
 # respond with JSON
 http.ServerResponse.prototype.simpleJSON = (code, obj) ->

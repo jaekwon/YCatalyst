@@ -103,6 +103,32 @@ trigger_update = (records) ->
       callback.callback(recdatas)
     delete all_callbacks[key]
 
+# helper to render with layout
+render_layout = (template, locals, req, res, fn) ->
+  locals.title = 'YCatalyst' if not locals.title?
+  locals.require = require
+  locals.current_user = req.get_current_user()
+  jade.renderFile "templates/#{template}", locals: locals, (err, body) ->
+    if err?
+      console.log err
+      console.log err.stack
+      console.log err.message
+      if fn?
+        fn(err, undefined)
+      return
+    locals.body = body
+    jade.renderFile "templates/layout.jade", locals: locals, (err, html) ->
+      if err?
+        console.log err
+        console.log err.stack
+        console.log err.message
+        if fn?
+          fn(err, undefined)
+        return
+      if res?
+        res.writeHead 200, status: 'ok'
+        res.end html
+
 server = http.createServer(utils.Rowt(new Sherpa.NodeJs([
 
   ['/static/:filepath', (req, res) ->
@@ -135,12 +161,7 @@ server = http.createServer(utils.Rowt(new Sherpa.NodeJs([
             if err
               console.log err
               return
-            jade.renderFile 'templates/index.jade', locals: {require: require, records: records, current_user: current_user}, (err, html) ->
-              if err
-                console.log err
-                return
-              res.writeHead 200, status: 'ok'
-              res.end html
+            render_layout "index.jade", {records: records}, req, res
   ]
 
   ['/r/:id', (req, res) ->
@@ -159,11 +180,7 @@ server = http.createServer(utils.Rowt(new Sherpa.NodeJs([
               res.writeHead 404, status: 'error'
               res.end()
               return
-            jade.renderFile 'templates/record.jade', locals: {root: logic.records.dangle(all, root_id), require: require, current_user: current_user}, (err, html) ->
-              console.log err if err
-              res.writeHead 200, status: 'ok'
-              res.end html
-              return
+            render_layout "record.jade", {root: logic.records.dangle(all, root_id)}, req, res
       when 'POST'
         # updating
         logic.records.get_one_record root_id, (err, record) ->
@@ -199,10 +216,7 @@ server = http.createServer(utils.Rowt(new Sherpa.NodeJs([
       when 'GET'
         parent_id = req.sherpaResponse.params.id
         logic.records.get_one_record parent_id, (err, parent) ->
-          jade.renderFile 'templates/reply.jade', locals: {parent: parent, current_user: current_user, require: require}, (err, html) ->
-            console.log err if err
-            res.writeHead 200, status: 'ok'
-            res.end html
+          render_layout "reply.jade", {parent: parent}, req, res
       when 'POST'
         parent_id = req.sherpaResponse.params.id
         comment = req.post_data.comment
@@ -273,29 +287,24 @@ server = http.createServer(utils.Rowt(new Sherpa.NodeJs([
       return
     switch req.method
       when 'GET'
-        jade.renderFile 'templates/submit.jade', locals: {current_user: current_user, require: require}, (err, html) ->
-          res.writeHead 200, status: 'ok'
-          res.end html
+        render_layout "submit.jade", {headerbar_text: 'Submit'}, req, res
       when 'POST'
         data = req.post_data
         # validate data
         try
-          if data.title or data.url
-            _v.check(data.title, 'title must be 2 to 200 characters').len(2, 200)
+          _v.check(data.title, 'title must be 2 to 200 characters').len(2, 200)
+          if data.url
             _v.check(data.url, 'url must be a valid http(s):// url.').isUrl()
           if data.text
             _v.check(data.text, 'text must be less than 10K characters for now').len(0, 10000)
-          if not data.title and not data.text
-            throw 'nothing submitted'
+          if not data.url and not data.text
+            throw 'you must enter a URL or text'
         catch e
-          jade.renderFile 'templates/message.jade', locals: {require: require, message: ''+e}, (err, html) ->
-            res.writeHead 200, status: 'ok'
-            res.end html
+          render_layout "message.jade", {message: ''+e}, req, res
           return
         # create new record
-        recdata = {created_by: current_user.username}
-        if data.title or data.url
-          recdata.title = data.title
+        recdata = {title: data.title, created_by: current_user.username}
+        if data.url
           recdata.url = data.url
         if data.text
           recdata.comment = data.text
@@ -307,14 +316,10 @@ server = http.createServer(utils.Rowt(new Sherpa.NodeJs([
   ['/login', (req, res) ->
     switch req.method
       when 'GET'
-        jade.renderFile 'templates/login.jade', locals: {require: require}, (err, html) ->
-          res.writeHead 200, status: 'ok'
-          res.end html
+        render_layout "login.jade", {}, req, res
       when 'POST'
         form_error = (error) ->
-          jade.renderFile 'templates/message.jade', locals: {require: require, message: error}, (err, html) ->
-            res.writeHead 200, status: 'ok'
-            res.end html
+          render_layout "message.jade", {message: error}, req, res
         try
           _v.check(req.post_data.username, 'username must be alphanumeric, 2 to 12 characters').len(2,12).isAlphanumeric()
           _v.check(req.post_data.password, 'password must be 5 to 20 characters').len(5,20)
@@ -337,13 +342,18 @@ server = http.createServer(utils.Rowt(new Sherpa.NodeJs([
             return
   ],
 
+  ['/logout', (req, res) ->
+    switch req.method
+      when 'GET'
+        res.clearCookie 'user'
+        res.redirect '/'
+  ],
+
   ['/register', (req, res) ->
     switch req.method
       when 'POST'
         form_error = (error) ->
-          jade.renderFile 'templates/message.jade', locals: {require: require, message: error}, (err, html) ->
-            res.writeHead 200, status: 'ok'
-            res.end html
+          render_layout "message.jade", {message: error}, req, res
 
         # validate data
         data = req.post_data

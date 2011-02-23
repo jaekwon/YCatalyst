@@ -113,7 +113,10 @@ class Record
         a href: "/user/#{h(@object.created_by)}", -> h(@object.created_by)
       br foo: "bar"
       a href: "/r/#{@object._id}", class: "contents", ->
-        text markz::markup(@object.comment) if @object.comment?
+        if @object.title?
+          span class: "title", -> @object.title
+        else
+          text markz::markup(@object.comment) if @object.comment?
 
   render_headline: (options) ->
     coffeekup.render @render_headline_kup, context: this, locals: {markz: markz}, dynamic_locals: true
