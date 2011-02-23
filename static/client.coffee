@@ -82,7 +82,7 @@ app.make_autoresizable = (textarea) ->
   autoresize = (event) ->
     cloned_textarea.css
       width: textarea.css('width')
-    console.log(textarea.css('height'))
+    #console.log(textarea.css('height'))
     cloned_textarea.text('')
     for line in textarea.val().split("\n")
       cloned_textarea.append(hE(line))

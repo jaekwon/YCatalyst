@@ -10,6 +10,38 @@
   } else {
     app = require('../app');
   }
+  Date.prototype.time_ago = function() {
+    var difference;
+    difference = (new Date()) - this;
+    if (difference < 60 * 1000) {
+      return "a moment ago";
+    }
+    if (difference < 60 * 60 * 1000) {
+      return Math.floor(difference / (60 * 1000)) + " minutes ago";
+    }
+    if (difference < 2 * 60 * 60 * 1000) {
+      return "1 hour ago";
+    }
+    if (difference < 24 * 60 * 60 * 1000) {
+      return Math.floor(difference / (60 * 60 * 1000)) + " hours ago";
+    }
+    if (difference < 2 * 24 * 60 * 60 * 1000) {
+      return "1 day ago";
+    }
+    if (difference < 30 * 24 * 60 * 60 * 1000) {
+      return Math.floor(difference / (24 * 60 * 60 * 1000)) + " days ago";
+    }
+    if (difference < 2 * 30 * 24 * 60 * 60 * 1000) {
+      return "1 month ago";
+    }
+    if (difference < 365 * 24 * 60 * 60 * 1000) {
+      return Math.floor(difference / (30 * 24 * 60 * 60 * 1000)) + " months ago";
+    }
+    if (difference < 2 * 365 * 24 * 60 * 60 * 1000) {
+      return "1 year ago";
+    }
+    return Math.floor(difference / (365 * 24 * 60 * 60 * 1000)) + " years ago";
+  };
   Record = (function() {
     function Record(object) {
       this.object = object;
@@ -21,6 +53,8 @@
       }
       if (!(this.object.created_at != null)) {
         this.object.created_at = new Date();
+      } else if (typeof this.object.created_at === 'string') {
+        this.object.created_at = new Date(this.object.created_at);
       }
     }
     Record.prototype.render_kup = function() {
@@ -49,6 +83,9 @@
             href: "/user/" + (h(this.object.created_by))
           }, function() {
             return h(this.object.created_by);
+          });
+          span(function() {
+            return " " + this.object.created_at.time_ago();
           });
           text(" | ");
           if (is_root && this.object.parent_id) {

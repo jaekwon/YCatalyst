@@ -50,7 +50,7 @@ exports.create_record = (recdata, parent) ->
   parents = []
   if parent?
     if not recdata.parent_id?
-      recdata.parent_id = parent.id
+      recdata.parent_id = parent.object._id
     if parent.object.parents?
       parents = [parent.object._id].concat(parent.object.parents[0..5])
     else

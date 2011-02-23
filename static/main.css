@@ -11,6 +11,10 @@ body {
     body #headerbar a {
       color: #ffaaaa;
       text-decoration: none; }
+    body #headerbar .logo {
+      font-weight: 700; }
+    body #headerbar .links {
+      margin: 0px 20px; }
   body #contents {
     padding-top: 20px; }
   body input[type=text] {

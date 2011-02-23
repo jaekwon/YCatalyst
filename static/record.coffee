@@ -10,6 +10,29 @@ if window?
 else
   app = require '../app'
 
+# possibly move this out
+Date.prototype.time_ago = () ->
+  difference = (new Date()) - this
+  if difference < 60 * 1000
+    return "a moment ago"
+  if difference < 60 * 60 * 1000
+    return Math.floor((difference/(60*1000))) + " minutes ago"
+  if difference < 2 * 60 * 60 * 1000
+    return "1 hour ago"
+  if difference < 24 * 60 * 60 * 1000
+    return Math.floor((difference/(60*60*1000))) + " hours ago"
+  if difference < 2 * 24 * 60 * 60 * 1000
+    return "1 day ago"
+  if difference < 30 * 24 * 60 * 60 * 1000
+    return Math.floor((difference/(24*60*60*1000))) + " days ago"
+  if difference < 2 * 30 * 24 * 60 * 60 * 1000
+    return "1 month ago"
+  if difference < 365 * 24 * 60 * 60 * 1000
+    return Math.floor((difference/(30*24*60*60*1000))) + " months ago"
+  if difference < 2 * 365 * 24 * 60 * 60 * 1000
+    return "1 year ago"
+  return Math.floor((difference/(365*24*60*60*1000))) + " years ago"
+
 # usage: 
 # r = new Record({record_data})
 # r.object # {record_data}
@@ -34,6 +57,9 @@ class Record
       @object.num_children = 0
     if not @object.created_at?
       @object.created_at = new Date()
+    else if typeof @object.created_at == 'string'
+      # after JSON serialization, created_at reverts to string on client
+      @object.created_at = new Date(@object.created_at)
 
   render_kup: ->
     div class: "record", id: @object._id, "data-root": is_root, "data-upvoted": upvoted, ->
@@ -42,6 +68,7 @@ class Record
           a class: "upvote", href: '#', onclick: "app.upvote('#{h(@object._id)}'); return false;", -> "&#9650;"
         span -> " #{@object.points or 0} pts by "
         a href: "/user/#{h(@object.created_by)}", -> h(@object.created_by)
+        span -> " " + @object.created_at.time_ago()
         text " | "
         if is_root and @object.parent_id
           a class: "parent", href: "/r/#{@object.parent_id}", -> "parent"

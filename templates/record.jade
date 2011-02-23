@@ -1,11 +1,10 @@
 !!! 5
 html(lang="en")
   head
-    title= "glyphtree"
+    title= "YCatalyst"
     script(type="text/javascript", src="https://www.google.com/jsapi?key=ABQIAAAAV88HHyf8NBcAL3aio53OixSEBwhbzDd0F998UkbSll3boCkrihTFj2uO3yETr_J5z25r2aIc4YCVpQ")
     script(type="text/javascript", src="https://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js")
-    script(type="text/javascript", src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.7/jquery-ui.min.js")
-    script(type="text/javascript", src="https://ajax.googleapis.com/ajax/libs/webfont/1.0.17/webfont.js")
+    //- script(type="text/javascript", src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.7/jquery-ui.min.js")
     script(type="text/javascript", src=require('./utils').static_file("client.js"))
     script(type="text/javascript", src=require('./utils').static_file("coffeekup.js"))
     script(type="text/javascript", src=require('./utils').static_file("markz.js"))
@@ -14,10 +13,20 @@ html(lang="en")
   body
 
     div#headerbar
-      - if (current_user)
-        span.username #{current_user.username}
-      - else
-        span.username anonymous
+      span.logo YCatalyst News
+
+      span.links
+        a(href: "/submit") submit
+
+      div(style: "float: right")
+        - if (current_user)
+          span.username #{current_user.username}
+          text &nbsp;|&nbsp;
+          a.logout(href: "/logout") logout
+        - else
+          span.username anonymous
+          text &nbsp;|&nbsp;
+          a.login(href: "/login") login
 
     - render_options = {current_user: current_user, is_root: true}
     !{root.render(render_options)}
@@ -30,9 +39,4 @@ html(lang="en")
 
   :javascript
     | $(document).ready(function() {
-    | });
-    | WebFont.load({ //WebFontConfig = {
-    |   google: {
-    |     families: []
-    |   }
     | });

@@ -87,7 +87,6 @@
       cloned_textarea.css({
         width: textarea.css('width')
       });
-      console.log(textarea.css('height'));
       cloned_textarea.text('');
       _ref = textarea.val().split("\n");
       for (_i = 0, _len = _ref.length; _i < _len; _i++) {

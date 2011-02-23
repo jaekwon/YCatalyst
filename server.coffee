@@ -209,7 +209,7 @@ server = http.createServer(utils.Rowt(new Sherpa.NodeJs([
         logic.records.get_one_record parent_id, (err, parent) ->
           if parent
             recdata = _id: utils.randid(), comment: comment, created_by: current_user.username
-            record = logic.records.create_record(data, parent)
+            record = logic.records.create_record(recdata, parent)
             mongo.records.save record.object, (err, stuff) ->
               if req.headers['x-requested-with'] == 'XMLHttpRequest'
                 res.simpleJSON 200, status: 'ok'

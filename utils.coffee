@@ -96,10 +96,15 @@ exports.passhash = (password, salt, times) ->
     hashed = crypto.createHash('md5').update(hashed).digest('base64')
   return hashed
 
+# clone nested objects, though
+# it gets tricky with special objects like Date...
+# add extensions here.
 exports.deep_clone = deep_clone = (obj) ->
   newObj = if (this instanceof Array) then [] else {}
   for own key, value of obj
-    if typeof value == 'object'
+    if value instanceof Date
+      newObj[key] = value
+    else if typeof value == 'object'
       newObj[key] = deep_clone(value)
     else
       newObj[key] = value
