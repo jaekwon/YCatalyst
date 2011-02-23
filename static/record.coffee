@@ -112,11 +112,17 @@ class Record
         span -> " #{@object.points or 0} pts by "
         a href: "/user/#{h(@object.created_by)}", -> h(@object.created_by)
       br foo: "bar"
-      a href: "/r/#{@object._id}", class: "contents", ->
-        if @object.title?
+      if @object.url?
+        a href: @object.url, class: "contents", ->
           span class: "title", -> @object.title
-        else
-          text markz::markup(@object.comment) if @object.comment?
+        span class: "host", -> "&nbsp;(#{@object.host})"
+      else
+        a href: "/r/#{@object._id}", class: "contents", ->
+          if @object.title?
+            span class: "title", -> @object.title
+            span class: "host", -> "&nbsp;(#{@object.host})"
+          else
+            text markz::markup(@object.comment) if @object.comment?
 
   render_headline: (options) ->
     coffeekup.render @render_headline_kup, context: this, locals: {markz: markz}, dynamic_locals: true

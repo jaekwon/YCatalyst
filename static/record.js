@@ -207,22 +207,45 @@
         br({
           foo: "bar"
         });
-        return a({
-          href: "/r/" + this.object._id,
-          "class": "contents"
-        }, function() {
-          if (this.object.title != null) {
+        if (this.object.url != null) {
+          a({
+            href: this.object.url,
+            "class": "contents"
+          }, function() {
             return span({
               "class": "title"
             }, function() {
               return this.object.title;
             });
-          } else {
-            if (this.object.comment != null) {
-              return text(markz.prototype.markup(this.object.comment));
+          });
+          return span({
+            "class": "host"
+          }, function() {
+            return "&nbsp;(" + this.object.host + ")";
+          });
+        } else {
+          return a({
+            href: "/r/" + this.object._id,
+            "class": "contents"
+          }, function() {
+            if (this.object.title != null) {
+              span({
+                "class": "title"
+              }, function() {
+                return this.object.title;
+              });
+              return span({
+                "class": "host"
+              }, function() {
+                return "&nbsp;(" + this.object.host + ")";
+              });
+            } else {
+              if (this.object.comment != null) {
+                return text(markz.prototype.markup(this.object.comment));
+              }
             }
-          }
-        });
+          });
+        }
       });
     };
     Record.prototype.render_headline = function(options) {

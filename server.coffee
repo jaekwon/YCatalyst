@@ -306,6 +306,13 @@ server = http.createServer(utils.Rowt(new Sherpa.NodeJs([
         recdata = {title: data.title, created_by: current_user.username}
         if data.url
           recdata.url = data.url
+          try
+            recdata.host = require('url').parse(data.url).hostname
+            if recdata.host.substr(0, 4) == 'www.' and recdata.host.length > 7
+              recdata.host = recdata.host.substr(4)
+          catch e
+            render_layout "message.jade", {message: "#{data.url} is not a valid URL?"}, req, res
+            return
         if data.text
           recdata.comment = data.text
         record = logic.records.create_record(recdata)
