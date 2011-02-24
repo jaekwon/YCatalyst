@@ -93,6 +93,34 @@ app.make_autoresizable = (textarea) ->
   # force autoresize right now
   setTimeout(autoresize, 0)
 
+# given an input field or textarea, 
+# show some default text (gray, italicized)
+app.set_default_text = (input, default_text) ->
+  on_focus = =>
+    input.removeClass 'default_text'
+    if input.val() == default_text
+      input.val ''
+  on_blur = =>
+    if input.val() == default_text or input.val() == ''
+      input.val(default_text)
+      input.addClass 'default_text'
+  on_blur()
+  input.focus(on_focus)
+  input.blur(on_blur)
+  input.data('default_text', default_text)
+
+jQuery.fn.extend(
+  'set_default_text': (default_text) ->
+    elem = $(this)
+    app.set_default_text(elem, default_text)
+  'get_value': () ->
+    value = $(this).val()
+    if $(this).data('default_text') == value
+      return null
+    else
+      return value
+)
+
 $(document).ready ->
   # get the id of the current user
   app.current_user =

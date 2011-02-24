@@ -1,4 +1,7 @@
-p login here
+- if (typeof message != 'undefined')
+  p #{message}
+- else
+  p login here
 
 form(action: "/login", method: "POST")
   table

@@ -1,5 +1,6 @@
 (function() {
   var app;
+  var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
   if (!(window.app != null)) {
     window.app = {};
   }
@@ -100,6 +101,41 @@
     textarea.bind('keyup', autoresize);
     return setTimeout(autoresize, 0);
   };
+  app.set_default_text = function(input, default_text) {
+    var on_blur, on_focus;
+    on_focus = __bind(function() {
+      input.removeClass('default_text');
+      if (input.val() === default_text) {
+        return input.val('');
+      }
+    }, this);
+    on_blur = __bind(function() {
+      if (input.val() === default_text || input.val() === '') {
+        input.val(default_text);
+        return input.addClass('default_text');
+      }
+    }, this);
+    on_blur();
+    input.focus(on_focus);
+    input.blur(on_blur);
+    return input.data('default_text', default_text);
+  };
+  jQuery.fn.extend({
+    'set_default_text': function(default_text) {
+      var elem;
+      elem = $(this);
+      return app.set_default_text(elem, default_text);
+    },
+    'get_value': function() {
+      var value;
+      value = $(this).val();
+      if ($(this).data('default_text') === value) {
+        return null;
+      } else {
+        return value;
+      }
+    }
+  });
   $(document).ready(function() {
     var root;
     app.current_user = $('#current_user').length > 0 ? {

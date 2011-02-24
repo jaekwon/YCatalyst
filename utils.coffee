@@ -18,7 +18,6 @@ exports.dir = (object) ->
         methods.push(z)
     return methods.join(', ')
 
-
 SERVER_LOG = fs.createWriteStream('./log/server.log', flags: 'a', encoding: 'utf8')
 
 # get current user
@@ -110,3 +109,13 @@ exports.deep_clone = deep_clone = (obj) ->
     else
       newObj[key] = value
   return newObj
+
+# for displaying the hostname in parentheses
+exports.url_hostname = (url) ->
+  try
+    host = require('url').parse(url).hostname
+    if host.substr(0, 4) == 'www.' and host.length > 7
+      host = host.substr(4)
+  catch e
+    throw 'invalid url?'
+  return host

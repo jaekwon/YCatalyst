@@ -63,9 +63,16 @@ class Record
 
   render_kup: ->
     div class: "record", id: @object._id, "data-root": is_root, "data-upvoted": upvoted, ->
-      span class: "top_items", ->
-        if current_user? and not upvoted
-          a class: "upvote", href: '#', onclick: "app.upvote('#{h(@object._id)}'); return false;", -> "&#9650;"
+      if current_user? and not upvoted
+        a class: "upvote", href: '#', onclick: "app.upvote('#{h(@object._id)}'); return false;", -> "&#9650;"
+      if @object.title?
+        if @object.url?
+          a href: @object.url, class: "title", -> @object.title
+          span class: "host", -> "&nbsp;(#{@object.host})"
+        else
+          a href: "/r/#{@object._id}", class: "title", -> @object.title
+        br foo: "bar"
+      span class: "item_info", ->
         span -> " #{@object.points or 0} pts by "
         a href: "/user/#{h(@object.created_by)}", -> h(@object.created_by)
         span -> " " + @object.created_at.time_ago()
@@ -108,21 +115,17 @@ class Record
 
   render_headline_kup: ->
     div class: "record", id: @object._id, ->
-      span class: "top_items", ->
-        span -> " #{@object.points or 0} pts by "
-        a href: "/user/#{h(@object.created_by)}", -> h(@object.created_by)
-      br foo: "bar"
       if @object.url?
-        a href: @object.url, class: "contents", ->
-          span class: "title", -> @object.title
+        a href: @object.url, class: "title", -> @object.title
         span class: "host", -> "&nbsp;(#{@object.host})"
       else
-        a href: "/r/#{@object._id}", class: "contents", ->
-          if @object.title?
-            span class: "title", -> @object.title
-            span class: "host", -> "&nbsp;(#{@object.host})"
-          else
-            text markz::markup(@object.comment) if @object.comment?
+        a href: "/r/#{@object._id}", class: "title", -> @object.title
+      br foo: "bar"
+      span class: "item_info", ->
+        span -> " #{@object.points or 0} pts by "
+        a href: "/user/#{h(@object.created_by)}", -> h(@object.created_by)
+        text " | "
+        a href: "/r/#{@object._id}", -> "discuss"
 
   render_headline: (options) ->
     coffeekup.render @render_headline_kup, context: this, locals: {markz: markz}, dynamic_locals: true
@@ -191,13 +194,23 @@ class Record
         success: (data) ->
           kup = ->
             div class: "edit_box", ->
-              textarea name: "comment", -> hE(data.record.comment)
+              if not data.record.parent_id
+                input type: "text", name: "title", value: hE(data.record.title or '')
+                br foo: 'bar'
+                input type: "text", name: "url", value: hE(data.record.url or '')
+                br foo: 'bar'
+                textarea name: "comment", -> hE(data.record.comment or '')
+              else
+                textarea name: "comment", -> hE(data.record.comment or '')
               br foo: 'bar' # dunno why just br doesn't work
               button onclick: "app.post_edit('#{rid}')", -> 'update'
               button onclick: "$(this).parent().remove()", -> 'cancel'
           container = record_e.find('>.contents>.edit_box_container').
             append(coffeekup.render kup, context: this, locals: {rid: rid, data: data}, dynamic_locals: true)
           app.make_autoresizable container.find('textarea')
+          container.find('input[name="title"]').set_default_text('title')
+          container.find('input[name="url"]').set_default_text('URL')
+          container.find('textarea[name="comment"]').set_default_text('comment')
 
   # client side #
   # static method #
@@ -227,12 +240,14 @@ class Record
   # static method #
   post_edit: (rid) ->
     record_e = $('#'+rid)
-    comment = record_e.find('>.contents>.edit_box_container>.edit_box>textarea').val()
+    title = record_e.find('>.contents>.edit_box_container>.edit_box>input[name="title"]').val()
+    url = record_e.find('>.contents>.edit_box_container>.edit_box>input[name="url"]').val()
+    comment = record_e.find('>.contents>.edit_box_container>.edit_box>textarea[name="comment"]').val()
     $.ajax
       cache: false
       type: "POST"
       url: "/r/#{rid}"
-      data: {comment: comment}
+      data: {title: title, url: url, comment: comment}
       dataType: "json"
       error: ->
         console.log('meh')

@@ -27,18 +27,6 @@ DEFAULT_DEPTH = 5
 
 # a global hash from record id to [callbacks]
 all_callbacks = {}
-# a global hash from record id to {username: {timestamp}}
-all_sessions = {}
-
-# create or update the session for key/username
-touch_session = (key, username) ->
-  sessions = all_sessions[key]
-  if not sessions?
-    sessions = all_sessions[key] = {}
-  s = sessions[username]
-  if not s?
-    s = sessions[username] = {}
-  s.timestamp = new Date()
 
 # clear old callbacks
 # they can hang around for at most 30 seconds.
@@ -56,27 +44,6 @@ setInterval (->
   if num_purged > 0
     console.log "purged #{num_purged} of #{num_seen} in #{new Date() - now}"
   ), 3000
-
-# clear old sessions after 60 secondsish
-setInterval (->
-  now = new Date()
-  num_cleared = 0
-  num_seen = 0
-  for key, sessions of all_sessions
-    # we count the number of sessions per key, cuz javascript has no suitable object.length
-    num_seen_for_key = 0
-    for username, session of sessions
-      # TODO this is stupid. replace with a better dict implementation with length
-      continue if username == '_fake_length'
-      num_seen_for_key += 1
-      if now - session.timestamp > 60*1000
-        num_cleared += 1
-        delete sessions[username]
-    sessions._fake_length = num_seen_for_key
-    num_seen += num_seen_for_key
-  if num_cleared > 0
-    console.log "cleared #{num_cleared} of #{num_seen} in #{new Date() - now} sessions"
-  ), 15000
 
 # given records, tell clients that this record had been updated
 # -> if record is new
@@ -149,11 +116,7 @@ server = http.createServer(utils.Rowt(new Sherpa.NodeJs([
     switch req.method
       when 'GET'
         current_user = req.get_current_user()
-        views = [] # list of [record id, num viewers]
-        for key, sessions of all_sessions
-          if key != '_fake_length' # see why it's stupid?
-            views.push( [key, sessions._fake_length] )
-        views.sort( (a, b) -> b[1] - a[1] )
+        views = logic.sessions.get_viewers()
         rids = (v[0] for v in views)
         mongo.records.find {_id: {$in: rids}}, (err, cursor) ->
           cursor.toArray (err, records) ->
@@ -191,6 +154,14 @@ server = http.createServer(utils.Rowt(new Sherpa.NodeJs([
           if record.object.created_by != current_user.username
             res.simpleJSON 400, status: 'unauthorized'
             return
+          if not record.object.parent_id
+            record.object.title = req.post_data.title
+            record.object.url = req.post_data.url
+            try
+              record.object.host = utils.url_hostname(req.post_data.url)
+            catch e
+              record.object.host = 'unknown'
+              console.log "record with url #{req.post_data.url}: couldn't parse the hostname"
           record.object.comment = req.post_data.comment
           record.object.updated_at = new Date()
           mongo.records.save record.object, (err, stuff) ->
@@ -202,7 +173,7 @@ server = http.createServer(utils.Rowt(new Sherpa.NodeJs([
     switch req.method
       when 'GET'
         rid = req.sherpaResponse.params.id
-        watching = if all_sessions[rid]? then (username for username, session of (all_sessions[rid] or {})) else []
+        watching = logic.sessions.get_watching(rid)
         res.simpleJSON(200, watching)
   ],
 
@@ -255,7 +226,7 @@ server = http.createServer(utils.Rowt(new Sherpa.NodeJs([
           timestamp: new Date()
           username: current_user.username if current_user?
         if current_user?
-          touch_session(key, current_user.username)
+          logic.sessions.touch_session(key, current_user.username)
   ],
 
   ['/r/:id/upvote', (req, res) ->
@@ -303,18 +274,14 @@ server = http.createServer(utils.Rowt(new Sherpa.NodeJs([
           render_layout "message.jade", {message: ''+e}, req, res
           return
         # create new record
-        recdata = {title: data.title, created_by: current_user.username}
+        recdata = {title: data.title, comment: data.text, created_by: current_user.username}
         if data.url
           recdata.url = data.url
           try
-            recdata.host = require('url').parse(data.url).hostname
-            if recdata.host.substr(0, 4) == 'www.' and recdata.host.length > 7
-              recdata.host = recdata.host.substr(4)
+            recdata.host = utils.url_hostname(data.url)
           catch e
-            render_layout "message.jade", {message: "#{data.url} is not a valid URL?"}, req, res
-            return
-        if data.text
-          recdata.comment = data.text
+            recdata.host = 'unknown'
+            console.log "record with url #{data.url}: couldn't parse the hostname"
         record = logic.records.create_record(recdata)
         mongo.records.save record.object, (err, stuff) ->
           res.redirect "/r/#{stuff._id}"

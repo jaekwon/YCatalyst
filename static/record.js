@@ -64,18 +64,43 @@
         "data-root": is_root,
         "data-upvoted": upvoted
       }, function() {
-        span({
-          "class": "top_items"
-        }, function() {
-          if ((typeof current_user != "undefined" && current_user !== null) && !upvoted) {
+        if ((typeof current_user != "undefined" && current_user !== null) && !upvoted) {
+          a({
+            "class": "upvote",
+            href: '#',
+            onclick: "app.upvote('" + (h(this.object._id)) + "'); return false;"
+          }, function() {
+            return "&#9650;";
+          });
+        }
+        if (this.object.title != null) {
+          if (this.object.url != null) {
             a({
-              "class": "upvote",
-              href: '#',
-              onclick: "app.upvote('" + (h(this.object._id)) + "'); return false;"
+              href: this.object.url,
+              "class": "title"
             }, function() {
-              return "&#9650;";
+              return this.object.title;
+            });
+            span({
+              "class": "host"
+            }, function() {
+              return "&nbsp;(" + this.object.host + ")";
+            });
+          } else {
+            a({
+              href: "/r/" + this.object._id,
+              "class": "title"
+            }, function() {
+              return this.object.title;
             });
           }
+          br({
+            foo: "bar"
+          });
+        }
+        span({
+          "class": "item_info"
+        }, function() {
           span(function() {
             return " " + (this.object.points || 0) + " pts by ";
           });
@@ -192,60 +217,47 @@
         "class": "record",
         id: this.object._id
       }, function() {
-        span({
-          "class": "top_items"
-        }, function() {
-          span(function() {
-            return " " + (this.object.points || 0) + " pts by ";
-          });
-          return a({
-            href: "/user/" + (h(this.object.created_by))
-          }, function() {
-            return h(this.object.created_by);
-          });
-        });
-        br({
-          foo: "bar"
-        });
         if (this.object.url != null) {
           a({
             href: this.object.url,
-            "class": "contents"
+            "class": "title"
           }, function() {
-            return span({
-              "class": "title"
-            }, function() {
-              return this.object.title;
-            });
+            return this.object.title;
           });
-          return span({
+          span({
             "class": "host"
           }, function() {
             return "&nbsp;(" + this.object.host + ")";
           });
         } else {
-          return a({
+          a({
             href: "/r/" + this.object._id,
-            "class": "contents"
+            "class": "title"
           }, function() {
-            if (this.object.title != null) {
-              span({
-                "class": "title"
-              }, function() {
-                return this.object.title;
-              });
-              return span({
-                "class": "host"
-              }, function() {
-                return "&nbsp;(" + this.object.host + ")";
-              });
-            } else {
-              if (this.object.comment != null) {
-                return text(markz.prototype.markup(this.object.comment));
-              }
-            }
+            return this.object.title;
           });
         }
+        br({
+          foo: "bar"
+        });
+        return span({
+          "class": "item_info"
+        }, function() {
+          span(function() {
+            return " " + (this.object.points || 0) + " pts by ";
+          });
+          a({
+            href: "/user/" + (h(this.object.created_by))
+          }, function() {
+            return h(this.object.created_by);
+          });
+          text(" | ");
+          return a({
+            href: "/r/" + this.object._id
+          }, function() {
+            return "discuss";
+          });
+        });
       });
     };
     Record.prototype.render_headline = function(options) {
@@ -339,11 +351,35 @@
               return div({
                 "class": "edit_box"
               }, function() {
-                textarea({
-                  name: "comment"
-                }, function() {
-                  return hE(data.record.comment);
-                });
+                if (!data.record.parent_id) {
+                  input({
+                    type: "text",
+                    name: "title",
+                    value: hE(data.record.title || '')
+                  });
+                  br({
+                    foo: 'bar'
+                  });
+                  input({
+                    type: "text",
+                    name: "url",
+                    value: hE(data.record.url || '')
+                  });
+                  br({
+                    foo: 'bar'
+                  });
+                  textarea({
+                    name: "comment"
+                  }, function() {
+                    return hE(data.record.comment || '');
+                  });
+                } else {
+                  textarea({
+                    name: "comment"
+                  }, function() {
+                    return hE(data.record.comment || '');
+                  });
+                }
                 br({
                   foo: 'bar'
                 });
@@ -367,7 +403,10 @@
               },
               dynamic_locals: true
             }));
-            return app.make_autoresizable(container.find('textarea'));
+            app.make_autoresizable(container.find('textarea'));
+            container.find('input[name="title"]').set_default_text('title');
+            container.find('input[name="url"]').set_default_text('URL');
+            return container.find('textarea[name="comment"]').set_default_text('comment');
           }
         });
       }
@@ -400,14 +439,18 @@
       });
     };
     Record.prototype.post_edit = function(rid) {
-      var comment, record_e;
+      var comment, record_e, title, url;
       record_e = $('#' + rid);
-      comment = record_e.find('>.contents>.edit_box_container>.edit_box>textarea').val();
+      title = record_e.find('>.contents>.edit_box_container>.edit_box>input[name="title"]').val();
+      url = record_e.find('>.contents>.edit_box_container>.edit_box>input[name="url"]').val();
+      comment = record_e.find('>.contents>.edit_box_container>.edit_box>textarea[name="comment"]').val();
       return $.ajax({
         cache: false,
         type: "POST",
         url: "/r/" + rid,
         data: {
+          title: title,
+          url: url,
           comment: comment
         },
         dataType: "json",

@@ -34,25 +34,30 @@ body {
       color: #666666; }
       body .record a:visited {
         color: #999999; }
-    body .record .contents {
+    body .record .title {
+      text-decoration: none;
+      font-size: 1.1em; }
+    body .record a.upvote {
+      text-decoration: none;
+      font-size: 10px;
+      margin-right: 2px; }
+    body .record .item_info {
       position: relative;
       top: -1px;
+      color: #999999;
+      font-size: 0.8em; }
+      body .record .item_info a {
+        color: #999999;
+        text-decoration: none; }
+        body .record .item_info a:hover {
+          text-decoration: underline; }
+    body .record .host {
+      color: #999999; }
+    body .record .contents {
       margin: 2px 0px; }
     body .record a.contents {
       text-decoration: none;
       color: black; }
-    body .record a.upvote {
-      font-size: 0.8em; }
-    body .record .top_items {
-      color: #999999;
-      font-size: 0.8em; }
-      body .record .top_items a {
-        color: #999999;
-        text-decoration: none; }
-        body .record .top_items a:hover {
-          text-decoration: underline; }
-    body .record .host {
-      color: #999999; }
     body .record .reply {
       font-size: 0.8em; }
     body .record .edit_box {
@@ -87,3 +92,7 @@ body {
   body table th {
     font-weight: 200;
     color: gray; }
+  body input.default_text, body textarea.default_text {
+    color: gray;
+    font-style: italic;
+    font-size: 0.9em; }

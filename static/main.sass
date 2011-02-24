@@ -43,17 +43,16 @@ body
       color: $dark_link
       &:visited
         color: $light_text
-    // very slightly squeeze a record, especially on the front page
-    .contents
+    .title
+      text-decoration: none
+      font-size: 1.1em
+    a.upvote
+      text-decoration: none
+      font-size: 10px
+      margin-right: 2px
+    .item_info
       position: relative
       top: -1px
-      margin: 2px 0px
-    a.contents
-      text-decoration: none
-      color: black
-    a.upvote
-      font-size: 0.8em
-    .top_items
       color: $light_text
       font-size: 0.8em
       a
@@ -63,6 +62,11 @@ body
           text-decoration: underline
     .host
       color: $light_text
+    .contents
+      margin: 2px 0px
+    a.contents
+      text-decoration: none
+      color: black
     .reply
       font-size: 0.8em
     .edit_box
@@ -101,3 +105,8 @@ body
     th
       font-weight: 200
       color: gray
+
+  input.default_text, textarea.default_text
+    color: gray
+    font-style: italic
+    font-size: 0.9em
