@@ -1,7 +1,7 @@
 - if (typeof message != 'undefined')
   p #{message}
 - else
-  p login here
+  p Login here
 
 form(action: "/login", method: "POST")
   table
@@ -20,9 +20,9 @@ form(action: "/login", method: "POST")
         input(type: "submit", value: "login")
 
 p 
-  | new user?
+  | New user?
   br 
-  | register if you have an invite code
+  | Please register if you have an invite code. We're in private alpha!
 
 form(action: "/register", method: "POST")
   table

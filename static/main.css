@@ -1,15 +1,17 @@
 body {
   color: black;
   font-family: Verdana, Verdana, Geneva, sans-serif;
-  font-size: 14px; }
+  font-size: 10pt; }
   body #headerbar {
-    background-color: black;
+    background-color: #1f1f1f;
     padding: 4px;
-    color: #ffaaaa; }
+    color: white; }
+    body #headerbar img {
+      vertical-align: middle; }
     body #headerbar .username {
       font-weight: 900; }
     body #headerbar a {
-      color: #ffaaaa;
+      color: white;
       text-decoration: none; }
     body #headerbar .logo {
       font-weight: 700; }
@@ -17,6 +19,10 @@ body {
       margin: 0px 20px; }
   body #body_contents {
     margin-top: 10px; }
+  body img {
+    border: 0px;
+    margin: 0px;
+    padding: 0px; }
   body input[type=text] {
     width: 460px;
     padding: 2px;
@@ -29,35 +35,42 @@ body {
     font-family: Verdana, Verdana, Geneva, sans-serif;
     font-size: 14px; }
   body .record {
+    position: relative;
     margin: 10px 0px; }
     body .record a {
-      color: #666666; }
+      color: #333333; }
       body .record a:visited {
         color: #999999; }
     body .record .title {
       text-decoration: none;
-      font-size: 1.1em; }
+      font-size: 10pt; }
+    body .record .host {
+      font-size: 10px;
+      color: #999999; }
     body .record a.upvote {
+      position: absolute;
+      left: -15px;
+      top: 3px;
       text-decoration: none;
       font-size: 10px;
-      margin-right: 2px; }
+      color: #999999; }
     body .record .item_info {
       position: relative;
-      top: -1px;
       color: #999999;
-      font-size: 0.8em; }
+      font-size: 8pt; }
       body .record .item_info a {
         color: #999999;
         text-decoration: none; }
         body .record .item_info a:hover {
           text-decoration: underline; }
-    body .record .host {
-      color: #999999; }
+    body .record[data-root="true"] {
+      margin-left: 16px; }
+      body .record[data-root="true"] > .item_info {
+        font-size: 7pt; }
     body .record .contents {
       margin: 2px 0px; }
-    body .record a.contents {
-      text-decoration: none;
-      color: black; }
+    body .record[data-root="true"] > .contents {
+      margin: 10px 0px; }
     body .record .reply {
       font-size: 0.8em; }
     body .record .edit_box {
@@ -85,7 +98,7 @@ body {
     color: #aaaaff;
     padding-left: 20px;
     margin: 0px;
-    list-style-type: square; }
+    list-style-type: none; }
     body ol li, body ul li {
       padding: 0px;
       margin: 0px; }

@@ -130,10 +130,16 @@
       var value;
       value = $(this).val();
       if ($(this).data('default_text') === value) {
-        return null;
+        return '';
       } else {
         return value;
       }
+    },
+    'increment': function() {
+      return this.text(parseInt(this.text()) + 1);
+    },
+    'decrement': function() {
+      return this.text(parseInt(this.text()) - 1);
     }
   });
   $(document).ready(function() {

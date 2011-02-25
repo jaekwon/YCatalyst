@@ -73,19 +73,21 @@
             return "&#9650;";
           });
         }
-        if (this.object.title != null) {
-          if (this.object.url != null) {
+        if (this.object.title) {
+          if (this.object.url) {
             a({
               href: this.object.url,
               "class": "title"
             }, function() {
               return this.object.title;
             });
-            span({
-              "class": "host"
-            }, function() {
-              return "&nbsp;(" + this.object.host + ")";
-            });
+            if (this.object.host) {
+              span({
+                "class": "host"
+              }, function() {
+                return "&nbsp;(" + this.object.host + ")";
+              });
+            }
           } else {
             a({
               href: "/r/" + this.object._id,
@@ -150,7 +152,7 @@
         div({
           "class": "contents"
         }, function() {
-          if (this.object.comment != null) {
+          if (this.object.comment) {
             text(markz.prototype.markup(this.object.comment));
           }
           text(" ");
@@ -217,18 +219,29 @@
         "class": "record",
         id: this.object._id
       }, function() {
-        if (this.object.url != null) {
+        if ((typeof current_user != "undefined" && current_user !== null) && !upvoted) {
+          a({
+            "class": "upvote",
+            href: '#',
+            onclick: "app.upvote('" + (h(this.object._id)) + "'); $(this).parent().find('>.item_info>.points').increment(); $(this).remove(); return false;"
+          }, function() {
+            return "&#9650;";
+          });
+        }
+        if (this.object.url) {
           a({
             href: this.object.url,
             "class": "title"
           }, function() {
             return this.object.title;
           });
-          span({
-            "class": "host"
-          }, function() {
-            return "&nbsp;(" + this.object.host + ")";
-          });
+          if (this.object.host) {
+            span({
+              "class": "host"
+            }, function() {
+              return "&nbsp;(" + this.object.host + ")";
+            });
+          }
         } else {
           a({
             href: "/r/" + this.object._id,
@@ -243,8 +256,13 @@
         return span({
           "class": "item_info"
         }, function() {
+          span({
+            "class": "points"
+          }, function() {
+            return "" + (this.object.points || 0);
+          });
           span(function() {
-            return " " + (this.object.points || 0) + " pts by ";
+            return " pts by ";
           });
           a({
             href: "/user/" + (h(this.object.created_by))
@@ -252,19 +270,34 @@
             return h(this.object.created_by);
           });
           text(" | ");
-          return a({
-            href: "/r/" + this.object._id
-          }, function() {
-            return "discuss";
-          });
+          if (this.object.num_discussions) {
+            return a({
+              href: "/r/" + this.object._id
+            }, function() {
+              return "" + this.object.num_discussions + " comments";
+            });
+          } else {
+            return a({
+              href: "/r/" + this.object._id
+            }, function() {
+              return "discuss";
+            });
+          }
         });
       });
     };
     Record.prototype.render_headline = function(options) {
+      var current_user, upvoted;
+      if (options != null) {
+        current_user = options.current_user;
+      }
+      upvoted = typeof window != "undefined" && window !== null ? app.upvoted.indexOf(this.object._id) !== -1 : current_user != null ? (this.object.upvoters != null) && this.object.upvoters.indexOf(current_user._id) !== -1 : void 0;
       return coffeekup.render(this.render_headline_kup, {
         context: this,
         locals: {
-          markz: markz
+          markz: markz,
+          upvoted: upvoted,
+          current_user: current_user
         },
         dynamic_locals: true
       });
@@ -441,9 +474,9 @@
     Record.prototype.post_edit = function(rid) {
       var comment, record_e, title, url;
       record_e = $('#' + rid);
-      title = record_e.find('>.contents>.edit_box_container>.edit_box>input[name="title"]').val();
-      url = record_e.find('>.contents>.edit_box_container>.edit_box>input[name="url"]').val();
-      comment = record_e.find('>.contents>.edit_box_container>.edit_box>textarea[name="comment"]').val();
+      title = record_e.find('>.contents>.edit_box_container>.edit_box>input[name="title"]').get_value();
+      url = record_e.find('>.contents>.edit_box_container>.edit_box>input[name="url"]').get_value();
+      comment = record_e.find('>.contents>.edit_box_container>.edit_box>textarea[name="comment"]').get_value();
       return $.ajax({
         cache: false,
         type: "POST",

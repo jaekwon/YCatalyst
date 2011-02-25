@@ -16,7 +16,8 @@ html(lang="en")
       - if (typeof headerbar_text != 'undefined')
         span.logo #{headerbar_text}
       - else
-        span.logo YCatalyst News
+        a.logo(href: "/")
+          img(src: "/static/logo.png")
         span.links
           a(href: "/submit") submit
         div(style: "float: right")

@@ -116,9 +116,13 @@ jQuery.fn.extend(
   'get_value': () ->
     value = $(this).val()
     if $(this).data('default_text') == value
-      return null
+      return ''
     else
       return value
+  'increment': () ->
+    this.text(parseInt(this.text())+1)
+  'decrement': () ->
+    this.text(parseInt(this.text())-1)
 )
 
 $(document).ready ->

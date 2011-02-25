@@ -65,10 +65,11 @@ class Record
     div class: "record", id: @object._id, "data-root": is_root, "data-upvoted": upvoted, ->
       if current_user? and not upvoted
         a class: "upvote", href: '#', onclick: "app.upvote('#{h(@object._id)}'); return false;", -> "&#9650;"
-      if @object.title?
-        if @object.url?
+      if @object.title
+        if @object.url
           a href: @object.url, class: "title", -> @object.title
-          span class: "host", -> "&nbsp;(#{@object.host})"
+          if @object.host
+            span class: "host", -> "&nbsp;(#{@object.host})"
         else
           a href: "/r/#{@object._id}", class: "title", -> @object.title
         br foo: "bar"
@@ -87,7 +88,7 @@ class Record
           text " | "
           a class: "delete", href: "#", onclick: "app.delete('#{h(@object._id)}'); return false;", -> "delete"
       div class: "contents", ->
-        text markz::markup(@object.comment) if @object.comment?
+        text markz::markup(@object.comment) if @object.comment
         text " "
         a class: "reply", href: "/r/#{@object._id}/reply", onclick: "app.show_reply_box('#{h(@object._id)}'); return false;", -> "reply"
         # placeholders
@@ -115,20 +116,33 @@ class Record
 
   render_headline_kup: ->
     div class: "record", id: @object._id, ->
-      if @object.url?
+      if current_user? and not upvoted
+        a class: "upvote", href: '#', onclick: "app.upvote('#{h(@object._id)}'); $(this).parent().find('>.item_info>.points').increment(); $(this).remove(); return false;", -> "&#9650;"
+      if @object.url
         a href: @object.url, class: "title", -> @object.title
-        span class: "host", -> "&nbsp;(#{@object.host})"
+        if @object.host
+          span class: "host", -> "&nbsp;(#{@object.host})"
       else
         a href: "/r/#{@object._id}", class: "title", -> @object.title
       br foo: "bar"
       span class: "item_info", ->
-        span -> " #{@object.points or 0} pts by "
+        span class: "points", -> "#{@object.points or 0}"
+        span -> " pts by "
         a href: "/user/#{h(@object.created_by)}", -> h(@object.created_by)
         text " | "
-        a href: "/r/#{@object._id}", -> "discuss"
+        if @object.num_discussions
+          a href: "/r/#{@object._id}", -> "#{@object.num_discussions} comments"
+        else
+          a href: "/r/#{@object._id}", -> "discuss"
 
   render_headline: (options) ->
-    coffeekup.render @render_headline_kup, context: this, locals: {markz: markz}, dynamic_locals: true
+    current_user = options.current_user if options?
+    upvoted =
+      if window?
+        app.upvoted.indexOf(@object._id) != -1
+      else if current_user?
+        @object.upvoters? and @object.upvoters.indexOf(current_user._id) != -1
+    coffeekup.render @render_headline_kup, context: this, locals: {markz: markz, upvoted: upvoted, current_user: current_user}, dynamic_locals: true
 
   comment_url: ->
     "/r/#{@object._id}/reply"
@@ -240,9 +254,9 @@ class Record
   # static method #
   post_edit: (rid) ->
     record_e = $('#'+rid)
-    title = record_e.find('>.contents>.edit_box_container>.edit_box>input[name="title"]').val()
-    url = record_e.find('>.contents>.edit_box_container>.edit_box>input[name="url"]').val()
-    comment = record_e.find('>.contents>.edit_box_container>.edit_box>textarea[name="comment"]').val()
+    title = record_e.find('>.contents>.edit_box_container>.edit_box>input[name="title"]').get_value()
+    url = record_e.find('>.contents>.edit_box_container>.edit_box>input[name="url"]').get_value()
+    comment = record_e.find('>.contents>.edit_box_container>.edit_box>textarea[name="comment"]').get_value()
     $.ajax
       cache: false
       type: "POST"

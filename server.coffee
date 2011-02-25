@@ -157,11 +157,14 @@ server = http.createServer(utils.Rowt(new Sherpa.NodeJs([
           if not record.object.parent_id
             record.object.title = req.post_data.title
             record.object.url = req.post_data.url
-            try
-              record.object.host = utils.url_hostname(req.post_data.url)
-            catch e
-              record.object.host = 'unknown'
-              console.log "record with url #{req.post_data.url}: couldn't parse the hostname"
+            if req.post_data.url
+              try
+                record.object.host = utils.url_hostname(req.post_data.url)
+              catch e
+                record.object.host = 'unknown'
+                console.log "record with url #{req.post_data.url}: couldn't parse the hostname"
+            else
+              delete record.object.host
           record.object.comment = req.post_data.comment
           record.object.updated_at = new Date()
           mongo.records.save record.object, (err, stuff) ->
@@ -193,7 +196,8 @@ server = http.createServer(utils.Rowt(new Sherpa.NodeJs([
         comment = req.post_data.comment
         logic.records.get_one_record parent_id, (err, parent) ->
           if parent
-            recdata = _id: utils.randid(), comment: comment, created_by: current_user.username
+            root_id = if parent.object.root_id? then parent.object.root_id else parent.object._id
+            recdata = _id: utils.randid(), comment: comment, created_by: current_user.username, root_id: root_id
             record = logic.records.create_record(recdata, parent)
             mongo.records.save record.object, (err, stuff) ->
               if req.headers['x-requested-with'] == 'XMLHttpRequest'
@@ -206,6 +210,18 @@ server = http.createServer(utils.Rowt(new Sherpa.NodeJs([
               mongo.records.save parent.object, (err, stuff) ->
                 if err
                   console.err "failed to update parent.num_children: #{parent_id}"
+              # update the root, num_discussions.
+              logic.records.get_one_record root_id, (err, root) ->
+                if err
+                  console.err "failed ot update root.num_discussions: #{root_id}"
+                  return
+                if not root.object.num_discussions?
+                  root.object.num_discussions = 1
+                else
+                  root.object.num_discussions += 1
+                mongo.records.save root.object, (err, stuff) ->
+                  if err
+                    console.err "failed to update root.num_discussions: #{root_id}"
               # notify clients
               trigger_update [parent, record]
           else
@@ -253,8 +269,7 @@ server = http.createServer(utils.Rowt(new Sherpa.NodeJs([
   ['/submit', (req, res) ->
     current_user = req.get_current_user()
     if not current_user?
-      res.writeHead 401, status: 'login_error'
-      res.end 'not logged in'
+      render_layout "login.jade", {message: 'You need to log in to submit'}, req, res
       return
     switch req.method
       when 'GET'

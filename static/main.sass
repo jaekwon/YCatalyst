@@ -1,20 +1,22 @@
-$dark_link: #666
+$dark_link: #333
 $light_text: #999
 $the_font: Verdana, Verdana, Geneva, sans-serif
 
 body
   color: black
   font-family: $the_font
-  font-size: 14px
+  font-size: 10pt
 
   #headerbar
-    background-color: black
+    img
+      vertical-align: middle
+    background-color: #1f1f1f
     padding: 4px
-    color: #FAA
+    color: #FFF
     .username
       font-weight: 900
     a
-      color: #FAA
+      color: #FFF
       text-decoration: none
     .logo
       font-weight: 700
@@ -23,6 +25,11 @@ body
 
   #body_contents
     margin-top: 10px
+
+  img
+    border: 0px
+    margin: 0px
+    padding: 0px
 
   input[type=text]
     width: 460px
@@ -38,6 +45,7 @@ body
     font-size: 14px
 
   .record
+    position: relative
     margin: 10px 0px
     a
       color: $dark_link
@@ -45,28 +53,34 @@ body
         color: $light_text
     .title
       text-decoration: none
-      font-size: 1.1em
+      font-size: 10pt
+    .host
+      font-size: 10px
+      color: $light_text
     a.upvote
+      position: absolute
+      left: -15px
+      top: 3px
       text-decoration: none
       font-size: 10px
-      margin-right: 2px
+      color: $light_text
     .item_info
       position: relative
-      top: -1px
       color: $light_text
-      font-size: 0.8em
+      font-size: 8pt
       a
         color: $light_text
         text-decoration: none
         &:hover
           text-decoration: underline
-    .host
-      color: $light_text
+    &[data-root="true"]
+      margin-left: 16px
+      &>.item_info
+        font-size: 7pt
     .contents
       margin: 2px 0px
-    a.contents
-      text-decoration: none
-      color: black
+    &[data-root="true"]>.contents
+      margin: 10px 0px
     .reply
       font-size: 0.8em
     .edit_box
@@ -96,7 +110,7 @@ body
     color: #AAF
     padding-left: 20px
     margin: 0px
-    list-style-type: square
+    list-style-type: none
     li
       padding: 0px
       margin: 0px
