@@ -180,8 +180,10 @@ class Record
   # client side #
   # static method #
   show_reply_box: (rid) ->
+    if not app.current_user?
+      window.location = "/login?goto=/r/#{rid}/reply"
+      return
     record_e = $('#'+rid)
-    window.qwe = record_e
     if record_e.find('>.contents>.reply_box_container>.reply_box').length == 0
       kup = ->
         div class: "reply_box", ->

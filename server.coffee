@@ -309,6 +309,8 @@ server = http.createServer(utils.Rowt(new Sherpa.NodeJs([
   ['/login', (req, res) ->
     switch req.method
       when 'GET'
+        data = require('querystring').parse(require('url').parse(req.url).query)
+        res.setCookie 'goto', data.goto
         render_layout "login.jade", {}, req, res
       when 'POST'
         form_error = (error) ->
@@ -329,7 +331,7 @@ server = http.createServer(utils.Rowt(new Sherpa.NodeJs([
           if user.password[0] == utils.passhash(req.post_data.password, user.password[1], hashtimes)
             # set the user in session
             res.setSecureCookie 'user', JSON.stringify(user)
-            res.redirect '/'
+            res.redirect req.getCookie('goto') or '/'
           else
             form_error('wrong password')
             return
