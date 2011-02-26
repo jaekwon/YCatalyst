@@ -116,14 +116,15 @@ server = http.createServer(utils.Rowt(new Sherpa.NodeJs([
     switch req.method
       when 'GET'
         current_user = req.get_current_user()
-        views = logic.sessions.get_viewers()
-        rids = (v[0] for v in views)
-        mongo.records.find {_id: {$in: rids}}, (err, cursor) ->
+        #views = logic.sessions.get_viewers()
+        #rids = (v[0] for v in views)
+        #mongo.records.find {_id: {$in: rids}}, (err, cursor) ->
+        mongo.records.find {parent_id: null}, {sort: [['score', -1]]}, (err, cursor) ->
           cursor.toArray (err, records) ->
-            records = (new rec.Record(r) for r in records)
             if err
               console.log err
               return
+            records = (new rec.Record(r) for r in records)
             render_layout "index.jade", {records: records}, req, res
   ]
 
@@ -260,6 +261,9 @@ server = http.createServer(utils.Rowt(new Sherpa.NodeJs([
           if record.object.upvoters.indexOf(current_user._id) == -1
             record.object.upvoters.push(current_user._id)
           record.object.points = record.object.upvoters.length
+          # rescore the record
+          logic.records.score_record(record)
+          # save this record
           mongo.records.save record.object, (err, stuff) ->
             res.simpleJSON(200, status: 'ok')
             # notify clients

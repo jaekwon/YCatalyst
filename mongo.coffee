@@ -31,7 +31,7 @@ db.open (err, db) ->
   # set up records
   db.collection 'records', (err, coll) ->
     # ensure indexes
-    coll.ensureIndex [['parent_id', 1], ['points', 1]], (err, indexName) ->
+    coll.ensureIndex [['parent_id', 1], ['score', 1]], (err, indexName) ->
       console.log "created index: #{indexName}"
       #coll.indexInformation (err, doc) ->
       #  console.log "information: #{require('sys').inspect(doc)}"

@@ -70,6 +70,7 @@ exports.Rowt = (fn) ->
         return fn(req, res)
     catch e
       console.log("error in Rowt: " + e)
+      console.log(e.stack)
       try
         res.writeHead(500, status: 'woops')
       catch _
@@ -100,7 +101,9 @@ exports.passhash = (password, salt, times) ->
 # it gets tricky with special objects like Date...
 # add extensions here.
 exports.deep_clone = deep_clone = (obj) ->
-  newObj = if (this instanceof Array) then [] else {}
+  if obj == null
+    return null
+  newObj = if (obj instanceof Array) then (new Array()) else {}
   for own key, value of obj
     if value instanceof Date
       newObj[key] = value

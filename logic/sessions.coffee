@@ -24,6 +24,10 @@ setInterval (->
         num_cleared += 1
         delete sessions[username]
     sessions._fake_length = num_seen_for_key
+    # if there are zero sessions on a key, then remove that session
+    if sessions._fake_length == 0
+      delete all_sessions[key]
+    # other
     num_seen += num_seen_for_key
   if num_cleared > 0
     console.log "cleared #{num_cleared} of #{num_seen} in #{new Date() - now} sessions"

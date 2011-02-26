@@ -15,7 +15,7 @@ exports.get_records = (root_id, level, fn) ->
       # NOTE: http://talklikeaduck.denhaven2.com/2009/04/15/ordered-hashes-in-ruby-1-9-and-javascript
       # and   http://ejohn.org/blog/javascript-in-chrome/
       # The side effect of sorting here is that the dangle method will automagically sort the children by points.
-      mongo.records.find {parent_id: {$in: tofetch}}, {sort: [['points', -1]]}, (err, cursor) ->
+      mongo.records.find {parent_id: {$in: tofetch}}, {sort: [['score', -1]]}, (err, cursor) ->
         cursor.toArray (err, records) ->
           tofetch = []
           for record in records
@@ -43,6 +43,21 @@ exports.scrubbed_recdata = (record) ->
   delete object.upvoters
   return object
 
+# given a record, rescores the record
+exports.score_record = (record) ->
+  # constants
+  newness_factor = 0.5 # how important is newness in hours?
+  gravity = 1.8
+  timebase_hours = 2.0
+  # variables
+  t = record.object.created_at.getTime()
+  h = t / (60*60*1000)
+  d_h = ((new Date()) - record.object.created_at) / (60*60*1000)
+  points = record.object.points
+  score = h*newness_factor + (points-1) / (Math.pow((d_h+timebase_hours),gravity))
+  console.log "t: #{t} h: #{h} d_h: #{d_h} points: #{points} score: #{score}"
+  record.object.score = score
+
 # recdata: the record data object
 # parent: the data object for the parent
 # returns: a new Record object
@@ -55,12 +70,15 @@ exports.create_record = (recdata, parent) ->
       parents = [parent.object._id].concat(parent.object.parents[0..5])
     else
       parents = [parent.object._id]
+  else
+    recdata.parent_id = null # need this for mongodb indexing
   if not recdata._id?
     recdata._id = utils.randid()
   recdata.created_at = new Date()
   recdata.parents = parents
   record = new rec.Record(recdata)
   record.is_new = true
+  exports.score_record(record)
   return record
   
 # given a bunch of records and the root, organize it into a tree
