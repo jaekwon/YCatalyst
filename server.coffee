@@ -386,8 +386,8 @@ server = http.createServer(utils.Rowt(new Sherpa.NodeJs([
         mongo.invites.findOne _id: data.invite, (err, invite) ->
           if err or not invite?
             form_error("invalid invite")
-          else if invite.claimed_by?
-            form_error("invite code already used")
+          else if invite.claimed_by? and invite.claimed_by.length >= (invite.count or 1)
+            form_error("invite code already used #{invite.count or 1}")
           else
             # create the user
             user = data
