@@ -47,6 +47,7 @@ body
   .record
     position: relative
     margin: 10px 0px
+    padding-left: 15px
     a
       color: $dark_link
       &:visited
@@ -59,7 +60,7 @@ body
       color: $light_text
     a.upvote
       position: absolute
-      left: -15px
+      left: 0px
       top: 3px
       text-decoration: none
       font-size: 10px
@@ -74,15 +75,14 @@ body
         &:hover
           text-decoration: underline
     &[data-root="true"]
-      margin-left: 16px
+      &>.contents
+        margin: 10px 0px
       &>.item_info
         font-size: 7pt
     .contents
       margin: 2px 0px
       &.deleted
         color: gray
-    &[data-root="true"]>.contents
-      margin: 10px 0px
     .reply
       font-size: 0.8em
     .edit_box
@@ -97,8 +97,8 @@ body
         margin-top: 5px
     .children
       border-left: 1px solid #eee
-      margin-left: 10px
-      padding-left: 10px
+      margin-left: 5px
+      padding-left: 5px
       .more
         color: $light_text
         text-decoration: none
