@@ -277,6 +277,9 @@
           }, function() {
             return h(this.object.created_by);
           });
+          span(function() {
+            return " " + this.object.created_at.time_ago();
+          });
           text(" | ");
           if (this.object.num_discussions) {
             return a({

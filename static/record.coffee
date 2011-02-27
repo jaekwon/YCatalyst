@@ -132,6 +132,7 @@ class Record
         span class: "points", -> "#{@object.points or 0}"
         span -> " pts by "
         a href: "/user/#{h(@object.created_by)}", -> h(@object.created_by)
+        span -> " " + @object.created_at.time_ago()
         text " | "
         if @object.num_discussions
           a href: "/r/#{@object._id}", -> "#{@object.num_discussions} comments"
