@@ -100,7 +100,7 @@ body {
     color: #aaaaff;
     padding-left: 20px;
     margin: 0px;
-    list-style-type: none; }
+    list-style-type: decimal; }
     body ol li, body ul li {
       padding: 0px;
       margin: 0px; }
