@@ -64,112 +64,120 @@
         "data-root": is_root,
         "data-upvoted": upvoted
       }, function() {
-        if ((typeof current_user != "undefined" && current_user !== null) && !upvoted) {
-          a({
-            "class": "upvote",
-            href: '#',
-            onclick: "app.upvote('" + (h(this.object._id)) + "'); return false;"
-          }, function() {
-            return "&#9650;";
-          });
-        }
-        if (this.object.title) {
-          if (this.object.url) {
+        if (!(this.object.deleted_at != null)) {
+          if ((typeof current_user != "undefined" && current_user !== null) && !upvoted) {
             a({
-              href: this.object.url,
-              "class": "title"
+              "class": "upvote",
+              href: '#',
+              onclick: "app.upvote('" + (h(this.object._id)) + "'); return false;"
             }, function() {
-              return this.object.title;
+              return "&#9650;";
             });
-            if (this.object.host) {
-              span({
-                "class": "host"
+          }
+          if (this.object.title) {
+            if (this.object.url) {
+              a({
+                href: this.object.url,
+                "class": "title"
               }, function() {
-                return "&nbsp;(" + this.object.host + ")";
+                return this.object.title;
+              });
+              if (this.object.host) {
+                span({
+                  "class": "host"
+                }, function() {
+                  return "&nbsp;(" + this.object.host + ")";
+                });
+              }
+            } else {
+              a({
+                href: "/r/" + this.object._id,
+                "class": "title"
+              }, function() {
+                return this.object.title;
               });
             }
-          } else {
-            a({
-              href: "/r/" + this.object._id,
-              "class": "title"
-            }, function() {
-              return this.object.title;
+            br({
+              foo: "bar"
             });
           }
-          br({
-            foo: "bar"
-          });
-        }
-        span({
-          "class": "item_info"
-        }, function() {
-          span(function() {
-            return " " + (this.object.points || 0) + " pts by ";
-          });
-          a({
-            href: "/user/" + (h(this.object.created_by))
+          span({
+            "class": "item_info"
           }, function() {
-            return h(this.object.created_by);
-          });
-          span(function() {
-            return " " + this.object.created_at.time_ago();
-          });
-          text(" | ");
-          if (is_root && this.object.parent_id) {
+            span(function() {
+              return " " + (this.object.points || 0) + " pts by ";
+            });
             a({
-              "class": "parent",
-              href: "/r/" + this.object.parent_id
+              href: "/user/" + (h(this.object.created_by))
             }, function() {
-              return "parent";
+              return h(this.object.created_by);
+            });
+            span(function() {
+              return " " + this.object.created_at.time_ago();
             });
             text(" | ");
-          }
-          a({
-            "class": "link",
-            href: "/r/" + this.object._id
-          }, function() {
-            return "link";
-          });
-          if ((typeof current_user != "undefined" && current_user !== null) && this.object.created_by === current_user.username) {
-            text(" | ");
+            if (is_root && this.object.parent_id) {
+              a({
+                "class": "parent",
+                href: "/r/" + this.object.parent_id
+              }, function() {
+                return "parent";
+              });
+              text(" | ");
+            }
             a({
-              "class": "edit",
-              href: "#",
-              onclick: "app.show_edit_box('" + (h(this.object._id)) + "'); return false;"
+              "class": "link",
+              href: "/r/" + this.object._id
             }, function() {
-              return "edit";
+              return "link";
             });
-            text(" | ");
-            return a({
-              "class": "delete",
-              href: "#",
-              onclick: "app.delete('" + (h(this.object._id)) + "'); return false;"
-            }, function() {
-              return "delete";
-            });
-          }
-        });
-        div({
-          "class": "contents"
-        }, function() {
-          if (this.object.comment) {
-            text(markz.prototype.markup(this.object.comment));
-          }
-          text(" ");
-          a({
-            "class": "reply",
-            href: "/r/" + this.object._id + "/reply",
-            onclick: "app.show_reply_box('" + (h(this.object._id)) + "'); return false;"
-          }, function() {
-            return "reply";
+            if ((typeof current_user != "undefined" && current_user !== null) && this.object.created_by === current_user.username) {
+              text(" | ");
+              a({
+                "class": "edit",
+                href: "#",
+                onclick: "app.show_edit_box('" + (h(this.object._id)) + "'); return false;"
+              }, function() {
+                return "edit";
+              });
+              text(" | ");
+              return a({
+                "class": "delete",
+                href: "#",
+                onclick: "app.delete('" + (h(this.object._id)) + "'); return false;"
+              }, function() {
+                return "delete";
+              });
+            }
           });
           div({
-            "class": "edit_box_container"
+            "class": "contents"
+          }, function() {
+            if (this.object.comment) {
+              text(markz.prototype.markup(this.object.comment));
+            }
+            text(" ");
+            a({
+              "class": "reply",
+              href: "/r/" + this.object._id + "/reply",
+              onclick: "app.show_reply_box('" + (h(this.object._id)) + "'); return false;"
+            }, function() {
+              return "reply";
+            });
+            div({
+              "class": "edit_box_container"
+            });
+            return div({
+              "class": "reply_box_container"
+            });
           });
-          return div({
-            "class": "reply_box_container"
+        } else {
+          div({
+            "class": "contents deleted"
+          }, function() {
+            return "[deleted]";
           });
-        });
+        }
         return div({
           "class": "children"
         }, function() {
@@ -448,7 +456,18 @@
       }
     };
     Record.prototype["delete"] = function(rid) {
-      return alert('not implemented yet');
+      return $.ajax({
+        cache: false,
+        type: "POST",
+        url: "/r/" + rid + "/delete",
+        datatype: "json",
+        error: function() {
+          return console.log('meh');
+        },
+        success: function(data) {
+          return console.log('deleted');
+        }
+      });
     };
     Record.prototype.post_reply = function(rid) {
       var comment, record_e;
@@ -514,5 +533,6 @@
     app.show_edit_box = Record.prototype.show_edit_box;
     app.post_reply = Record.prototype.post_reply;
     app.post_edit = Record.prototype.post_edit;
+    app["delete"] = Record.prototype["delete"];
   }
 }).call(this);

@@ -63,37 +63,40 @@ class Record
 
   render_kup: ->
     div class: "record", id: @object._id, "data-root": is_root, "data-upvoted": upvoted, ->
-      if current_user? and not upvoted
-        a class: "upvote", href: '#', onclick: "app.upvote('#{h(@object._id)}'); return false;", -> "&#9650;"
-      if @object.title
-        if @object.url
-          a href: @object.url, class: "title", -> @object.title
-          if @object.host
-            span class: "host", -> "&nbsp;(#{@object.host})"
-        else
-          a href: "/r/#{@object._id}", class: "title", -> @object.title
-        br foo: "bar"
-      span class: "item_info", ->
-        span -> " #{@object.points or 0} pts by "
-        a href: "/user/#{h(@object.created_by)}", -> h(@object.created_by)
-        span -> " " + @object.created_at.time_ago()
-        text " | "
-        if is_root and @object.parent_id
-          a class: "parent", href: "/r/#{@object.parent_id}", -> "parent"
+      if not @object.deleted_at?
+        if current_user? and not upvoted
+          a class: "upvote", href: '#', onclick: "app.upvote('#{h(@object._id)}'); return false;", -> "&#9650;"
+        if @object.title
+          if @object.url
+            a href: @object.url, class: "title", -> @object.title
+            if @object.host
+              span class: "host", -> "&nbsp;(#{@object.host})"
+          else
+            a href: "/r/#{@object._id}", class: "title", -> @object.title
+          br foo: "bar"
+        span class: "item_info", ->
+          span -> " #{@object.points or 0} pts by "
+          a href: "/user/#{h(@object.created_by)}", -> h(@object.created_by)
+          span -> " " + @object.created_at.time_ago()
           text " | "
-        a class: "link", href: "/r/#{@object._id}", -> "link"
-        if current_user? and @object.created_by == current_user.username
-          text " | "
-          a class: "edit", href: "#", onclick: "app.show_edit_box('#{h(@object._id)}'); return false;", -> "edit"
-          text " | "
-          a class: "delete", href: "#", onclick: "app.delete('#{h(@object._id)}'); return false;", -> "delete"
-      div class: "contents", ->
-        text markz::markup(@object.comment) if @object.comment
-        text " "
-        a class: "reply", href: "/r/#{@object._id}/reply", onclick: "app.show_reply_box('#{h(@object._id)}'); return false;", -> "reply"
-        # placeholders
-        div class: "edit_box_container"
-        div class: "reply_box_container"
+          if is_root and @object.parent_id
+            a class: "parent", href: "/r/#{@object.parent_id}", -> "parent"
+            text " | "
+          a class: "link", href: "/r/#{@object._id}", -> "link"
+          if current_user? and @object.created_by == current_user.username
+            text " | "
+            a class: "edit", href: "#", onclick: "app.show_edit_box('#{h(@object._id)}'); return false;", -> "edit"
+            text " | "
+            a class: "delete", href: "#", onclick: "app.delete('#{h(@object._id)}'); return false;", -> "delete"
+        div class: "contents", ->
+          text markz::markup(@object.comment) if @object.comment
+          text " "
+          a class: "reply", href: "/r/#{@object._id}/reply", onclick: "app.show_reply_box('#{h(@object._id)}'); return false;", -> "reply"
+          # placeholders
+          div class: "edit_box_container"
+          div class: "reply_box_container"
+      else
+        div class: "contents deleted", -> "[deleted]"
       div class: "children", ->
         if @children
           for child in @children
@@ -231,7 +234,15 @@ class Record
   # client side #
   # static method #
   delete: (rid) ->
-    alert 'not implemented yet'
+    $.ajax
+      cache: false
+      type: "POST"
+      url: "/r/#{rid}/delete"
+      datatype: "json"
+      error: ->
+        console.log('meh')
+      success: (data) ->
+        console.log('deleted')
 
   # client side #
   # static method #
@@ -284,3 +295,4 @@ if window?
   app.show_edit_box = Record::show_edit_box
   app.post_reply = Record::post_reply
   app.post_edit = Record::post_edit
+  app.delete = Record::delete

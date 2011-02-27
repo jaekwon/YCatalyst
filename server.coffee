@@ -119,7 +119,7 @@ server = http.createServer(utils.Rowt(new Sherpa.NodeJs([
         #views = logic.sessions.get_viewers()
         #rids = (v[0] for v in views)
         #mongo.records.find {_id: {$in: rids}}, (err, cursor) ->
-        mongo.records.find {parent_id: null}, {sort: [['score', -1]]}, (err, cursor) ->
+        mongo.records.find {parent_id: null, deleted_at: {$exists: false}}, {sort: [['score', -1]]}, (err, cursor) ->
           cursor.toArray (err, records) ->
             if err
               console.log err
@@ -179,6 +179,28 @@ server = http.createServer(utils.Rowt(new Sherpa.NodeJs([
         rid = req.sherpaResponse.params.id
         watching = logic.sessions.get_watching(rid)
         res.simpleJSON(200, watching)
+  ],
+
+  ['/r/:id/delete', (req, res) ->
+    console.log "qwe"
+    current_user = req.get_current_user()
+    if not current_user?
+      res.writeHead 401, status: 'login_error'
+      res.end 'not logged in'
+      return
+    switch req.method
+      when 'POST'
+        rid = req.sherpaResponse.params.id
+        logic.records.get_one_record rid, (err, record) ->
+          if record
+            record.object.deleted_at = new Date()
+            record.object.deleted_by = current_user.username
+            mongo.records.save record.object, (err, stuff) ->
+              res.simpleJSON 200, status: 'ok'
+              trigger_update [record]
+          else
+            res.writeHead 404, status: 'error'
+            res.end html
   ],
 
   ['/r/:id/reply', (req, res) ->

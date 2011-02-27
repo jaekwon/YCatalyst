@@ -69,6 +69,8 @@ body {
         font-size: 7pt; }
     body .record .contents {
       margin: 2px 0px; }
+      body .record .contents.deleted {
+        color: gray; }
     body .record[data-root="true"] > .contents {
       margin: 10px 0px; }
     body .record .reply {
