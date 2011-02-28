@@ -30,7 +30,6 @@ db.open (err, db) ->
 
   # set up records
   db.collection 'records', (err, coll) ->
-    # ensure indexes
     coll.ensureIndex [['parent_id', 1], ['score', 1]], (err, indexName) ->
       console.log "created index: #{indexName}"
       #coll.indexInformation (err, doc) ->
@@ -39,11 +38,12 @@ db.open (err, db) ->
 
   # set up users
   db.collection 'users', (err, coll) ->
+    coll.ensureIndex [['email', 1]], (err, indexName) ->
+      console.log "created index: #{indexName}"
     did_open('users', coll)
 
   # set up invites
   db.collection 'invites', (err, coll) ->
-    # ensure indexes
     coll.ensureIndex [['user_id', 1]], (err, indexName) ->
       console.log "created index: #{indexName}"
     did_open('invites', coll)

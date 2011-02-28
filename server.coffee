@@ -359,6 +359,72 @@ server = http.createServer(utils.Rowt(new Sherpa.NodeJs([
             return
   ],
 
+  ['/password_reset', (req, res) ->
+    switch req.method
+      when 'GET'
+        data = require('querystring').parse(require('url').parse(req.url).query)
+        if not data.key
+          # show the email form
+          render_layout "password_reset.jade", {}, req, res
+        else
+          # ask for the password & repeat
+          mongo.users.findOne username: data.username, (err, user) ->
+            if not user
+              # invalid user
+              render_layout "message.jade", {message: "Sorry, invalid request"}, req, res
+            else if user.password_reset_nonce == data.key
+              # reset the password
+              render_layout "password_reset.jade", {user: user}, req, res
+            else
+              # wrong key/nonce
+              render_layout "message.jade", {message: "Sorry, the URL is bad or expired. Check your latest email or try again"}, req, res
+      when 'POST'
+        if req.post_data.email
+          # we got the user's email
+          mongo.users.findOne email: req.post_data.email, (err, user) ->
+            if user
+              res.clearCookie 'user'
+              logic.mailer.send_password user: user, (err, results) ->
+                if err?
+                  render_layout "message.jade", {message: "Error sending an email, please try again."}, req, res
+                  return
+                render_layout "message.jade", {message: "check your email please."}, req, res
+            else
+              render_layout "message.jade", {message: "Sorry, unknown email #{req.post_data.email}."}, req, res
+              return
+        else if req.post_data.password
+          # we got the password and all that. do all validation here.
+          if req.post_data.password != req.post_data.password2
+            render_layout "message.jade", {message: "Password doesn't match. Go back."}, req, res
+            return
+          mongo.users.findOne username: req.post_data.username, (err, user) ->
+            if user
+              # ensure that the nonce was actually there.
+              if not user.password_reset_nonce or user.password_reset_nonce.length < 5 or (user.password_reset_nonce != req.post_data.password_reset_nonce)
+                render_layout "message.jade", {message: "Invalid request. Check your latest email or try again"}, req, res
+                return
+              # ensure good password
+              if not (5 <= req.post_data.password.length <= 20)
+                render_layout "message.jade", {message: "Invalid password. Your password must be between 5 and 20 characters in length"}, req, res
+                return
+              # save this new password and reset/delete the nonce
+              salt = utils.randid()
+              hashtimes = 10000 # runs about 80ms on my laptop
+              user.password = [utils.passhash(req.post_data.password, salt, hashtimes), salt, hashtimes]
+              delete user.password_reset_nonce
+              mongo.users.save user, (err, stuff) ->
+                # set the user in session
+                res.setSecureCookie 'user', JSON.stringify(user)
+                res.redirect '/'
+            else
+              render_layout "message.jade", {message: "Sorry, unknown user #{req.post_data.username}."}, req, res
+              return
+        else
+          # dunno
+          res.redirect '/password_reset'
+          return
+  ],
+
   ['/logout', (req, res) ->
     switch req.method
       when 'GET'
