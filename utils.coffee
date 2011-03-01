@@ -1,4 +1,6 @@
 require.paths.unshift 'vendor/www-forms'
+qs = require 'querystring'
+url = require 'url'
 www_forms = require 'www-forms'
 http = require 'http'
 fs = require 'fs'
@@ -55,6 +57,10 @@ exports.Rowt = (fn) ->
       SERVER_LOG.write("#{(''+new Date()).substr(0,24)} #{req.headers['x-real-ip'] or req.connection.remoteAddress} #{req.httpVersion} #{req.method} #{req.url} --> #{statusCode} \n")
       SERVER_LOG.flush()
     try
+      if req.url.indexOf('?') != -1
+        req.query_data = qs.parse(url.parse(req.url).query)
+      else
+        req.query_data = {}
       if (req.method == 'POST')
         called_back = false
         req.setEncoding 'utf8'

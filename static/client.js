@@ -66,41 +66,6 @@
       }
     });
   };
-  app.make_autoresizable = function(textarea) {
-    var autoresize, cloned_textarea;
-    cloned_textarea = $(document.createElement('div'));
-    cloned_textarea.css({
-      minHeight: textarea.css('min-height'),
-      minWidth: textarea.css('min-width'),
-      fontFamily: textarea.css('font-family'),
-      fontSize: textarea.css('font-size'),
-      padding: textarea.css('padding'),
-      overflow: 'hidden'
-    });
-    cloned_textarea.css({
-      position: 'absolute',
-      left: '-1000000px',
-      disabled: true
-    });
-    $(document.body).prepend(cloned_textarea);
-    autoresize = function(event) {
-      var line, _i, _len, _ref;
-      cloned_textarea.css({
-        width: textarea.css('width')
-      });
-      cloned_textarea.text('');
-      _ref = textarea.val().split("\n");
-      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-        line = _ref[_i];
-        cloned_textarea.append(hE(line));
-        cloned_textarea.append('<br/>');
-      }
-      cloned_textarea.append('<br/>');
-      return textarea.css('height', cloned_textarea[0].scrollHeight);
-    };
-    textarea.bind('keyup', autoresize);
-    return setTimeout(autoresize, 0);
-  };
   app.set_default_text = function(input, default_text) {
     var on_blur, on_focus;
     on_focus = __bind(function() {
@@ -140,6 +105,44 @@
     },
     'decrement': function() {
       return this.text(parseInt(this.text()) - 1);
+    },
+    'make_autoresizable': function() {
+      return this.each(function(i, textarea) {
+        var autoresize, cloned_textarea;
+        textarea = $(textarea);
+        cloned_textarea = $(document.createElement('div'));
+        cloned_textarea.css({
+          minHeight: textarea.css('min-height'),
+          minWidth: textarea.css('min-width'),
+          fontFamily: textarea.css('font-family'),
+          fontSize: textarea.css('font-size'),
+          padding: textarea.css('padding'),
+          overflow: 'hidden'
+        });
+        cloned_textarea.css({
+          position: 'absolute',
+          left: '-1000000px',
+          disabled: true
+        });
+        $(document.body).prepend(cloned_textarea);
+        autoresize = function(event) {
+          var line, _i, _len, _ref;
+          cloned_textarea.css({
+            width: textarea.css('width')
+          });
+          cloned_textarea.text('');
+          _ref = textarea.val().split("\n");
+          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+            line = _ref[_i];
+            cloned_textarea.append(hE(line));
+            cloned_textarea.append('<br/>');
+          }
+          cloned_textarea.append('<br/>');
+          return textarea.css('height', cloned_textarea[0].scrollHeight);
+        };
+        textarea.bind('keyup', autoresize);
+        return setTimeout(autoresize, 0);
+      });
     }
   });
   $(document).ready(function() {

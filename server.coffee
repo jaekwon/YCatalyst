@@ -299,7 +299,7 @@ server = http.createServer(utils.Rowt(new Sherpa.NodeJs([
       return
     switch req.method
       when 'GET'
-        render_layout "submit.jade", {headerbar_text: 'Submit'}, req, res
+        render_layout "submit.jade", {headerbar_text: 'Submit', type: (req.query_data.type or 'link')}, req, res
       when 'POST'
         data = req.post_data
         # validate data
@@ -331,8 +331,7 @@ server = http.createServer(utils.Rowt(new Sherpa.NodeJs([
   ['/login', (req, res) ->
     switch req.method
       when 'GET'
-        data = require('querystring').parse(require('url').parse(req.url).query)
-        res.setCookie 'goto', data.goto
+        res.setCookie 'goto', req.query_data.goto
         render_layout "login.jade", {}, req, res
       when 'POST'
         form_error = (error) ->
@@ -362,17 +361,16 @@ server = http.createServer(utils.Rowt(new Sherpa.NodeJs([
   ['/password_reset', (req, res) ->
     switch req.method
       when 'GET'
-        data = require('querystring').parse(require('url').parse(req.url).query)
-        if not data.key
+        if not req.query_data.key
           # show the email form
           render_layout "password_reset.jade", {}, req, res
         else
           # ask for the password & repeat
-          mongo.users.findOne username: data.username, (err, user) ->
+          mongo.users.findOne username: req.query_data.username, (err, user) ->
             if not user
               # invalid user
               render_layout "message.jade", {message: "Sorry, invalid request"}, req, res
-            else if user.password_reset_nonce == data.key
+            else if user.password_reset_nonce == req.query_data.key
               # reset the password
               render_layout "password_reset.jade", {user: user}, req, res
             else

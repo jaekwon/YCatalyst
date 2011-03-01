@@ -196,7 +196,7 @@ class Record
           button onclick: "app.post_reply('#{rid}')", -> 'post comment'
           button onclick: "$(this).parent().remove()", -> 'cancel'
       container = record_e.find('>.contents>.reply_box_container').append(coffeekup.render kup, context: this, locals: {rid: rid}, dynamic_locals: true)
-      app.make_autoresizable container.find('textarea')
+      container.find('textarea').make_autoresizable()
 
   # client side #
   # static method #
@@ -227,7 +227,7 @@ class Record
               button onclick: "$(this).parent().remove()", -> 'cancel'
           container = record_e.find('>.contents>.edit_box_container').
             append(coffeekup.render kup, context: this, locals: {rid: rid, data: data}, dynamic_locals: true)
-          app.make_autoresizable container.find('textarea')
+          container.find('textarea').make_autoresizable()
           container.find('input[name="title"]').set_default_text('title')
           container.find('input[name="url"]').set_default_text('URL')
           container.find('textarea[name="comment"]').set_default_text('comment')

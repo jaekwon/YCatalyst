@@ -1,34 +1,60 @@
-form(action: "/submit", method: "POST")
-  table
-    tr
-      th
-        span title
-      td
-        input(type: "text", name: "title")
-      td
-        i(style: "color: gray") required
-  br
-  table
-    tr
-      th
-        span url
-      td
-        input(type: "text", name: "url")
-    tr
-      th
-      td
-        span(style: "font-weight: bold; color: gray") and/or
-    tr
-      th(valign: "top")
-        span text
-      td
-        textarea(name: "text")
-    tr
-      th
-      td
-        input(type: "submit", value: "submit")
+- if (type == 'link')
+  form(action: "/submit", method: "POST")
+    table
+      tr
+        th
+          span title
+        td
+          input(type: "text", name: "title")
+        td
+          i(style: "color: gray") required
+    br
+    table
+      tr
+        th
+          span url
+        td
+          input(type: "text", name: "url")
+      tr
+        th
+        td
+          span(style: "font-weight: bold; color: gray") and/or
+      tr
+        th(valign: "top")
+          span text
+        td
+          textarea(name: "text")
+      tr
+        th
+        td
+          input(type: "submit", value: "submit")
+- else
+  form(action: "/submit", method: "POST")
+    input(type: "hidden", name: "type", value: "poll")
+    table
+      tr
+        th
+          span title
+        td
+          input(type: "text", name: "title")
+        td
+          i(style: "color: gray") required
+      tr
+        th(valign: "top")
+          span text
+        td
+          textarea(name: "text")
+      tr
+        th(valign: "top")
+          span choices
+        td
+          textarea(name: "choices")
+      tr
+        th
+        td
+          input(type: "submit", value: "submit")
 
 :javascript
   | $(document).ready(function() {
-  |   app.make_autoresizable($('textarea'));
+  |   $('textarea').make_autoresizable();
   | });
