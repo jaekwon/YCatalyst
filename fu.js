@@ -68,6 +68,7 @@ fu.staticHandler = function (filename) {
     sys.puts("loading " + filename + "...");
     readFile(filename, function (err, data) {
       if (err) {
+        console.log(err.message);
         sys.puts("Error loading " + filename);
       } else {
         body = data;

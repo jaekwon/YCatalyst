@@ -1,11 +1,9 @@
 require.paths.unshift 'vendor/jade'
-require.paths.unshift 'vendor/sherpa/lib'
 require.paths.unshift 'vendor'
 require.paths.unshift 'vendor/validator'
 
 http = require 'http'
 jade = require 'jade'
-sherpa = require 'sherpa/nodejs'
 utils = require './utils'
 mongo = require './mongo'
 fu = require './fu'
@@ -96,12 +94,12 @@ render_layout = (template, locals, req, res, fn) ->
         res.writeHead 200, status: 'ok'
         res.end html
 
-server = http.createServer(utils.Rowt(new Sherpa.NodeJs([
+server = utils.Rowter([
 
   ['/static/:filepath', (req, res) ->
     switch req.method
       when 'GET'
-        filepath = req.sherpaResponse.params.filepath
+        filepath = req.path_data.filepath
         filepath = require('path').join './static/', filepath
         if filepath.indexOf('static/') != 0
           res.writeHead 404, 'does not exist'
@@ -130,7 +128,7 @@ server = http.createServer(utils.Rowt(new Sherpa.NodeJs([
 
   ['/r/:id', (req, res) ->
     current_user = req.get_current_user()
-    root_id = req.sherpaResponse.params.id
+    root_id = req.path_data.id
     switch req.method
       when 'GET'
         # requested from json, just return a single record
@@ -176,7 +174,7 @@ server = http.createServer(utils.Rowt(new Sherpa.NodeJs([
   ['/r/:id/watching', (req, res) ->
     switch req.method
       when 'GET'
-        rid = req.sherpaResponse.params.id
+        rid = req.path_data.id
         watching = logic.sessions.get_watching(rid)
         res.simpleJSON(200, watching)
   ],
@@ -190,7 +188,7 @@ server = http.createServer(utils.Rowt(new Sherpa.NodeJs([
       return
     switch req.method
       when 'POST'
-        rid = req.sherpaResponse.params.id
+        rid = req.path_data.id
         logic.records.get_one_record rid, (err, record) ->
           if record
             record.object.deleted_at = new Date()
@@ -211,11 +209,11 @@ server = http.createServer(utils.Rowt(new Sherpa.NodeJs([
       return
     switch req.method
       when 'GET'
-        parent_id = req.sherpaResponse.params.id
+        parent_id = req.path_data.id
         logic.records.get_one_record parent_id, (err, parent) ->
           render_layout "reply.jade", {parent: parent}, req, res
       when 'POST'
-        parent_id = req.sherpaResponse.params.id
+        parent_id = req.path_data.id
         comment = req.post_data.comment
         logic.records.get_one_record parent_id, (err, parent) ->
           if parent
@@ -268,7 +266,7 @@ server = http.createServer(utils.Rowt(new Sherpa.NodeJs([
     current_user = req.get_current_user()
     switch req.method
       when 'GET'
-        key = req.sherpaResponse.params.key
+        key = req.path_data.key
         if not all_callbacks[key]
           all_callbacks[key] = []
         all_callbacks[key].push
@@ -288,7 +286,7 @@ server = http.createServer(utils.Rowt(new Sherpa.NodeJs([
       return
     switch req.method
       when 'POST'
-        rid = req.sherpaResponse.params.id
+        rid = req.path_data.id
         logic.records.get_one_record rid, (err, record) ->
           if not record.object.upvoters?
             record.object.upvoters = []
@@ -501,7 +499,6 @@ server = http.createServer(utils.Rowt(new Sherpa.NodeJs([
               mongo.invites.save invite, (err, stuff) ->
                 #pass
   ]
-
-]).listener()))
+])
 server.listen 8126, '127.0.0.1'
 console.log 'Server running at http://127.0.0.1:8126'

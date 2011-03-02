@@ -49,40 +49,83 @@ http.ServerResponse.prototype.writeHead = (statusCode) ->
   this.emit('writeHead', statusCode)
   _o_writeHead.apply(this, arguments)
 
-exports.Rowt = (fn) ->
-  return (req, res) ->
-    SERVER_LOG.write("#{(''+new Date()).substr(0,24)} #{req.headers['x-real-ip'] or req.connection.remoteAddress} #{req.httpVersion} #{req.method} #{req.url} #{req.headers.referer} \n")
+# ROWTER
+# Sets some sensible defaults,
+# and also sets req.path_data / req.query_data / req.post_data
+# routes: an array of ['/route', fn(req, res)] pairs
+exports.Rowter = (routes) ->
+  # convert [route, fn] to [regex, param_names, fn]
+  parsed = []
+  for route_fn in routes
+    [route, fn] = route_fn
+    symbols = (x.substr(1) for x in (route.match(/:[^\/]+/g) or []))
+    regex = new RegExp("^"+route.replace(/:[^\/]+/g, "([^\/]+)")+"$")
+    regex._re_string = route.replace(/:[^\/]+/g, "([^\/]+)")
+    parsed.push([regex, symbols, fn])
+
+  # create a giant function that takes a (req, res) pair and finds the right fn to call.
+  # we need a giant function for each server because that's how node.js works.
+  giant_function = (req, res) ->
+    # find matching route
+    for regex_symbols_fn in parsed
+      [regex, symbols, fn] = regex_symbols_fn
+      matched = regex(req.url.split("?", 1))
+      #console.log "/#{regex._re_string}/ matched #{req.url.split("?", 1)} to get #{matched}"
+      if not matched?
+        continue
+      # otherwise, we found our match.
+      # construct the req.path_data object
+      req.path_data = {}
+      if symbols.length > 0
+        for i in [0..symbols.length]
+          req.path_data[symbols[i]] = matched[i+1]
+      # and finally
+      do_Rowt(fn, req, res)
+      return
+
+    # if we're here, we failed to find a matching route.
+    # TODO 
+    return
+
+  server = http.createServer(giant_function)
+  server.routes = parsed # you can dynamically alter this array if you want.
+  return server
+      
+# most of the meat is here.      
+do_Rowt = (fn, req, res) ->
+  SERVER_LOG.write("#{(''+new Date()).substr(0,24)} #{req.headers['x-real-ip'] or req.connection.remoteAddress} #{req.httpVersion} #{req.method} #{req.url} #{req.headers.referer} \n")
+  SERVER_LOG.flush()
+  res.addListener 'writeHead', (statusCode) ->
+    SERVER_LOG.write("#{(''+new Date()).substr(0,24)} #{req.headers['x-real-ip'] or req.connection.remoteAddress} #{req.httpVersion} #{req.method} #{req.url} --> #{statusCode} \n")
     SERVER_LOG.flush()
-    res.addListener 'writeHead', (statusCode) ->
-      SERVER_LOG.write("#{(''+new Date()).substr(0,24)} #{req.headers['x-real-ip'] or req.connection.remoteAddress} #{req.httpVersion} #{req.method} #{req.url} --> #{statusCode} \n")
-      SERVER_LOG.flush()
-    try
-      if req.url.indexOf('?') != -1
-        req.query_data = qs.parse(url.parse(req.url).query)
-      else
-        req.query_data = {}
-      if (req.method == 'POST')
-        called_back = false
-        req.setEncoding 'utf8'
-        req.addListener 'data', (chunk) ->
-          req.post_data = www_forms.decodeForm(chunk)
+  try
+    if req.url.indexOf('?') != -1
+      req.query_data = qs.parse(url.parse(req.url).query)
+    else
+      req.query_data = {}
+    if (req.method == 'POST')
+      called_back = false
+      req.setEncoding 'utf8'
+      req.addListener 'data', (chunk) ->
+        req.post_data = www_forms.decodeForm(chunk)
+        called_back = true
+        return fn(req, res)
+      req.addListener 'end', ->
+        if not called_back
           called_back = true
           return fn(req, res)
-        req.addListener 'end', ->
-          if not called_back
-            called_back = true
-            return fn(req, res)
-      else
-        return fn(req, res)
-    catch e
-      console.log("error in Rowt: " + e)
-      console.log(e.stack)
-      try
-        res.writeHead(500, status: 'woops')
-      catch _
-        # pass
-      res.end()
+    else
+      return fn(req, res)
+  catch e
+    console.log("error in Rowt: " + e)
+    console.log(e.stack)
+    try
+      res.writeHead(500, status: 'woops')
+    catch _
+      # pass
+    res.end()
 
+# other utility stuff
 exports.randid = () ->
     text = ""
     possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
