@@ -48,7 +48,10 @@ app.poll = (root) ->
               else
                 # render it
                 record = new window.app.Record(recdata)
-                parent.find('.children:eq(0)').prepend(record.render(is_root: false, current_user: app.current_user))
+                if record.object.type == 'choice'
+                  parent.find('>.contents>.choices').append(record.render(is_root: false, current_user: app.current_user))
+                else
+                  parent.find('>.children').prepend(record.render(is_root: false, current_user: app.current_user))
             # otherwise we're updating possibly an existing record
             else
               is_leaf = parent.parents('.record').length >= (app.DEFAULT_DEPTH-1)

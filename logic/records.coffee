@@ -14,7 +14,7 @@ exports.get_records = (root_id, level, fn) ->
     fetchmore = (i) ->
       # NOTE: http://talklikeaduck.denhaven2.com/2009/04/15/ordered-hashes-in-ruby-1-9-and-javascript
       # and   http://ejohn.org/blog/javascript-in-chrome/
-      # The side effect of sorting here is that the dangle method will automagically sort the children by points.
+      # The side effect of sorting here is that the dangle method will automagically sort the children by score.
       mongo.records.find {parent_id: {$in: tofetch}}, {sort: [['score', -1]]}, (err, cursor) ->
         cursor.toArray (err, records) ->
           tofetch = []
@@ -91,4 +91,15 @@ exports.dangle = (records, root_id) ->
       if not parent.children
         parent.children = []
       parent.children.push(record)
+  # we now have the root...
+  # pull out poll items and put them in a different spot.
+  if root.object.type == 'poll'
+    orig_children = root.children
+    root.children = []
+    root.choices = []
+    for child in orig_children
+      if child.object.type == 'choice'
+        root.choices.push(child)
+      else
+        root.children.push(child)
   return root

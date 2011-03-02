@@ -221,6 +221,13 @@ server = http.createServer(utils.Rowt(new Sherpa.NodeJs([
           if parent
             root_id = if parent.object.root_id? then parent.object.root_id else parent.object._id
             recdata = _id: utils.randid(), comment: comment, created_by: current_user.username, root_id: root_id
+            if req.post_data.type == 'choice'
+              # only the parent's creator can add a poll choice
+              if parent.object.created_by != current_user.username
+                res.writeHead 401, status: 'unauthorized'
+                res.end "I can't let you do that"
+                return
+              recdata.type = 'choice'
             record = logic.records.create_record(recdata, parent)
             mongo.records.save record.object, (err, stuff) ->
               if req.headers['x-requested-with'] == 'XMLHttpRequest'
@@ -228,25 +235,30 @@ server = http.createServer(utils.Rowt(new Sherpa.NodeJs([
               else
                 res.writeHead 302, Location: '/r/'+parent_id
                 res.end()
-              # update the parent as well, specifically num_children
-              parent.object.num_children += 1
-              mongo.records.save parent.object, (err, stuff) ->
-                if err
-                  console.err "failed to update parent.num_children: #{parent_id}"
-              # update the root, num_discussions.
-              logic.records.get_one_record root_id, (err, root) ->
-                if err
-                  console.err "failed ot update root.num_discussions: #{root_id}"
-                  return
-                if not root.object.num_discussions?
-                  root.object.num_discussions = 1
-                else
-                  root.object.num_discussions += 1
-                mongo.records.save root.object, (err, stuff) ->
+              if record.object.type == 'choice'
+                # we could trigger a live update, but
+                # needs an update of the process.
+                trigger_update [record]
+              else
+                # update the parent as well, specifically num_children
+                parent.object.num_children += 1
+                mongo.records.save parent.object, (err, stuff) ->
                   if err
-                    console.err "failed to update root.num_discussions: #{root_id}"
-              # notify clients
-              trigger_update [parent, record]
+                    console.err "failed to update parent.num_children: #{parent_id}"
+                # update the root, num_discussions.
+                logic.records.get_one_record root_id, (err, root) ->
+                  if err
+                    console.err "failed ot update root.num_discussions: #{root_id}"
+                    return
+                  if not root.object.num_discussions?
+                    root.object.num_discussions = 1
+                  else
+                    root.object.num_discussions += 1
+                  mongo.records.save root.object, (err, stuff) ->
+                    if err
+                      console.err "failed to update root.num_discussions: #{root_id}"
+                # notify clients
+                trigger_update [parent, record]
           else
             res.writeHead 404, status: 'error'
             res.end html
@@ -309,8 +321,15 @@ server = http.createServer(utils.Rowt(new Sherpa.NodeJs([
             _v.check(data.url, 'url must be a valid http(s):// url.').isUrl()
           if data.text
             _v.check(data.text, 'text must be less than 10K characters for now').len(0, 10000)
-          if not data.url and not data.text
-            throw 'you must enter a URL or text'
+          if data.choices
+            _v.check(data.choices, 'choices must be less than 10K characters for now').len(0, 10000)
+          if data.type == 'poll'
+            choices = data.choices = (data.choices or '').replace(/\r\n/g, "\n").split("\n\n")
+            if choices.length < 2
+              throw 'you must enter some choices separated by newlines'
+          else
+            if not data.url and not data.text and not data.choices
+              throw 'you must enter a URL or text'
         catch e
           render_layout "message.jade", {message: ''+e}, req, res
           return
@@ -323,9 +342,23 @@ server = http.createServer(utils.Rowt(new Sherpa.NodeJs([
           catch e
             recdata.host = 'unknown'
             console.log "record with url #{data.url}: couldn't parse the hostname"
+        else if data.choices
+          recdata.type = 'poll'
+          
         record = logic.records.create_record(recdata)
         mongo.records.save record.object, (err, stuff) ->
-          res.redirect "/r/#{stuff._id}"
+          record.object = stuff
+          # if data.choices, then add the choices too
+          if data.choices
+            for choice in data.choices
+              choice_recdata = {comment: choice, created_by: current_user.username, type: 'choice'}
+              choice_record = logic.records.create_record(choice_recdata, record)
+              mongo.records.save choice_record.object, (err, stuff) ->
+                # nothing to do
+            # TODO assume it worked.
+            res.redirect "/r/#{stuff._id}"
+          else
+            res.redirect "/r/#{stuff._id}"
   ],
 
   ['/login', (req, res) ->

@@ -72,18 +72,24 @@ body {
       margin: 2px 0px; }
       body .record .contents.deleted {
         color: gray; }
-    body .record .reply {
+    body .record .reply, body .record .addchoice {
+      margin-right: 1em;
       font-size: 0.8em; }
     body .record .edit_box {
       margin: 10px 0px; }
       body .record .edit_box button {
         margin-top: 5px; }
     body .record .reply_box {
-      margin: 10px 0px 10px 10px;
+      margin: 10px 0px 10px 5px;
       padding-left: 10px;
       border-left: 1px solid #eeeeee; }
       body .record .reply_box button {
         margin-top: 5px; }
+    body .record .choices {
+      border-left: 2px solid #bbbbff;
+      margin-left: 5px;
+      padding-left: 5px;
+      color: #333399; }
     body .record .children {
       border-left: 1px solid #eeeeee;
       margin-left: 5px;

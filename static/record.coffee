@@ -75,35 +75,52 @@ class Record
             a href: "/r/#{@object._id}", class: "title", -> @object.title
           br foo: "bar"
         span class: "item_info", ->
-          span -> " #{@object.points or 0} pts by "
-          a href: "/user/#{h(@object.created_by)}", -> h(@object.created_by)
-          span -> " " + @object.created_at.time_ago()
-          text " | "
+          span -> " #{@object.points or 0} pts "
+          if @object.type != 'choice'
+            text " by "
+            a href: "/user/#{h(@object.created_by)}", -> h(@object.created_by)
+            span -> " " + @object.created_at.time_ago()
+            text " | "
           if is_root and @object.parent_id
             a class: "parent", href: "/r/#{@object.parent_id}", -> "parent"
             text " | "
-          a class: "link", href: "/r/#{@object._id}", -> "link"
+          if @object.type != 'choice'
+            a class: "link", href: "/r/#{@object._id}", -> "link"
           if current_user? and @object.created_by == current_user.username
             text " | "
             a class: "edit", href: "#", onclick: "app.show_edit_box('#{h(@object._id)}'); return false;", -> "edit"
             text " | "
             a class: "delete", href: "#", onclick: "app.delete('#{h(@object._id)}'); return false;", -> "delete"
         div class: "contents", ->
+          # main body
           text markz::markup(@object.comment) if @object.comment
-          text " "
-          a class: "reply", href: "/r/#{@object._id}/reply", onclick: "app.show_reply_box('#{h(@object._id)}'); return false;", -> "reply"
+          # perhaps some poll choices
+          if @choices
+            div class: "choices", ->
+              for choice in @choices
+                continue if choice.object.deleted_at?
+                text choice.render(is_root: false, current_user: current_user)
+        div class: "footer", ->
+          # add poll choice
+          if current_user? and @object.type == 'poll' and @object.created_by == current_user.username
+            a class: "addchoice", href: "#", onclick: "app.show_reply_box('#{h(@object._id)}', {choice: true}); return false;", -> "add choice"
+          # reply link
+          if @object.type != 'choice'
+            a class: "reply", href: "/r/#{@object._id}/reply", onclick: "app.show_reply_box('#{h(@object._id)}'); return false;", -> "reply"
           # placeholders
           div class: "edit_box_container"
-          div class: "reply_box_container"
+          if @object.type != 'choice'
+            div class: "reply_box_container"
       else
         div class: "contents deleted", -> "[deleted]"
-      div class: "children", ->
-        if @children
-          for child in @children
-            text child.render(is_root: false, current_user: current_user)
-        loaded_children = if @children then @children.length else 0
-        if loaded_children < @object.num_children
-          a class: "more", href: "/r/#{@object._id}", -> "#{@object.num_children - loaded_children} more replies"
+      if @object.type != 'choice'
+        div class: "children", ->
+          if @children
+            for child in @children
+              text child.render(is_root: false, current_user: current_user)
+          loaded_children = if @children then @children.length else 0
+          if loaded_children < @object.num_children
+            a class: "more", href: "/r/#{@object._id}", -> "#{@object.num_children - loaded_children} more replies"
 
   # options:
   #   is_root -> default true, if false, doesn't show parent_link,
@@ -158,11 +175,14 @@ class Record
   redraw: (options) ->
     old = $("\##{@object._id}")
     old_is_root = old.attr('data-root') == "true"
-    children = old.find('.children:eq(0)').detach()
+    choices = old.find('>.contents>.choices').detach()
+    children = old.find('>.children').detach()
     options.is_root = old_is_root
     old.replaceWith(this.render(options))
+    if choices.length > 0
+      $("\##{@object._id}").find('>.contents').append(choices)
     if not options? or not options.is_leaf
-      $("\##{@object._id}").find('.children:eq(0)').replaceWith(children)
+      $("\##{@object._id}").find('>.children').replaceWith(children)
 
   # client side #
   # static method #
@@ -183,26 +203,29 @@ class Record
 
   # client side #
   # static method #
-  show_reply_box: (rid) ->
+  show_reply_box: (rid, options) ->
     if not app.current_user?
       window.location = "/login?goto=/r/#{rid}/reply"
       return
     record_e = $('#'+rid)
-    if record_e.find('>.contents>.reply_box_container>.reply_box').length == 0
+    if record_e.find('>.footer>.reply_box_container>.reply_box').length == 0
       kup = ->
         div class: "reply_box", ->
           textarea name: "comment"
           br foo: 'bar' # dunno why just br doesn't work
-          button onclick: "app.post_reply('#{rid}')", -> 'post comment'
+          if options? and options.choice
+            button onclick: "app.post_reply('#{rid}', 'choice')", -> 'add choice'
+          else
+            button onclick: "app.post_reply('#{rid}')", -> 'post comment'
           button onclick: "$(this).parent().remove()", -> 'cancel'
-      container = record_e.find('>.contents>.reply_box_container').append(coffeekup.render kup, context: this, locals: {rid: rid}, dynamic_locals: true)
+      container = record_e.find('>.footer>.reply_box_container').append(coffeekup.render kup, context: this, locals: {rid: rid, options: options}, dynamic_locals: true)
       container.find('textarea').make_autoresizable()
 
   # client side #
   # static method #
   show_edit_box: (rid) ->
     record_e = $('#'+rid)
-    if record_e.find('>.contents>.edit_box_container>.edit_box').length == 0
+    if record_e.find('>.footer>.edit_box_container>.edit_box').length == 0
       # get the record data
       $.ajax
         cache: false
@@ -225,7 +248,7 @@ class Record
               br foo: 'bar' # dunno why just br doesn't work
               button onclick: "app.post_edit('#{rid}')", -> 'update'
               button onclick: "$(this).parent().remove()", -> 'cancel'
-          container = record_e.find('>.contents>.edit_box_container').
+          container = record_e.find('>.footer>.edit_box_container').
             append(coffeekup.render kup, context: this, locals: {rid: rid, data: data}, dynamic_locals: true)
           container.find('textarea').make_autoresizable()
           container.find('input[name="title"]').set_default_text('title')
@@ -247,20 +270,20 @@ class Record
 
   # client side #
   # static method #
-  post_reply: (rid) ->
+  post_reply: (rid, type) ->
     record_e = $('#'+rid)
-    comment = record_e.find('>.contents>.reply_box_container>.reply_box>textarea').val()
+    comment = record_e.find('>.footer>.reply_box_container>.reply_box>textarea').val()
     $.ajax
       cache: false
       type: "POST"
       url: "/r/#{rid}/reply"
-      data: {comment: comment}
+      data: {comment: comment, type: type}
       dataType: "json"
       error: ->
         console.log('meh')
       success: (data) ->
         if data?
-          record_e.find('>.contents>.reply_box_container>.reply_box').remove()
+          record_e.find('>.footer>.reply_box_container>.reply_box').remove()
         else
           alert 'uh oh, server might be down. try again later?'
 
@@ -268,9 +291,9 @@ class Record
   # static method #
   post_edit: (rid) ->
     record_e = $('#'+rid)
-    title = record_e.find('>.contents>.edit_box_container>.edit_box>input[name="title"]').get_value()
-    url = record_e.find('>.contents>.edit_box_container>.edit_box>input[name="url"]').get_value()
-    comment = record_e.find('>.contents>.edit_box_container>.edit_box>textarea[name="comment"]').get_value()
+    title = record_e.find('>.footer>.edit_box_container>.edit_box>input[name="title"]').get_value()
+    url = record_e.find('>.footer>.edit_box_container>.edit_box>input[name="url"]').get_value()
+    comment = record_e.find('>.footer>.edit_box_container>.edit_box>textarea[name="comment"]').get_value()
     $.ajax
       cache: false
       type: "POST"
@@ -281,7 +304,7 @@ class Record
         console.log('meh')
       success: (data) ->
         if data?
-          record_e.find('>.contents>.edit_box_container>.edit_box').remove()
+          record_e.find('>.footer>.edit_box_container>.edit_box').remove()
         else
           alert 'uh oh, server might be down. try again later?'
 

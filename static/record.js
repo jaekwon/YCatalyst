@@ -105,17 +105,20 @@
             "class": "item_info"
           }, function() {
             span(function() {
-              return " " + (this.object.points || 0) + " pts by ";
+              return " " + (this.object.points || 0) + " pts ";
             });
-            a({
-              href: "/user/" + (h(this.object.created_by))
-            }, function() {
-              return h(this.object.created_by);
-            });
-            span(function() {
-              return " " + this.object.created_at.time_ago();
-            });
-            text(" | ");
+            if (this.object.type !== 'choice') {
+              text(" by ");
+              a({
+                href: "/user/" + (h(this.object.created_by))
+              }, function() {
+                return h(this.object.created_by);
+              });
+              span(function() {
+                return " " + this.object.created_at.time_ago();
+              });
+              text(" | ");
+            }
             if (is_root && this.object.parent_id) {
               a({
                 "class": "parent",
@@ -125,12 +128,14 @@
               });
               text(" | ");
             }
-            a({
-              "class": "link",
-              href: "/r/" + this.object._id
-            }, function() {
-              return "link";
-            });
+            if (this.object.type !== 'choice') {
+              a({
+                "class": "link",
+                href: "/r/" + this.object._id
+              }, function() {
+                return "link";
+              });
+            }
             if ((typeof current_user != "undefined" && current_user !== null) && this.object.created_by === current_user.username) {
               text(" | ");
               a({
@@ -156,20 +161,56 @@
             if (this.object.comment) {
               text(markz.prototype.markup(this.object.comment));
             }
-            text(" ");
-            a({
-              "class": "reply",
-              href: "/r/" + this.object._id + "/reply",
-              onclick: "app.show_reply_box('" + (h(this.object._id)) + "'); return false;"
-            }, function() {
-              return "reply";
-            });
+            if (this.choices) {
+              return div({
+                "class": "choices"
+              }, function() {
+                var choice, _i, _len, _ref, _results;
+                _ref = this.choices;
+                _results = [];
+                for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+                  choice = _ref[_i];
+                  if (choice.object.deleted_at != null) {
+                    continue;
+                  }
+                  _results.push(text(choice.render({
+                    is_root: false,
+                    current_user: current_user
+                  })));
+                }
+                return _results;
+              });
+            }
+          });
+          div({
+            "class": "footer"
+          }, function() {
+            if ((typeof current_user != "undefined" && current_user !== null) && this.object.type === 'poll' && this.object.created_by === current_user.username) {
+              a({
+                "class": "addchoice",
+                href: "#",
+                onclick: "app.show_reply_box('" + (h(this.object._id)) + "', {choice: true}); return false;"
+              }, function() {
+                return "add choice";
+              });
+            }
+            if (this.object.type !== 'choice') {
+              a({
+                "class": "reply",
+                href: "/r/" + this.object._id + "/reply",
+                onclick: "app.show_reply_box('" + (h(this.object._id)) + "'); return false;"
+              }, function() {
+                return "reply";
+              });
+            }
             div({
               "class": "edit_box_container"
             });
-            return div({
-              "class": "reply_box_container"
-            });
+            if (this.object.type !== 'choice') {
+              return div({
+                "class": "reply_box_container"
+              });
+            }
           });
         } else {
           div({
@@ -178,30 +219,32 @@
             return "[deleted]";
           });
         }
-        return div({
-          "class": "children"
-        }, function() {
-          var child, loaded_children, _i, _len, _ref;
-          if (this.children) {
-            _ref = this.children;
-            for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-              child = _ref[_i];
-              text(child.render({
-                is_root: false,
-                current_user: current_user
-              }));
+        if (this.object.type !== 'choice') {
+          return div({
+            "class": "children"
+          }, function() {
+            var child, loaded_children, _i, _len, _ref;
+            if (this.children) {
+              _ref = this.children;
+              for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+                child = _ref[_i];
+                text(child.render({
+                  is_root: false,
+                  current_user: current_user
+                }));
+              }
             }
-          }
-          loaded_children = this.children ? this.children.length : 0;
-          if (loaded_children < this.object.num_children) {
-            return a({
-              "class": "more",
-              href: "/r/" + this.object._id
-            }, function() {
-              return "" + (this.object.num_children - loaded_children) + " more replies";
-            });
-          }
-        });
+            loaded_children = this.children ? this.children.length : 0;
+            if (loaded_children < this.object.num_children) {
+              return a({
+                "class": "more",
+                href: "/r/" + this.object._id
+              }, function() {
+                return "" + (this.object.num_children - loaded_children) + " more replies";
+              });
+            }
+          });
+        }
       });
     };
     Record.prototype.render = function(options) {
@@ -317,14 +360,18 @@
       return "/r/" + this.object._id + "/reply";
     };
     Record.prototype.redraw = function(options) {
-      var children, old, old_is_root;
+      var children, choices, old, old_is_root;
       old = $("\#" + this.object._id);
       old_is_root = old.attr('data-root') === "true";
-      children = old.find('.children:eq(0)').detach();
+      choices = old.find('>.contents>.choices').detach();
+      children = old.find('>.children').detach();
       options.is_root = old_is_root;
       old.replaceWith(this.render(options));
+      if (choices.length > 0) {
+        $("\#" + this.object._id).find('>.contents').append(choices);
+      }
       if (!(options != null) || !options.is_leaf) {
-        return $("\#" + this.object._id).find('.children:eq(0)').replaceWith(children);
+        return $("\#" + this.object._id).find('>.children').replaceWith(children);
       }
     };
     Record.prototype.upvote = function(rid) {
@@ -340,14 +387,14 @@
         success: function(data) {}
       });
     };
-    Record.prototype.show_reply_box = function(rid) {
+    Record.prototype.show_reply_box = function(rid, options) {
       var container, kup, record_e;
       if (!(app.current_user != null)) {
         window.location = "/login?goto=/r/" + rid + "/reply";
         return;
       }
       record_e = $('#' + rid);
-      if (record_e.find('>.contents>.reply_box_container>.reply_box').length === 0) {
+      if (record_e.find('>.footer>.reply_box_container>.reply_box').length === 0) {
         kup = function() {
           return div({
             "class": "reply_box"
@@ -358,11 +405,19 @@
             br({
               foo: 'bar'
             });
-            button({
-              onclick: "app.post_reply('" + rid + "')"
-            }, function() {
-              return 'post comment';
-            });
+            if ((options != null) && options.choice) {
+              button({
+                onclick: "app.post_reply('" + rid + "', 'choice')"
+              }, function() {
+                return 'add choice';
+              });
+            } else {
+              button({
+                onclick: "app.post_reply('" + rid + "')"
+              }, function() {
+                return 'post comment';
+              });
+            }
             return button({
               onclick: "$(this).parent().remove()"
             }, function() {
@@ -370,10 +425,11 @@
             });
           });
         };
-        container = record_e.find('>.contents>.reply_box_container').append(coffeekup.render(kup, {
+        container = record_e.find('>.footer>.reply_box_container').append(coffeekup.render(kup, {
           context: this,
           locals: {
-            rid: rid
+            rid: rid,
+            options: options
           },
           dynamic_locals: true
         }));
@@ -383,7 +439,7 @@
     Record.prototype.show_edit_box = function(rid) {
       var record_e;
       record_e = $('#' + rid);
-      if (record_e.find('>.contents>.edit_box_container>.edit_box').length === 0) {
+      if (record_e.find('>.footer>.edit_box_container>.edit_box').length === 0) {
         return $.ajax({
           cache: false,
           type: "GET",
@@ -442,7 +498,7 @@
                 });
               });
             };
-            container = record_e.find('>.contents>.edit_box_container').append(coffeekup.render(kup, {
+            container = record_e.find('>.footer>.edit_box_container').append(coffeekup.render(kup, {
               context: this,
               locals: {
                 rid: rid,
@@ -472,16 +528,17 @@
         }
       });
     };
-    Record.prototype.post_reply = function(rid) {
+    Record.prototype.post_reply = function(rid, type) {
       var comment, record_e;
       record_e = $('#' + rid);
-      comment = record_e.find('>.contents>.reply_box_container>.reply_box>textarea').val();
+      comment = record_e.find('>.footer>.reply_box_container>.reply_box>textarea').val();
       return $.ajax({
         cache: false,
         type: "POST",
         url: "/r/" + rid + "/reply",
         data: {
-          comment: comment
+          comment: comment,
+          type: type
         },
         dataType: "json",
         error: function() {
@@ -489,7 +546,7 @@
         },
         success: function(data) {
           if (data != null) {
-            return record_e.find('>.contents>.reply_box_container>.reply_box').remove();
+            return record_e.find('>.footer>.reply_box_container>.reply_box').remove();
           } else {
             return alert('uh oh, server might be down. try again later?');
           }
@@ -499,9 +556,9 @@
     Record.prototype.post_edit = function(rid) {
       var comment, record_e, title, url;
       record_e = $('#' + rid);
-      title = record_e.find('>.contents>.edit_box_container>.edit_box>input[name="title"]').get_value();
-      url = record_e.find('>.contents>.edit_box_container>.edit_box>input[name="url"]').get_value();
-      comment = record_e.find('>.contents>.edit_box_container>.edit_box>textarea[name="comment"]').get_value();
+      title = record_e.find('>.footer>.edit_box_container>.edit_box>input[name="title"]').get_value();
+      url = record_e.find('>.footer>.edit_box_container>.edit_box>input[name="url"]').get_value();
+      comment = record_e.find('>.footer>.edit_box_container>.edit_box>textarea[name="comment"]').get_value();
       return $.ajax({
         cache: false,
         type: "POST",
@@ -517,7 +574,7 @@
         },
         success: function(data) {
           if (data != null) {
-            return record_e.find('>.contents>.edit_box_container>.edit_box').remove();
+            return record_e.find('>.footer>.edit_box_container>.edit_box').remove();
           } else {
             return alert('uh oh, server might be down. try again later?');
           }

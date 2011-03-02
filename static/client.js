@@ -39,10 +39,17 @@
               if ($('#' + recdata.parent_id).length > 0 && $('#' + recdata._id).length === 0) {
                 if (parent.parents('.record').length >= app.DEFAULT_DEPTH) {} else {
                   record = new window.app.Record(recdata);
-                  parent.find('.children:eq(0)').prepend(record.render({
-                    is_root: false,
-                    current_user: app.current_user
-                  }));
+                  if (record.object.type === 'choice') {
+                    parent.find('>.contents>.choices').append(record.render({
+                      is_root: false,
+                      current_user: app.current_user
+                    }));
+                  } else {
+                    parent.find('>.children').prepend(record.render({
+                      is_root: false,
+                      current_user: app.current_user
+                    }));
+                  }
                 }
               } else {
                 is_leaf = parent.parents('.record').length >= (app.DEFAULT_DEPTH - 1);
