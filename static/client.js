@@ -1,70 +1,67 @@
 (function() {
-  var app;
+  var App;
   var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
-  if (!(window.app != null)) {
-    window.app = {};
-  }
-  app = window.app;
-  app.current_user = null;
-  app.DEFAULT_DEPTH = 5;
-  app.upvoted = null;
-  app.include = function(filename) {
+  App = {};
+  App.current_user = null;
+  App.DEFAULT_DEPTH = 5;
+  App.upvoted = null;
+  App.include = function(filename) {
     var script;
     script = document.createElement('script');
     script.src = filename;
     script.type = 'text/javascript';
     return $('head').append(script);
   };
-  app.poll_errors = 0;
-  app.poll = function(root) {
+  App.poll_errors = 0;
+  App.poll = function(root) {
     return $.ajax({
       cache: false,
       type: "GET",
       url: "/r/" + (root.attr('id')) + "/recv",
       dataType: "json",
       error: function() {
-        app.poll_errors += 1;
+        App.poll_errors += 1;
         return setTimeout((function() {
-          return app.poll(root);
+          return App.poll(root);
         }), 10 * 1000);
       },
       success: function(data) {
         var is_leaf, parent, recdata, record, _i, _len;
         try {
-          app.poll_errors = 0;
+          App.poll_errors = 0;
           if (data) {
             for (_i = 0, _len = data.length; _i < _len; _i++) {
               recdata = data[_i];
               parent = $('#' + recdata.parent_id);
               if ($('#' + recdata.parent_id).length > 0 && $('#' + recdata._id).length === 0) {
-                if (parent.parents('.record').length >= app.DEFAULT_DEPTH) {} else {
-                  record = new window.app.Record(recdata);
+                if (parent.parents('.record').length >= App.DEFAULT_DEPTH) {} else {
+                  record = new Record(recdata);
                   if (record.object.type === 'choice') {
                     parent.find('>.contents>.choices').append(record.render({
                       is_root: false,
-                      current_user: app.current_user
+                      current_user: App.current_user
                     }));
                   } else {
                     parent.find('>.children').prepend(record.render({
                       is_root: false,
-                      current_user: app.current_user
+                      current_user: App.current_user
                     }));
                   }
                 }
               } else {
-                is_leaf = parent.parents('.record').length >= (app.DEFAULT_DEPTH - 1);
-                record = new window.app.Record(recdata);
+                is_leaf = parent.parents('.record').length >= (App.DEFAULT_DEPTH - 1);
+                record = new Record(recdata);
                 record.redraw({
                   is_leaf: is_leaf,
-                  current_user: app.current_user
+                  current_user: App.current_user
                 });
               }
             }
-            return app.poll(root);
+            return App.poll(root);
           } else {
-            app.poll_errors += 1;
+            App.poll_errors += 1;
             return setTimeout((function() {
-              return app.poll(root);
+              return App.poll(root);
             }), 10 * 1000);
           }
         } catch (e) {
@@ -73,7 +70,7 @@
       }
     });
   };
-  app.set_default_text = function(input, default_text) {
+  App.set_default_text = function(input, default_text) {
     var on_blur, on_focus;
     on_focus = __bind(function() {
       input.removeClass('default_text');
@@ -96,7 +93,7 @@
     'set_default_text': function(default_text) {
       var elem;
       elem = $(this);
-      return app.set_default_text(elem, default_text);
+      return App.set_default_text(elem, default_text);
     },
     'get_value': function() {
       var value;
@@ -154,18 +151,19 @@
   });
   $(document).ready(function() {
     var root;
-    app.current_user = $('#current_user').length > 0 ? {
+    App.current_user = $('#current_user').length > 0 ? {
       _id: $("#current_user").attr('data-id'),
       username: $("#current_user").attr('data-username')
     } : null;
     if ($('[data-root="true"]').length > 0) {
       root = $('[data-root="true"]:eq(0)');
       setTimeout((function() {
-        return app.poll(root);
+        return App.poll(root);
       }), 500);
     }
-    return app.upvoted = $.map($('.record[data-upvoted="true"]'), function(e) {
+    return App.upvoted = $.map($('.record[data-upvoted="true"]'), function(e) {
       return e.id;
     });
   });
+  window.App = App;
 }).call(this);

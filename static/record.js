@@ -1,15 +1,7 @@
 (function() {
-  var Record, app, coffeekup, markz;
-  coffeekup = typeof CoffeeKup != "undefined" && CoffeeKup !== null ? CoffeeKup : require('coffeekup');
-  markz = typeof Markz != "undefined" && Markz !== null ? Markz : require('./markz').Markz;
-  if (typeof window != "undefined" && window !== null) {
-    if (!(window.app != null)) {
-      window.app = {};
-    }
-    app = window.app;
-  } else {
-    app = require('../app');
-  }
+  var CoffeeKup, Markz, Record;
+  CoffeeKup = typeof window != "undefined" && window !== null ? window.CoffeeKup : require('CoffeeKup');
+  Markz = typeof window != "undefined" && window !== null ? window.Markz : require('./Markz').Markz;
   Date.prototype.time_ago = function() {
     var difference;
     difference = (new Date()) - this;
@@ -69,7 +61,7 @@
             a({
               "class": "upvote",
               href: '#',
-              onclick: "app.upvote('" + (h(this.object._id)) + "'); return false;"
+              onclick: "Record.upvote('" + (h(this.object._id)) + "'); return false;"
             }, function() {
               return "&#9650;";
             });
@@ -141,7 +133,7 @@
               a({
                 "class": "edit",
                 href: "#",
-                onclick: "app.show_edit_box('" + (h(this.object._id)) + "'); return false;"
+                onclick: "Record.show_edit_box('" + (h(this.object._id)) + "'); return false;"
               }, function() {
                 return "edit";
               });
@@ -149,7 +141,7 @@
               return a({
                 "class": "delete",
                 href: "#",
-                onclick: "app.delete('" + (h(this.object._id)) + "'); return false;"
+                onclick: "Record.delete('" + (h(this.object._id)) + "'); return false;"
               }, function() {
                 return "delete";
               });
@@ -159,7 +151,7 @@
             "class": "contents"
           }, function() {
             if (this.object.comment) {
-              text(markz.prototype.markup(this.object.comment));
+              text(Markz.prototype.markup(this.object.comment));
             }
             if (this.choices) {
               return div({
@@ -189,7 +181,7 @@
               a({
                 "class": "addchoice",
                 href: "#",
-                onclick: "app.show_reply_box('" + (h(this.object._id)) + "', {choice: true}); return false;"
+                onclick: "Record.show_reply_box('" + (h(this.object._id)) + "', {choice: true}); return false;"
               }, function() {
                 return "add choice";
               });
@@ -198,7 +190,7 @@
               a({
                 "class": "reply",
                 href: "/r/" + this.object._id + "/reply",
-                onclick: "app.show_reply_box('" + (h(this.object._id)) + "'); return false;"
+                onclick: "Record.show_reply_box('" + (h(this.object._id)) + "'); return false;"
               }, function() {
                 return "reply";
               });
@@ -253,11 +245,11 @@
       if (options != null) {
         current_user = options.current_user;
       }
-      upvoted = typeof window != "undefined" && window !== null ? app.upvoted.indexOf(this.object._id) !== -1 : current_user != null ? (this.object.upvoters != null) && this.object.upvoters.indexOf(current_user._id) !== -1 : void 0;
-      return coffeekup.render(this.render_kup, {
+      upvoted = typeof window != "undefined" && window !== null ? App.upvoted.indexOf(this.object._id) !== -1 : current_user != null ? (this.object.upvoters != null) && this.object.upvoters.indexOf(current_user._id) !== -1 : void 0;
+      return CoffeeKup.render(this.render_kup, {
         context: this,
         locals: {
-          markz: markz,
+          Markz: Markz,
           is_root: is_root,
           upvoted: upvoted,
           current_user: current_user
@@ -274,7 +266,7 @@
           a({
             "class": "upvote",
             href: '#',
-            onclick: "app.upvote('" + (h(this.object._id)) + "'); $(this).parent().find('>.item_info>.points').increment(); $(this).remove(); return false;"
+            onclick: "Record.upvote('" + (h(this.object._id)) + "'); $(this).parent().find('>.item_info>.points').increment(); $(this).remove(); return false;"
           }, function() {
             return "&#9650;";
           });
@@ -345,11 +337,11 @@
       if (options != null) {
         current_user = options.current_user;
       }
-      upvoted = typeof window != "undefined" && window !== null ? app.upvoted.indexOf(this.object._id) !== -1 : current_user != null ? (this.object.upvoters != null) && this.object.upvoters.indexOf(current_user._id) !== -1 : void 0;
-      return coffeekup.render(this.render_headline_kup, {
+      upvoted = typeof window != "undefined" && window !== null ? App.upvoted.indexOf(this.object._id) !== -1 : current_user != null ? (this.object.upvoters != null) && this.object.upvoters.indexOf(current_user._id) !== -1 : void 0;
+      return CoffeeKup.render(this.render_headline_kup, {
         context: this,
         locals: {
-          markz: markz,
+          Markz: Markz,
           upvoted: upvoted,
           current_user: current_user
         },
@@ -375,7 +367,7 @@
       }
     };
     Record.prototype.upvote = function(rid) {
-      app.upvoted.push(rid);
+      App.upvoted.push(rid);
       return $.ajax({
         cache: false,
         type: "POST",
@@ -389,7 +381,7 @@
     };
     Record.prototype.show_reply_box = function(rid, options) {
       var container, kup, record_e;
-      if (!(app.current_user != null)) {
+      if (!(App.current_user != null)) {
         window.location = "/login?goto=/r/" + rid + "/reply";
         return;
       }
@@ -407,13 +399,13 @@
             });
             if ((options != null) && options.choice) {
               button({
-                onclick: "app.post_reply('" + rid + "', 'choice')"
+                onclick: "Record.post_reply('" + rid + "', 'choice')"
               }, function() {
                 return 'add choice';
               });
             } else {
               button({
-                onclick: "app.post_reply('" + rid + "')"
+                onclick: "Record.post_reply('" + rid + "')"
               }, function() {
                 return 'post comment';
               });
@@ -425,7 +417,7 @@
             });
           });
         };
-        container = record_e.find('>.footer>.reply_box_container').append(coffeekup.render(kup, {
+        container = record_e.find('>.footer>.reply_box_container').append(CoffeeKup.render(kup, {
           context: this,
           locals: {
             rid: rid,
@@ -487,7 +479,7 @@
                   foo: 'bar'
                 });
                 button({
-                  onclick: "app.post_edit('" + rid + "')"
+                  onclick: "Record.post_edit('" + rid + "')"
                 }, function() {
                   return 'update';
                 });
@@ -498,7 +490,7 @@
                 });
               });
             };
-            container = record_e.find('>.footer>.edit_box_container').append(coffeekup.render(kup, {
+            container = record_e.find('>.footer>.edit_box_container').append(CoffeeKup.render(kup, {
               context: this,
               locals: {
                 rid: rid,
@@ -587,12 +579,12 @@
     exports.Record = Record;
   }
   if (typeof window != "undefined" && window !== null) {
-    app.Record = Record;
-    app.upvote = Record.prototype.upvote;
-    app.show_reply_box = Record.prototype.show_reply_box;
-    app.show_edit_box = Record.prototype.show_edit_box;
-    app.post_reply = Record.prototype.post_reply;
-    app.post_edit = Record.prototype.post_edit;
-    app["delete"] = Record.prototype["delete"];
+    window.Record = Record;
+    Record.upvote = Record.prototype.upvote;
+    Record.show_reply_box = Record.prototype.show_reply_box;
+    Record.show_edit_box = Record.prototype.show_edit_box;
+    Record.post_reply = Record.prototype.post_reply;
+    Record.post_edit = Record.prototype.post_edit;
+    Record["delete"] = Record.prototype["delete"];
   }
 }).call(this);

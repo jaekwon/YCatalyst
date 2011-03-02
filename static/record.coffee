@@ -1,14 +1,8 @@
 # currently, any time we modify this file we need to ./static/compile and possibly restart the server :(
 
 # we have to rename, otherwise coffeescript declares 'var CoffeeKup' which wipes the client side import
-coffeekup = if CoffeeKup? then CoffeeKup else require 'coffeekup'
-markz = if Markz? then Markz else require('./markz').Markz
-if window?
-  if not window.app?
-    window.app = {}
-  app = window.app
-else
-  app = require '../app'
+CoffeeKup = if window? then window.CoffeeKup else require 'CoffeeKup'
+Markz = if window? then window.Markz else require('./Markz').Markz
 
 # possibly move this out
 Date.prototype.time_ago = () ->
@@ -62,10 +56,11 @@ class Record
       @object.created_at = new Date(@object.created_at)
 
   render_kup: ->
+    # NOTE: locals like 'current_user', 'upvoted' are passed in from the render function
     div class: "record", id: @object._id, "data-root": is_root, "data-upvoted": upvoted, ->
       if not @object.deleted_at?
         if current_user? and not upvoted
-          a class: "upvote", href: '#', onclick: "app.upvote('#{h(@object._id)}'); return false;", -> "&#9650;"
+          a class: "upvote", href: '#', onclick: "Record.upvote('#{h(@object._id)}'); return false;", -> "&#9650;"
         if @object.title
           if @object.url
             a href: @object.url, class: "title", -> @object.title
@@ -88,12 +83,12 @@ class Record
             a class: "link", href: "/r/#{@object._id}", -> "link"
           if current_user? and @object.created_by == current_user.username
             text " | "
-            a class: "edit", href: "#", onclick: "app.show_edit_box('#{h(@object._id)}'); return false;", -> "edit"
+            a class: "edit", href: "#", onclick: "Record.show_edit_box('#{h(@object._id)}'); return false;", -> "edit"
             text " | "
-            a class: "delete", href: "#", onclick: "app.delete('#{h(@object._id)}'); return false;", -> "delete"
+            a class: "delete", href: "#", onclick: "Record.delete('#{h(@object._id)}'); return false;", -> "delete"
         div class: "contents", ->
           # main body
-          text markz::markup(@object.comment) if @object.comment
+          text Markz::markup(@object.comment) if @object.comment
           # perhaps some poll choices
           if @choices
             div class: "choices", ->
@@ -103,10 +98,10 @@ class Record
         div class: "footer", ->
           # add poll choice
           if current_user? and @object.type == 'poll' and @object.created_by == current_user.username
-            a class: "addchoice", href: "#", onclick: "app.show_reply_box('#{h(@object._id)}', {choice: true}); return false;", -> "add choice"
+            a class: "addchoice", href: "#", onclick: "Record.show_reply_box('#{h(@object._id)}', {choice: true}); return false;", -> "add choice"
           # reply link
           if @object.type != 'choice'
-            a class: "reply", href: "/r/#{@object._id}/reply", onclick: "app.show_reply_box('#{h(@object._id)}'); return false;", -> "reply"
+            a class: "reply", href: "/r/#{@object._id}/reply", onclick: "Record.show_reply_box('#{h(@object._id)}'); return false;", -> "reply"
           # placeholders
           div class: "edit_box_container"
           if @object.type != 'choice'
@@ -129,15 +124,15 @@ class Record
     current_user = options.current_user if options?
     upvoted =
       if window?
-        app.upvoted.indexOf(@object._id) != -1
+        App.upvoted.indexOf(@object._id) != -1
       else if current_user?
         @object.upvoters? and @object.upvoters.indexOf(current_user._id) != -1
-    coffeekup.render @render_kup, context: this, locals: {markz: markz, is_root: is_root, upvoted: upvoted, current_user: current_user}, dynamic_locals: true
+    CoffeeKup.render @render_kup, context: this, locals: {Markz: Markz, is_root: is_root, upvoted: upvoted, current_user: current_user}, dynamic_locals: true
 
   render_headline_kup: ->
     div class: "record", id: @object._id, ->
       if current_user? and not upvoted
-        a class: "upvote", href: '#', onclick: "app.upvote('#{h(@object._id)}'); $(this).parent().find('>.item_info>.points').increment(); $(this).remove(); return false;", -> "&#9650;"
+        a class: "upvote", href: '#', onclick: "Record.upvote('#{h(@object._id)}'); $(this).parent().find('>.item_info>.points').increment(); $(this).remove(); return false;", -> "&#9650;"
       if @object.url
         a href: @object.url, class: "title", -> @object.title
         if @object.host
@@ -160,10 +155,10 @@ class Record
     current_user = options.current_user if options?
     upvoted =
       if window?
-        app.upvoted.indexOf(@object._id) != -1
+        App.upvoted.indexOf(@object._id) != -1
       else if current_user?
         @object.upvoters? and @object.upvoters.indexOf(current_user._id) != -1
-    coffeekup.render @render_headline_kup, context: this, locals: {markz: markz, upvoted: upvoted, current_user: current_user}, dynamic_locals: true
+    CoffeeKup.render @render_headline_kup, context: this, locals: {Markz: Markz, upvoted: upvoted, current_user: current_user}, dynamic_locals: true
 
   comment_url: ->
     "/r/#{@object._id}/reply"
@@ -188,7 +183,7 @@ class Record
   # static method #
   # show a dialog with some challenge on it
   upvote: (rid) ->
-    app.upvoted.push(rid)
+    App.upvoted.push(rid)
     $.ajax {
       cache: false
       type: "POST"
@@ -204,7 +199,7 @@ class Record
   # client side #
   # static method #
   show_reply_box: (rid, options) ->
-    if not app.current_user?
+    if not App.current_user?
       window.location = "/login?goto=/r/#{rid}/reply"
       return
     record_e = $('#'+rid)
@@ -214,11 +209,11 @@ class Record
           textarea name: "comment"
           br foo: 'bar' # dunno why just br doesn't work
           if options? and options.choice
-            button onclick: "app.post_reply('#{rid}', 'choice')", -> 'add choice'
+            button onclick: "Record.post_reply('#{rid}', 'choice')", -> 'add choice'
           else
-            button onclick: "app.post_reply('#{rid}')", -> 'post comment'
+            button onclick: "Record.post_reply('#{rid}')", -> 'post comment'
           button onclick: "$(this).parent().remove()", -> 'cancel'
-      container = record_e.find('>.footer>.reply_box_container').append(coffeekup.render kup, context: this, locals: {rid: rid, options: options}, dynamic_locals: true)
+      container = record_e.find('>.footer>.reply_box_container').append(CoffeeKup.render kup, context: this, locals: {rid: rid, options: options}, dynamic_locals: true)
       container.find('textarea').make_autoresizable()
 
   # client side #
@@ -246,10 +241,10 @@ class Record
               else
                 textarea name: "comment", -> hE(data.record.comment or '')
               br foo: 'bar' # dunno why just br doesn't work
-              button onclick: "app.post_edit('#{rid}')", -> 'update'
+              button onclick: "Record.post_edit('#{rid}')", -> 'update'
               button onclick: "$(this).parent().remove()", -> 'cancel'
           container = record_e.find('>.footer>.edit_box_container').
-            append(coffeekup.render kup, context: this, locals: {rid: rid, data: data}, dynamic_locals: true)
+            append(CoffeeKup.render kup, context: this, locals: {rid: rid, data: data}, dynamic_locals: true)
           container.find('textarea').make_autoresizable()
           container.find('input[name="title"]').set_default_text('title')
           container.find('input[name="url"]').set_default_text('URL')
@@ -313,10 +308,10 @@ if exports?
   exports.Record = Record
 # if client-side
 if window?
-  app.Record = Record
-  app.upvote = Record::upvote
-  app.show_reply_box = Record::show_reply_box
-  app.show_edit_box = Record::show_edit_box
-  app.post_reply = Record::post_reply
-  app.post_edit = Record::post_edit
-  app.delete = Record::delete
+  window.Record = Record
+  Record.upvote = Record::upvote
+  Record.show_reply_box = Record::show_reply_box
+  Record.show_edit_box = Record::show_edit_box
+  Record.post_reply = Record::post_reply
+  Record.post_edit = Record::post_edit
+  Record.delete = Record::delete
