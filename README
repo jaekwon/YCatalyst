@@ -1,3 +1,7 @@
 setup:
 > db.invites.save({'_id': 'invitecode1'})
 > db.records.save({'_id': 'rootrootroot', 'comment': 'the root'})
+
+npm install: 
+- xml2js
+- i'm sure missing a lot

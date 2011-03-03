@@ -109,10 +109,17 @@ do_Rowt = (fn, req, res) ->
       req.addListener 'data', (chunk) ->
         body += chunk
       req.addListener 'end', ->
-        if req.headers['content-type'].toLowerCase() == 'application/x-www-form-urlencoded'
-          req.post_data = www_forms.decodeForm(body)
-        else
-          req.post_data = body
+        if body
+          try
+            if req.headers['content-type'].toLowerCase() == 'application/x-www-form-urlencoded'
+              req.post_data = www_forms.decodeForm(body)
+            else
+              req.post_data = body
+          catch e
+            console.log e.message
+            console.log e.stack
+            console.log "Exception in parsing post data #{body}. Ignoring exception."
+            req.post_data = body
         return fn(req, res)
     else
       return fn(req, res)
