@@ -1,7 +1,7 @@
 (function() {
   var CoffeeKup, Markz, Record;
-  CoffeeKup = typeof window != "undefined" && window !== null ? window.CoffeeKup : require('CoffeeKup');
-  Markz = typeof window != "undefined" && window !== null ? window.Markz : require('./Markz').Markz;
+  CoffeeKup = typeof window != "undefined" && window !== null ? window.CoffeeKup : require('./coffeekup');
+  Markz = typeof window != "undefined" && window !== null ? window.Markz : require('./markz').Markz;
   Date.prototype.time_ago = function() {
     var difference;
     difference = (new Date()) - this;
