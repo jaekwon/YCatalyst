@@ -17,11 +17,12 @@ cookie.secret = "supersecretbanananana"
 
 DEFAULT_DEPTH = 5
 
-#if false
-#  process.on 'uncaughtException', (err) ->
-#    console.log "XXX HOLY SHIT"
-#    console.log err
-#    console.log "FIX THIS ASAP, http://debuggable.com/posts/node-js-dealing-with-uncaught-exceptions:4c933d54-1428-443c-928d-4e1ecbdd56cb"
+if true
+  process.on 'uncaughtException', (err) ->
+    console.log "XXXXXXXXX"
+    console.log err.message
+    console.log err.stack
+    console.log "XXXXXXXXX FIX THIS ASAP, http://debuggable.com/posts/node-js-dealing-with-uncaught-exceptions:4c933d54-1428-443c-928d-4e1ecbdd56cb"
 
 # a global hash from record id to [callbacks]
 all_callbacks = {}
