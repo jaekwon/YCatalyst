@@ -507,6 +507,7 @@ server = utils.Rowter([
     '/pubsub', (req, res) ->
       switch req.method
         when 'GET'
+          console.log "challenge accepted"
           res.writeHead 200
           res.write req.query_data['hub.challenge']
           res.end()
