@@ -1,7 +1,7 @@
 # currently, any time we modify this file we need to ./static/compile and possibly restart the server :(
 
 # we have to rename, otherwise coffeescript declares 'var CoffeeKup' which wipes the client side import
-CoffeeKup = if window? then window.CoffeeKup else require 'CoffeeKup'
+CoffeeKup = if window? then window.CoffeeKup else require './CoffeeKup'
 Markz = if window? then window.Markz else require('./Markz').Markz
 
 # possibly move this out
