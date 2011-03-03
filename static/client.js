@@ -1,7 +1,7 @@
 (function() {
   var App;
   var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
-  App = {};
+  App = window.App = {};
   App.current_user = null;
   App.DEFAULT_DEPTH = 5;
   App.upvoted = null;
@@ -165,5 +165,4 @@
       return e.id;
     });
   });
-  window.App = App;
 }).call(this);

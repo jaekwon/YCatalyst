@@ -495,10 +495,27 @@ server = utils.Rowter([
               res.setSecureCookie 'user', JSON.stringify(user)
               res.redirect '/'
               # update the invite
-              invite.claimed_by = [user._id]
+              if invite.claimed_by?
+                invite.claimed_by.push(user._id)
+              else
+                invite.claimed_by = [user._id]
               mongo.invites.save invite, (err, stuff) ->
                 #pass
   ]
+
+  [
+    '/pubsub', (req, res) ->
+      switch req.method
+        when 'GET'
+          res.writeHead 200
+          res.write req.query_data['hub.challenge']
+          res.end()
+        when 'POST'
+          res.writeHead 200
+          console.log "#{req.headers['content-type']} (#{req.post_data})"
+          res.end()
+  ]
 ])
+
 server.listen 8126, '127.0.0.1'
 console.log 'Server running at http://127.0.0.1:8126'

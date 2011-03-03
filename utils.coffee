@@ -104,16 +104,16 @@ do_Rowt = (fn, req, res) ->
     else
       req.query_data = {}
     if (req.method == 'POST')
-      called_back = false
+      body = ''
       req.setEncoding 'utf8'
       req.addListener 'data', (chunk) ->
-        req.post_data = www_forms.decodeForm(chunk)
-        called_back = true
-        return fn(req, res)
+        body += chunk
       req.addListener 'end', ->
-        if not called_back
-          called_back = true
-          return fn(req, res)
+        if req.headers['content-type'].toLowerCase() == 'application/x-www-form-urlencoded'
+          req.post_data = www_forms.decodeForm(body)
+        else
+          req.post_data = body
+        return fn(req, res)
     else
       return fn(req, res)
   catch e

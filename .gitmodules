@@ -16,3 +16,6 @@
 [submodule "vendor/cookie-node"]
 	path = vendor/cookie-node
 	url = https://github.com/jaekwon/cookie-node.git
+[submodule "vendor/nubnub"]
+	path = vendor/nubnub
+	url = https://github.com/technoweenie/nubnub.git
