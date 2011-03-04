@@ -505,7 +505,7 @@ server = utils.Rowter([
   ]
 
   [
-    '/pubsub', (req, res) ->
+    '/__pubsub__', (req, res) ->
       switch req.method
         when 'GET'
           console.log "challenge accepted"
@@ -514,7 +514,7 @@ server = utils.Rowter([
           res.end()
         when 'POST'
           res.writeHead 200
-          console.log "#{req.headers['content-type']} (#{req.post_data})"
+          require('./logic/diffbot').process_response(req.post_data)
           res.end()
   ]
 ])

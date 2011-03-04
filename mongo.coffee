@@ -51,3 +51,9 @@ db.open (err, db) ->
   # set up app stuff
   db.collection 'app', (err, coll) ->
     did_open('app', coll)
+
+  # set up diffbot pubsub stuff
+  db.collection 'diffbot', (err, coll) ->
+    coll.ensureIndex [['guid', 1]], (err, indexName) ->
+      console.log "created index: #{indexName}"
+    did_open('diffbot', coll)
