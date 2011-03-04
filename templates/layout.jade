@@ -20,6 +20,8 @@ html(lang="en")
           img(src: "/static/logo.png")
         span.links
           a(href: "/submit") submit
+          | &nbsp;|&nbsp;
+          a(href: "/admin/tracker") tracker
         div(style: "float: right")
           - if (current_user)
             span.username #{current_user.username}

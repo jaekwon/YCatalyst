@@ -1,0 +1,17 @@
+ul.diffs
+  - diffs.forEach(function(diff) {
+    li
+      div.diff
+        a(href: diff.url) #{diff.url}: 
+        text &nbsp;
+        span(class: "title") #{(diff.title)}
+        text &nbsp;
+        a(href: diff.link, class: "diffbot") (diffbot)
+        text &nbsp;
+        span(class: "timeago") #{(new Date(Number(diff.timestamp))).time_ago()}
+  - })
+
+:sass
+  | body
+  |   #body_contents
+  |     :margin-left 10px

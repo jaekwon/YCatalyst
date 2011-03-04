@@ -517,6 +517,17 @@ server = utils.Rowter([
           require('./logic/diffbot').process_response(req.post_data)
           res.end()
   ]
+
+  [
+    '/admin/tracker', (req, res) ->
+      switch req.method
+        when 'GET'
+          mongo.diffbot.find {}, {sort: [['timestamp', -1]]}, (err, cursor) ->
+            cursor.toArray (err, diffs) ->
+              if err
+                console.log err
+              render_layout "admin/diffs.jade", {diffs: diffs}, req, res
+  ]
 ])
 
 server.listen 8126, '127.0.0.1'

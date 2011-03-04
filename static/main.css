@@ -120,3 +120,18 @@ body {
 div.tabs div.choice {
   display: inline;
   margin: 0px 10px; }
+
+div.diff {
+  position: relative;
+  margin: 10px 0px;
+  padding-left: 15px; }
+  div.diff a {
+    text-decoration: none;
+    color: #333333; }
+    div.diff a:visited {
+      color: #999999; }
+  div.diff .title {
+    color: #333333; }
+  div.diff .diffbot, div.diff .timeago {
+    font-size: 0.8em;
+    color: #999999; }
