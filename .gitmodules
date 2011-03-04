@@ -21,4 +21,4 @@
 	url = https://github.com/technoweenie/nubnub.git
 [submodule "vendor/xml2js"]
 	path = vendor/xml2js
-	url = git@github.com:jaekwon/node-xml2js.git
+  url = git://github.com/jaekwon/node-xml2js.git
