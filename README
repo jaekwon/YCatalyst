@@ -3,5 +3,5 @@ setup:
 > db.records.save({'_id': 'rootrootroot', 'comment': 'the root'})
 
 npm install: 
-- xml2js
+// - xml2js -> actually, i forked on github here: git@github.com:jaekwon/node-xml2js.git
 - i'm sure missing a lot
