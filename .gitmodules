@@ -18,7 +18,7 @@
 	url = https://github.com/jaekwon/cookie-node.git
 [submodule "vendor/nubnub"]
 	path = vendor/nubnub
-	url = https://github.com/technoweenie/nubnub.git
+  url = git://github.com/jaekwon/nubnub.git
 [submodule "vendor/xml2js"]
 	path = vendor/xml2js
   url = git://github.com/jaekwon/node-xml2js.git
