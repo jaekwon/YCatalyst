@@ -57,3 +57,6 @@ db.open (err, db) ->
     coll.ensureIndex [['guid', 1]], (err, indexName) ->
       console.log "created index: #{indexName}"
     did_open('diffbot', coll)
+
+  db.collection 'diffbot_subscriptions', (err, coll) ->
+    did_open('diffbot_subscriptions', coll)

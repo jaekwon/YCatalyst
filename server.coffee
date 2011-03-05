@@ -528,6 +528,30 @@ server = utils.Rowter([
                 console.log err
               render_layout "admin/diffs.jade", {diffs: diffs}, req, res
   ]
+
+  [
+    '/admin/tracker/subscriptions', (req, res) ->
+      current_user = req.get_current_user()
+      if not current_user?
+        res.writeHead 401, status: 'login_error'
+        res.end 'not logged in'
+        return
+      switch req.method
+        when 'GET'
+          logic.diffbot.get_subscriptions (err, subscriptions) ->
+            render_layout "admin/subscriptions.jade", {subscriptions: subscriptions}, req, res
+        when 'POST'
+          try
+            _v.check(req.post_data.url, 'url must be a valid http(s):// url.').isUrl()
+          catch e
+            render_layout "message.jade", {message: ''+e}, req, res
+            return
+          logic.diffbot.subscribe req.post_data.url, current_user.username, (err) ->
+            if err
+              render_layout "message.jade", {message: ''+err}, req, res
+              return
+            res.redirect "/admin/tracker/subscriptions"
+  ]
 ])
 
 server.listen 8126, '127.0.0.1'

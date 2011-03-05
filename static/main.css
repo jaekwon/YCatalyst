@@ -2,6 +2,10 @@ body {
   color: black;
   font-family: Verdana, Verdana, Geneva, sans-serif;
   font-size: 10pt; }
+  body a {
+    color: #333333; }
+    body a:visited {
+      color: #999999; }
   body #headerbar {
     background-color: #3f3f3f;
     padding: 4px;
@@ -38,10 +42,6 @@ body {
     position: relative;
     margin: 10px 0px;
     padding-left: 15px; }
-    body .record a {
-      color: #333333; }
-      body .record a:visited {
-        color: #999999; }
     body .record .title {
       text-decoration: none;
       font-size: 10pt; }
@@ -107,6 +107,7 @@ body {
     margin: 0px;
     list-style-type: decimal; }
     body ol li, body ul li {
+      color: #999999;
       padding: 0px;
       margin: 0px; }
   body table th {
@@ -126,10 +127,7 @@ div.diff {
   margin: 10px 0px;
   padding-left: 15px; }
   div.diff a {
-    text-decoration: none;
-    color: #333333; }
-    div.diff a:visited {
-      color: #999999; }
+    text-decoration: none; }
   div.diff .title {
     color: #333333; }
   div.diff .diffbot, div.diff .timeago {

@@ -7,6 +7,11 @@ body
   font-family: $the_font
   font-size: 10pt
 
+  a
+    color: $dark_link
+    &:visited
+      color: $light_text
+
   #headerbar
     img
       vertical-align: middle
@@ -49,9 +54,6 @@ body
     margin: 10px 0px
     padding-left: 15px
     a
-      color: $dark_link
-      &:visited
-        color: $light_text
     .title
       text-decoration: none
       font-size: 10pt
@@ -120,6 +122,7 @@ body
     margin: 0px
     list-style-type: decimal
     li
+      color: $light_text
       padding: 0px
       margin: 0px
 
@@ -144,9 +147,6 @@ div.diff
   padding-left: 15px
   a
     text-decoration: none
-    color: $dark_link
-    &:visited
-      color: $light_text
   .title
     color: $dark_link
   .diffbot, .timeago
