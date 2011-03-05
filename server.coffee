@@ -522,7 +522,7 @@ server = utils.Rowter([
     '/admin/tracker', (req, res) ->
       switch req.method
         when 'GET'
-          mongo.diffbot.find {}, {sort: [['timestamp', -1]]}, (err, cursor) ->
+          mongo.diffbot.find {}, {sort: [['timestamp', -1]], limit: 20}, (err, cursor) ->
             cursor.toArray (err, diffs) ->
               if err
                 console.log err
