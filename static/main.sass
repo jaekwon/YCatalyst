@@ -122,7 +122,6 @@ body
     margin: 0px
     list-style-type: decimal
     li
-      color: $light_text
       padding: 0px
       margin: 0px
 
@@ -143,12 +142,18 @@ div.tabs
 
 div.diff
   position: relative
-  margin: 10px 0px
+  margin: 5px 0px
   padding-left: 15px
   a
     text-decoration: none
+    color: $light_text
   .title
     color: $dark_link
   .diffbot, .timeago
     font-size: 0.8em
+    color: $light_text
+
+div.subscription
+  margin: 5px 0px
+  .username, .timeago
     color: $light_text

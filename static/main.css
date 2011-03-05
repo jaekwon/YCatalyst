@@ -107,7 +107,6 @@ body {
     margin: 0px;
     list-style-type: decimal; }
     body ol li, body ul li {
-      color: #999999;
       padding: 0px;
       margin: 0px; }
   body table th {
@@ -124,12 +123,18 @@ div.tabs div.choice {
 
 div.diff {
   position: relative;
-  margin: 10px 0px;
+  margin: 5px 0px;
   padding-left: 15px; }
   div.diff a {
-    text-decoration: none; }
+    text-decoration: none;
+    color: #999999; }
   div.diff .title {
     color: #333333; }
   div.diff .diffbot, div.diff .timeago {
     font-size: 0.8em;
+    color: #999999; }
+
+div.subscription {
+  margin: 5px 0px; }
+  div.subscription .username, div.subscription .timeago {
     color: #999999; }
