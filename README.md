@@ -1,15 +1,15 @@
 YCatalyst
 =========
 
-  YCatalyst is a Hacker News clone written for Node.js in Coffeescript.
-  You can view the original site at http://ycatalyst.com.
+  YCatalyst is a Hacker News clone written for Node.js in Coffeescript.  
+  You can view the original site at http://ycatalyst.com.  
 
-  Please note that this is alpha quality and very much a work in progress.
-  If you would like to contribute, please email me at jae@ycatalyst.com.
+  Please note that this is alpha quality and very much a work in progress.  
+  If you would like to contribute, please email me at jae@ycatalyst.com.  
 
-  If you want to check out the real-time features, you can create a test
-  account at our staging server: http://staging.ycatalyst.com:8080/.
-  Use invite-code 'staging'.
+  If you want to check out the real-time features, you can create a test  
+  account at our staging server: http://staging.ycatalyst.com:8080/.  
+  Use invite-code 'staging'.  
 
 Features
 ========
