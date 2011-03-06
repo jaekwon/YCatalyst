@@ -575,5 +575,5 @@ server = utils.Rowter([
   ]
 ])
 
-server.listen config.server.port, '127.0.0.1'
-console.log "Server running at http://127.0.0.1:#{config.server.port}"
+server.listen config.server.port, config.server.host
+console.log "Server running at http://#{config.server.host}:#{config.server.port}"
