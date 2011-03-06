@@ -17,7 +17,6 @@ port = 27017
 open_callbacks = {}
 did_open = (name, coll) ->
   console.log("did_open #{name}")
-  #console.log exports
   exports[name] = coll
   if open_callbacks[name]?
     for callback in open_callbacks[name]
@@ -50,7 +49,9 @@ db = exports.db = new Db(dbname, new Server(host, port, {}), {native_parser: tru
 db.open (err, db) ->
   for name, indices of db_info
     db.collection name, (err, coll) ->
-      for index of indices
-        coll.ensureIndex index, (err, indexName) ->
-          console.log "created index: #{indexName}"
-    did_open(name)
+      if indices
+        for index in indices
+          coll.ensureIndex index, (err, indexName) ->
+            console.log "ensured index: #{indexName}"
+      # TODO should call did_open after all indices are ensured, with callback chaining of sorts.
+      did_open(name, coll)

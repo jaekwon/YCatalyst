@@ -1,5 +1,9 @@
 (function() {
-  var App;
+  /*
+  # YCatalyst
+  # Copyright(c) 2011 Jae Kwon (jae@ycatalyst.com)
+  # MIT Licensed
+  */  var App;
   var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
   App = window.App = {};
   App.current_user = null;

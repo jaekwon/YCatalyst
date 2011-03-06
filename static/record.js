@@ -1,5 +1,9 @@
 (function() {
-  var CoffeeKup, Markz, Record;
+  /*
+  # YCatalyst
+  # Copyright(c) 2011 Jae Kwon (jae@ycatalyst.com)
+  # MIT Licensed
+  */  var CoffeeKup, Markz, Record;
   CoffeeKup = typeof window != "undefined" && window !== null ? window.CoffeeKup : require('./coffeekup');
   Markz = typeof window != "undefined" && window !== null ? window.Markz : require('./markz').Markz;
   Date.prototype.time_ago = function() {
