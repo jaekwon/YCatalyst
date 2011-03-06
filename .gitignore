@@ -5,3 +5,4 @@ test.*
 log/*
 config.coffee
 config/deploy.rb
+config/deploy
