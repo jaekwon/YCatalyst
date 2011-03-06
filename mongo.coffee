@@ -8,10 +8,7 @@ Db = require('mongodb').Db
 Connection = require('mongodb').Connection
 Server = require('mongodb').Server
 BSON = require('mongodb').BSONNative
-
-dbname = 'ycatalyst'
-host = 'localhost'
-port = 27017
+config = require('./config')
 
 # keep list of callbacks to call after database opens. {name -> [callbacks]}
 open_callbacks = {}
@@ -45,7 +42,7 @@ db_info = {
   'app': null
 }
 
-db = exports.db = new Db(dbname, new Server(host, port, {}), {native_parser: true})
+db = exports.db = new Db(config.mongo.dbname, new Server(config.mongo.host, config.mongo.port, {}), {native_parser: true})
 db.open (err, db) ->
   for name, indices of db_info
     db.collection name, (err, coll) ->

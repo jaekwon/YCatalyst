@@ -9,3 +9,9 @@ exports.superfeedr_auth = {
 }
 
 exports.cookie_secret = 'SOME SECRET STRING'
+
+exports.mongo = {
+  dbname: 'ycatalyst'
+  host = 'localhost'
+  port = 27017
+}

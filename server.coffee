@@ -310,6 +310,12 @@ server = utils.Rowter([
             trigger_update [record]
   ],
 
+  ['/user/:username', (req, res) ->
+    switch req.method
+      when 'GET'
+        render_layout "message.jade", {message: 'user pages coming real soon!'}, req, res
+  ]
+
   ['/submit', (req, res) ->
     current_user = req.get_current_user()
     if not current_user?
@@ -377,7 +383,7 @@ server = utils.Rowter([
           render_layout "message.jade", {message: error}, req, res
         try
           _v.check(req.post_data.username, 'username must be alphanumeric, 2 to 12 characters').len(2,12).isAlphanumeric()
-          _v.check(req.post_data.password, 'password must be 5 to 20 characters').len(5,20)
+          _v.check(req.post_data.password, 'password must be 5 to 1024 characters').len(5,1024)
         catch e
           form_error(''+e)
           return
@@ -441,8 +447,8 @@ server = utils.Rowter([
                 render_layout "message.jade", {message: "Invalid request. Check your latest email or try again"}, req, res
                 return
               # ensure good password
-              if not (5 <= req.post_data.password.length <= 20)
-                render_layout "message.jade", {message: "Invalid password. Your password must be between 5 and 20 characters in length"}, req, res
+              if not (5 <= req.post_data.password.length <= 1024)
+                render_layout "message.jade", {message: "Invalid password. Your password must be between 5 and 1024 characters in length"}, req, res
                 return
               # save this new password and reset/delete the nonce
               salt = utils.randid()
@@ -479,7 +485,7 @@ server = utils.Rowter([
         data = req.post_data
         try
           _v.check(data.username, 'username must be alphanumeric, 2 to 12 characters').len(2,12).isAlphanumeric()
-          _v.check(data.password, 'password must be 5 to 20 characters').len(5,20)
+          _v.check(data.password, 'password must be 5 to 1024 characters').len(5,1024)
           _v.check(data.email).isEmail()
         catch e
           return form_error(''+e)
