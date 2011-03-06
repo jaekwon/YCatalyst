@@ -475,33 +475,41 @@ server = utils.Rowter([
           _v.check(data.password, 'password must be 5 to 20 characters').len(5,20)
           _v.check(data.email).isEmail()
         catch e
-          form_error(''+e)
+          return form_error(''+e)
         if not data.invite?
-          form_error("no invite specified")
-
+          return form_error("no invite specified")
+        if data.password != data.password2
+          return form_error("passwords don't match")
         mongo.invites.findOne _id: data.invite, (err, invite) ->
           if err or not invite?
             form_error("invalid invite")
+            return
           else if invite.claimed_by? and invite.claimed_by.length >= (invite.count or 1)
             form_error("invite code already used #{invite.count or 1}")
+            return
           else
-            # create the user
-            user = data
-            user._id = utils.randid()
-            salt = utils.randid()
-            hashtimes = 10000 # runs about 80ms on my laptop
-            user.password = [utils.passhash(user.password, salt, hashtimes), salt, hashtimes]
-            mongo.users.save user, (err, stuff) ->
-              # set the user in session
-              res.setSecureCookie 'user', JSON.stringify(user)
-              res.redirect '/'
-              # update the invite
-              if invite.claimed_by?
-                invite.claimed_by.push(user._id)
-              else
-                invite.claimed_by = [user._id]
-              mongo.invites.save invite, (err, stuff) ->
-                #pass
+            # make sure the username isn't already taken
+            mongo.users.findOne username: data.username, (err, user) ->
+              if user?
+                form_error("username '#{data.username}' is already taken. pick another.")
+                return
+              # create the user
+              user = data
+              user._id = utils.randid()
+              salt = utils.randid()
+              hashtimes = 10000 # runs about 80ms on my laptop
+              user.password = [utils.passhash(user.password, salt, hashtimes), salt, hashtimes]
+              mongo.users.save user, (err, stuff) ->
+                # set the user in session
+                res.setSecureCookie 'user', JSON.stringify(user)
+                res.redirect '/'
+                # update the invite
+                if invite.claimed_by?
+                  invite.claimed_by.push(user._id)
+                else
+                  invite.claimed_by = [user._id]
+                mongo.invites.save invite, (err, stuff) ->
+                  #pass
   ]
 
   [
