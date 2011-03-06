@@ -1,3 +1,9 @@
+###
+# YCatalyst
+# Copyright(c) 2011 Jae Kwon (jae@ycatalyst.com)
+# MIT Licensed
+###
+
 email = require('mailer')
 base64 = require('../static/base64')
 utils = require('../utils')

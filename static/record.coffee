@@ -1,4 +1,10 @@
-# currently, any time we modify this file we need to ./static/compile and possibly restart the server :(
+###
+# YCatalyst
+# Copyright(c) 2011 Jae Kwon (jae@ycatalyst.com)
+# MIT Licensed
+###
+
+# NOTE: currently, any time we modify this file we need to ./static/compile and possibly restart the server :(
 
 # we have to rename, otherwise coffeescript declares 'var CoffeeKup' which wipes the client side import
 CoffeeKup = if window? then window.CoffeeKup else require './coffeekup'

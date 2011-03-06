@@ -7,3 +7,5 @@ exports.superfeedr_auth = {
   user: 'SUPERFEEDR_USER'
   password: 'SUPERFEEDR_PASSWORD'
 }
+
+exports.cookie_secret = 'SOME SECRET STRING'

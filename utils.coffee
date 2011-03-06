@@ -1,3 +1,9 @@
+###
+# YCatalyst
+# Copyright(c) 2011 Jae Kwon (jae@ycatalyst.com)
+# MIT Licensed
+###
+
 require.paths.unshift 'vendor/www-forms'
 qs = require 'querystring'
 url = require 'url'

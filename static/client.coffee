@@ -1,3 +1,9 @@
+###
+# YCatalyst
+# Copyright(c) 2011 Jae Kwon (jae@ycatalyst.com)
+# MIT Licensed
+###
+
 App = window.App = {}
 
 # gets set at document.ready

@@ -1,3 +1,9 @@
+###
+# YCatalyst
+# Copyright(c) 2011 Jae Kwon (jae@ycatalyst.com)
+# MIT Licensed
+###
+
 require.paths.unshift 'vendor'
 Nubnub = require 'nubnub/src'
 xml2js = require 'xml2js/lib'

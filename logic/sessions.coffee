@@ -1,3 +1,9 @@
+###
+# YCatalyst
+# Copyright(c) 2011 Jae Kwon (jae@ycatalyst.com)
+# MIT Licensed
+###
+
 mongo = require '../mongo'
 
 # a global hash from record id to {username: {timestamp}}

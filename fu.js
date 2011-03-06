@@ -1,3 +1,5 @@
+// this is derived from a node.js sample project.
+
 var createServer = require("http").createServer;
 var readFile = require("fs").readFile;
 var sys = require("sys");

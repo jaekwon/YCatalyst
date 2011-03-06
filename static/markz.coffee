@@ -1,3 +1,9 @@
+###
+# YCatalyst
+# Copyright(c) 2011 Jae Kwon (jae@ycatalyst.com)
+# MIT Licensed
+###
+
 coffeekup = if CoffeeKup? then CoffeeKup else require 'coffeekup'
 
 # regexes ripped from the node.js validator project

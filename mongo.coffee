@@ -1,9 +1,15 @@
+###
+# YCatalyst
+# Copyright(c) 2011 Jae Kwon (jae@ycatalyst.com)
+# MIT Licensed
+###
+
 Db = require('mongodb').Db
 Connection = require('mongodb').Connection
 Server = require('mongodb').Server
 BSON = require('mongodb').BSONNative
 
-dbname = 'glyphtree'
+dbname = 'ycatalyst'
 host = 'localhost'
 port = 27017
 

@@ -1,3 +1,9 @@
+###
+# YCatalyst
+# Copyright(c) 2011 Jae Kwon (jae@ycatalyst.com)
+# MIT Licensed
+###
+
 mongo = require '../mongo'
 utils = require '../utils'
 rec = require '../static/record'

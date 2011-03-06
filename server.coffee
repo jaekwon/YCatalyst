@@ -1,3 +1,9 @@
+###
+# YCatalyst
+# Copyright(c) 2011 Jae Kwon (jae@ycatalyst.com)
+# MIT Licensed
+###
+
 require.paths.unshift 'vendor/jade'
 require.paths.unshift 'vendor'
 require.paths.unshift 'vendor/validator'
@@ -12,8 +18,9 @@ cookie = require 'cookie-node'
 _ = require './static/underscore'
 _v = require 'validator'
 logic = require './logic/logic'
+config = require './config'
 
-cookie.secret = "supersecretbanananana"
+cookie.secret = config.cookie_secret
 
 DEFAULT_DEPTH = 5
 
