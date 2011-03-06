@@ -1,0 +1,9 @@
+exports.sendgrid_auth = {
+  user: 'SENDGRID_USER_EMAIL'
+  password: 'SENDGRID_USER_PASSWORD'
+}
+
+exports.superfeedr_auth = {
+  user: 'SUPERFEEDR_USER'
+  password: 'SUPERFEEDR_PASSWORD'
+}
