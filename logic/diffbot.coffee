@@ -12,6 +12,9 @@ parser = new xml2js.Parser()
 jsdom = require 'jsdom'
 utils = require '../utils'
 config = require '../config'
+fs = require 'fs'
+
+PUBSUB_LOG = fs.createWriteStream('./log/pubsub.log', flags: 'a', encoding: 'utf8')
 
 # initialize a dom window we'll use for html management
 window = jsdom.jsdom().createWindow()
@@ -101,7 +104,8 @@ process_item = (item, link, type, window) ->
 
 exports.process_response = (datastring, cb) ->
   #raw pubsub push here.
-  #console.log "INCOMING>>#{datastring}\n"
+  PUBSUB_LOG.write("New pubsub post:\n#{datastring}\n\n")
+  PUBSUB_LOG.flush()
   parser.parseString datastring
 
 exports.subscribe = (url, username, fn) ->

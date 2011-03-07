@@ -80,7 +80,7 @@ trigger_update = (records) ->
 render_layout = (template, locals, req, res, fn) ->
   locals.title = 'YCatalyst' if not locals.title?
   locals.require = require
-  locals.current_user = req.get_current_user()
+  locals.current_user = req.current_user
   jade.renderFile "templates/#{template}", locals: locals, (err, body) ->
     if err?
       console.log err
@@ -121,7 +121,6 @@ server = utils.Rowter([
   ['/', (req, res) ->
     switch req.method
       when 'GET'
-        current_user = req.get_current_user()
         #views = logic.sessions.get_viewers()
         #rids = (v[0] for v in views)
         #mongo.records.find {_id: {$in: rids}}, (err, cursor) ->
@@ -135,7 +134,6 @@ server = utils.Rowter([
   ]
 
   ['/r/:id', (req, res) ->
-    current_user = req.get_current_user()
     root_id = req.path_data.id
     switch req.method
       when 'GET'
@@ -158,7 +156,7 @@ server = utils.Rowter([
             res.writeHead 404, status: 'error'
             res.end()
             return
-          if record.object.created_by != current_user.username
+          if record.object.created_by != req.current_user.username
             res.simpleJSON 400, status: 'unauthorized'
             return
           if not record.object.parent_id
@@ -189,8 +187,7 @@ server = utils.Rowter([
 
   ['/r/:id/delete', (req, res) ->
     console.log "qwe"
-    current_user = req.get_current_user()
-    if not current_user?
+    if not req.current_user?
       res.writeHead 401, status: 'login_error'
       res.end 'not logged in'
       return
@@ -200,7 +197,7 @@ server = utils.Rowter([
         logic.records.get_one_record rid, (err, record) ->
           if record
             record.object.deleted_at = new Date()
-            record.object.deleted_by = current_user.username
+            record.object.deleted_by = req.current_user.username
             mongo.records.save record.object, (err, stuff) ->
               res.simpleJSON 200, status: 'ok'
               trigger_update [record]
@@ -210,8 +207,7 @@ server = utils.Rowter([
   ],
 
   ['/r/:id/reply', (req, res) ->
-    current_user = req.get_current_user()
-    if not current_user?
+    if not req.current_user?
       res.writeHead 401, status: 'login_error'
       res.end 'not logged in'
       return
@@ -226,10 +222,10 @@ server = utils.Rowter([
         logic.records.get_one_record parent_id, (err, parent) ->
           if parent
             root_id = if parent.object.root_id? then parent.object.root_id else parent.object._id
-            recdata = _id: utils.randid(), comment: comment, created_by: current_user.username, root_id: root_id
+            recdata = _id: utils.randid(), comment: comment, created_by: req.current_user.username, root_id: root_id
             if req.post_data.type == 'choice'
               # only the parent's creator can add a poll choice
-              if parent.object.created_by != current_user.username
+              if parent.object.created_by != req.current_user.username
                 res.writeHead 401, status: 'unauthorized'
                 res.end "I can't let you do that"
                 return
@@ -271,7 +267,6 @@ server = utils.Rowter([
   ],
 
   ['/r/:key/recv', (req, res) ->
-    current_user = req.get_current_user()
     switch req.method
       when 'GET'
         key = req.path_data.key
@@ -281,14 +276,13 @@ server = utils.Rowter([
           callback: ((recdatas) ->
             res.simpleJSON(200, recdatas))
           timestamp: new Date()
-          username: current_user.username if current_user?
-        if current_user?
-          logic.sessions.touch_session(key, current_user.username)
+          username: req.current_user.username if req.current_user?
+        if req.current_user?
+          logic.sessions.touch_session(key, req.current_user.username)
   ],
 
   ['/r/:id/upvote', (req, res) ->
-    current_user = req.get_current_user()
-    if not current_user?
+    if not req.current_user?
       res.writeHead 401, status: 'login_error'
       res.end 'not logged in'
       return
@@ -298,8 +292,8 @@ server = utils.Rowter([
         logic.records.get_one_record rid, (err, record) ->
           if not record.object.upvoters?
             record.object.upvoters = []
-          if record.object.upvoters.indexOf(current_user._id) == -1
-            record.object.upvoters.push(current_user._id)
+          if record.object.upvoters.indexOf(req.current_user._id) == -1
+            record.object.upvoters.push(req.current_user._id)
           record.object.points = record.object.upvoters.length
           # rescore the record
           logic.records.score_record(record)
@@ -317,8 +311,7 @@ server = utils.Rowter([
   ]
 
   ['/submit', (req, res) ->
-    current_user = req.get_current_user()
-    if not current_user?
+    if not req.current_user?
       render_layout "login.jade", {message: 'You need to log in to submit'}, req, res
       return
     switch req.method
@@ -346,7 +339,7 @@ server = utils.Rowter([
           render_layout "message.jade", {message: ''+e}, req, res
           return
         # create new record
-        recdata = {title: data.title, comment: data.text, created_by: current_user.username}
+        recdata = {title: data.title, comment: data.text, created_by: req.current_user.username}
         if data.url
           recdata.url = data.url
           try
@@ -363,7 +356,7 @@ server = utils.Rowter([
           # if data.choices, then add the choices too
           if data.choices
             for choice in data.choices
-              choice_recdata = {comment: choice, created_by: current_user.username, type: 'choice'}
+              choice_recdata = {comment: choice, created_by: req.current_user.username, type: 'choice'}
               choice_record = logic.records.create_record(choice_recdata, record)
               mongo.records.save choice_record.object, (err, stuff) ->
                 # nothing to do
@@ -396,7 +389,7 @@ server = utils.Rowter([
           hashtimes = 10000 # runs about 80ms on my laptop
           if user.password[0] == utils.passhash(req.post_data.password, user.password[1], hashtimes)
             # set the user in session
-            res.setSecureCookie 'user', JSON.stringify(user)
+            res.current_user = user
             res.redirect req.getCookie('goto') or '/'
           else
             form_error('wrong password')
@@ -552,8 +545,7 @@ server = utils.Rowter([
 
   [
     '/admin/tracker/subscriptions', (req, res) ->
-      current_user = req.get_current_user()
-      if not current_user?
+      if not req.current_user?
         res.writeHead 401, status: 'login_error'
         res.end 'not logged in'
         return
@@ -567,7 +559,7 @@ server = utils.Rowter([
           catch e
             render_layout "message.jade", {message: ''+e}, req, res
             return
-          logic.diffbot.subscribe req.post_data.url, current_user.username, (err) ->
+          logic.diffbot.subscribe req.post_data.url, req.current_user.username, (err) ->
             if err
               render_layout "message.jade", {message: ''+err}, req, res
               return
