@@ -81,6 +81,7 @@ render_layout = (template, locals, req, res, fn) ->
   locals.title = 'YCatalyst' if not locals.title?
   locals.require = require
   locals.current_user = req.current_user
+  locals.Markz = require('./static/markz').Markz
   jade.renderFile "templates/#{template}", locals: locals, (err, body) ->
     if err?
       console.log err
@@ -305,9 +306,24 @@ server = utils.Rowter([
   ],
 
   ['/user/:username', (req, res) ->
+    is_self = req.current_user and req.current_user.username == req.path_data.username
     switch req.method
       when 'GET'
-        render_layout "message.jade", {message: 'user pages coming real soon!'}, req, res
+        mongo.users.findOne username: req.path_data.username, (err, user) ->
+          render_layout "user.jade", {user: user, is_self: is_self}, req, res
+      when 'POST'
+        if not is_self
+          res.writeHead 401, status: 'unauthorized'
+          res.end 'unauthorized'
+          return
+        if req.post_data.bio.length > 10000
+          render_layout "message.jade", {message: "Your bio is too long. Please keep it under 10K characters."}, req, res
+          return
+        mongo.users.update {username: req.path_data.username}, {$set: {bio: req.post_data.bio}}, (err, stuff) ->
+          if err
+            render_layout "message.jade", {message: ''+err}, req, res
+            return
+          res.redirect req.url
   ]
 
   ['/submit', (req, res) ->
@@ -505,6 +521,7 @@ server = utils.Rowter([
               salt = utils.randid()
               hashtimes = 10000 # runs about 80ms on my laptop
               user.password = [utils.passhash(user.password, salt, hashtimes), salt, hashtimes]
+              user.created_at = new Date()
               mongo.users.save user, (err, stuff) ->
                 # set the user in session
                 res.setSecureCookie 'user', JSON.stringify(user)

@@ -1,0 +1,34 @@
+table
+  tr
+    td
+      label user
+    td
+      text #{user.username}
+  tr
+    td
+      label joined
+    td
+      text #{user.created_at.time_ago()}
+  tr
+    td(valign: "top")
+      label bio
+    td
+      - if (is_self) {
+        // looking at your own bio
+        form(action: "/user/"+user.username, method: "POST")
+          textarea(name: "bio")#bio #{user.bio || ''}
+          br
+          input(type: "submit", value: "update")
+      - } else {
+        // looking at someone else's bio
+        - if (user.bio) {
+          !{Markz.prototype.markup(user.bio)}
+        - } else {
+          i no bio
+        - }
+      - }
+      
+:javascript
+  | $(document).ready(function() {
+  |   $('#bio').make_autoresizable();
+  | });
