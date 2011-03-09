@@ -26,7 +26,7 @@ body {
     body #headerbar .links {
       margin: 0px 20px; }
   body #body_contents {
-    margin-top: 10px; }
+    margin: 10px 0px 0px 10px; }
   body img {
     border: 0px;
     margin: 0px;
@@ -46,7 +46,7 @@ body {
     position: relative;
     margin: 10px 0px;
     padding-left: 15px; }
-    body .record .title {
+    body .record a.title {
       text-decoration: none;
       font-size: 10pt; }
     body .record .host {
@@ -93,7 +93,7 @@ body {
       border-left: 2px solid #bbbbff;
       margin-left: 5px;
       padding-left: 5px;
-      color: #333399; }
+      color: #2222aa; }
     body .record .children {
       border-left: 1px solid #eeeeee;
       margin-left: 5px;
@@ -113,6 +113,13 @@ body {
     body ol li, body ul li {
       padding: 0px;
       margin: 0px; }
+      body ol li div, body ul li div {
+        color: #999999;
+        position: relative;
+        padding-left: 15px;
+        margin: 5px 0px; }
+      body ol li a, body ul li a {
+        text-decoration: none; }
   body table th {
     font-weight: 200;
     color: gray; }
@@ -124,21 +131,3 @@ body {
 div.tabs div.choice {
   display: inline;
   margin: 0px 10px; }
-
-div.diff {
-  position: relative;
-  margin: 5px 0px;
-  padding-left: 15px; }
-  div.diff a {
-    text-decoration: none;
-    color: #999999; }
-  div.diff .title {
-    color: #333333; }
-  div.diff .diffbot, div.diff .timeago {
-    font-size: 0.8em;
-    color: #999999; }
-
-div.subscription {
-  margin: 5px 0px; }
-  div.subscription .username, div.subscription .timeago {
-    color: #999999; }

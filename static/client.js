@@ -75,9 +75,11 @@
     });
   };
   App.set_default_text = function(input, default_text) {
-    var on_blur, on_focus;
+    var on_blur, on_focus, orig_name;
+    orig_name = input.attr('name');
     on_focus = __bind(function() {
       input.removeClass('default_text');
+      input.attr('name', orig_name);
       if (input.val() === default_text) {
         return input.val('');
       }
@@ -85,6 +87,7 @@
     on_blur = __bind(function() {
       if (input.val() === default_text || input.val() === '') {
         input.val(default_text);
+        input.attr('name', '_not_' + orig_name);
         return input.addClass('default_text');
       }
     }, this);

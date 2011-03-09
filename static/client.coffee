@@ -74,13 +74,16 @@ App.poll = (root) ->
 # given an input field or textarea, 
 # show some default text (gray, italicized)
 App.set_default_text = (input, default_text) ->
+  orig_name = input.attr('name')
   on_focus = =>
     input.removeClass 'default_text'
+    input.attr('name', orig_name) # to handle synchronous submits
     if input.val() == default_text
       input.val ''
   on_blur = =>
     if input.val() == default_text or input.val() == ''
       input.val(default_text)
+      input.attr('name', '_not_'+orig_name) # to handle synchronous submits
       input.addClass 'default_text'
   on_blur()
   input.focus(on_focus)

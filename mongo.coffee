@@ -33,9 +33,11 @@ db_info = {
   'records': [
       [['parent_id', 1], ['score', 1]]]
   'users': [
-      [['email', 1]]],
+      [['email', 1]]]
   'invites': [
-      [['user_id', 1]]],
+      [['user_id', 1]]]
+  'referrals': [
+      [['email', 1]]]
   'diffbot': [
       [['guid', 1]]]
   'diffbot_subscriptions': null

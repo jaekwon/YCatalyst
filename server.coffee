@@ -176,7 +176,7 @@ server = utils.Rowter([
           mongo.records.save record.object, (err, stuff) ->
             res.simpleJSON 200, status: 'ok'
             trigger_update [record]
-  ],
+  ]
 
   ['/r/:id/watching', (req, res) ->
     switch req.method
@@ -184,7 +184,7 @@ server = utils.Rowter([
         rid = req.path_data.id
         watching = logic.sessions.get_watching(rid)
         res.simpleJSON(200, watching)
-  ],
+  ]
 
   ['/r/:id/delete', (req, res) ->
     console.log "qwe"
@@ -205,7 +205,7 @@ server = utils.Rowter([
           else
             res.writeHead 404, status: 'error'
             res.end html
-  ],
+  ]
 
   ['/r/:id/reply', (req, res) ->
     if not req.current_user?
@@ -265,7 +265,7 @@ server = utils.Rowter([
           else
             res.writeHead 404, status: 'error'
             res.end html
-  ],
+  ]
 
   ['/r/:key/recv', (req, res) ->
     switch req.method
@@ -280,7 +280,7 @@ server = utils.Rowter([
           username: req.current_user.username if req.current_user?
         if req.current_user?
           logic.sessions.touch_session(key, req.current_user.username)
-  ],
+  ]
 
   ['/r/:id/upvote', (req, res) ->
     if not req.current_user?
@@ -303,7 +303,16 @@ server = utils.Rowter([
             res.simpleJSON(200, status: 'ok')
             # notify clients
             trigger_update [record]
-  ],
+  ]
+
+  ['/users', (req, res) ->
+    # show all users
+    switch req.method
+      when 'GET'
+        mongo.users.find {}, {sort: [['created_at', -1]]}, (err, cursor) ->
+          cursor.toArray (err, users) ->
+            render_layout "users.jade", {users: users}, req, res
+  ]
 
   ['/user/:username', (req, res) ->
     is_self = req.current_user and req.current_user.username == req.path_data.username
@@ -380,7 +389,7 @@ server = utils.Rowter([
             res.redirect "/r/#{stuff._id}"
           else
             res.redirect "/r/#{stuff._id}"
-  ],
+  ]
 
   ['/login', (req, res) ->
     switch req.method
@@ -410,7 +419,7 @@ server = utils.Rowter([
           else
             form_error('wrong password')
             return
-  ],
+  ]
 
   ['/password_reset', (req, res) ->
     switch req.method
@@ -475,14 +484,42 @@ server = utils.Rowter([
           # dunno
           res.redirect '/password_reset'
           return
-  ],
+  ]
 
   ['/logout', (req, res) ->
     switch req.method
       when 'GET'
         res.clearCookie 'user'
         res.redirect '/'
-  ],
+  ]
+
+  ['/refer', (req, res) ->
+    # refer someone to the network
+    if not req.current_user?
+      res.writeHead 401, status: 'login_error'
+      res.end 'not logged in'
+      return
+    switch req.method
+      when 'GET'
+        render_layout "refer.jade", {}, req, res
+      when 'POST'
+        try
+          req.post_data.first_name ||= ''
+          req.post_data.last_name ||= ''
+          _v.check(req.post_data.first_name.trim(), 'Please enter the first name of the person you are referring').len(1,100)
+          _v.check(req.post_data.last_name.trim(), 'Please enter the last name of the person you are referring').len(1, 100)
+          _v.check(req.post_data.email).isEmail()
+        catch e
+          render_layout "message.jade", {message: ''+e}, req, res
+          return
+        referral = {first_name: req.post_data.first_name.trim(), last_name: req.post_data.last_name.trim(), email: req.post_data.email, referred_by: req.current_user.username}
+        logic.referrals.submit referral, (err) ->
+          if err
+            render_layout "message.jade", {message: err}, req, res
+            return
+          render_layout "message.jade", {message: "Thanks, we'll take it from here."}, req, res
+          return
+  ]
 
   ['/register', (req, res) ->
     switch req.method

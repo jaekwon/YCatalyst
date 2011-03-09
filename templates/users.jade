@@ -1,0 +1,16 @@
+ol.users
+  - users.forEach(function(user) {
+    li
+      div.user
+        a(href: '/user/'+user.username, class: 'username') #{user.username}
+        text &nbsp;
+        span(class: 'timeago') joined #{user.created_at.time_ago()}
+  - })
+
+:sass
+  | .timeago
+  |   :font-size 0.8em
+
+:javascript
+  | $(document).ready(function() {
+  | });

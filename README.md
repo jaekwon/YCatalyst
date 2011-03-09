@@ -29,6 +29,7 @@ Dependencies
 
   * coffee-script
   * node-mongodb-native
+  * nodemailer
   * jsdom
   * //xml2js  actually, i forked on github here: git@github.com:jaekwon/node-xml2js.git
 

@@ -23,14 +23,16 @@ html(lang="en")
           a(href: "/submit") submit
           | &nbsp;|&nbsp;
           a(href: "/submit?type=poll") poll
-          | &nbsp;|&nbsp;
-          a(href: "/admin/tracker") tracker
         div(style: "float: right")
           - if (current_user)
+            a(href: "/refer") refer a friend
+            | &nbsp;|&nbsp;
             a(href: "/user/"+current_user.username).username #{current_user.username}
             | &nbsp;|&nbsp;
             a.logout(href: "/logout") logout
           - else
+            a(href: "/apply") apply
+            | &nbsp;|&nbsp;
             span.username anonymous
             | &nbsp;|&nbsp;
             a.login(href: "/login") login

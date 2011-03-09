@@ -4,8 +4,10 @@
  * MIT Licensed
  */
 
-$dark_link: #333
+$dark_text: #333
 $light_text: #999
+$blue_text: #22A
+$light_blue_text: #AAF
 $the_font: Verdana, Verdana, Geneva, sans-serif
 
 body
@@ -14,7 +16,7 @@ body
   font-size: 10pt
 
   a
-    color: $dark_link
+    color: $dark_text
     &:visited
       color: $light_text
 
@@ -35,7 +37,7 @@ body
       margin: 0px 20px
 
   #body_contents
-    margin-top: 10px
+    margin: 10px 0px 0px 10px
 
   img
     border: 0px
@@ -59,8 +61,7 @@ body
     position: relative
     margin: 10px 0px
     padding-left: 15px
-    a
-    .title
+    a.title
       text-decoration: none
       font-size: 10pt
     .host
@@ -108,7 +109,7 @@ body
       border-left: 2px solid #bbf
       margin-left: 5px
       padding-left: 5px
-      color: #339
+      color: $blue_text
     .children
       border-left: 1px solid #eee
       margin-left: 5px
@@ -123,13 +124,20 @@ body
     color: gray
 
   ol, ul
-    color: #AAF
+    color: $light_blue_text
     padding-left: 20px
     margin: 0px
     list-style-type: decimal
     li
       padding: 0px
       margin: 0px
+      div
+        color: $light_text
+        position: relative
+        padding-left: 15px
+        margin: 5px 0px
+      a
+        text-decoration: none
 
   table
     th
@@ -145,21 +153,3 @@ div.tabs
   div.choice
     display: inline
     margin: 0px 10px
-
-div.diff
-  position: relative
-  margin: 5px 0px
-  padding-left: 15px
-  a
-    text-decoration: none
-    color: $light_text
-  .title
-    color: $dark_link
-  .diffbot, .timeago
-    font-size: 0.8em
-    color: $light_text
-
-div.subscription
-  margin: 5px 0px
-  .username, .timeago
-    color: $light_text
