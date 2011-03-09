@@ -10,8 +10,11 @@ mailer = require './mailer'
 utils = require '../utils'
 config = require '../config'
 
+# submit/create a new referral.
+# referral = :first_name, :last_name, :email, :referred_by
 exports.submit = (referral, cb) ->
   referral._id = utils.randid()
+  referral.created_at = new Date()
   # look for a previous referral with the same email
   mongo.referrals.findOne {email: referral.email}, (err, existing) ->
     if err

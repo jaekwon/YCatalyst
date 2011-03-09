@@ -73,8 +73,12 @@ App.poll = (root) ->
 
 # given an input field or textarea, 
 # show some default text (gray, italicized)
+# input: a single jQuery selection
+# default_text: (optional) the default text to show
+#  if not present, will look for 'data-default-text' html attribute
 App.set_default_text = (input, default_text) ->
   orig_name = input.attr('name')
+  default_text ||= input.attr('data-default-text')
   on_focus = =>
     input.removeClass 'default_text'
     input.attr('name', orig_name) # to handle synchronous submits
@@ -92,8 +96,9 @@ App.set_default_text = (input, default_text) ->
 
 jQuery.fn.extend(
   'set_default_text': (default_text) ->
-    elem = $(this)
-    App.set_default_text(elem, default_text)
+    this.each (i, thor) ->
+      elem = $(thor)
+      App.set_default_text(elem, default_text)
   'get_value': () ->
     value = $(this).val()
     if $(this).data('default_text') == value

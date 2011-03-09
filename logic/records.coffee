@@ -61,7 +61,7 @@ exports.score_record = (record) ->
   d_h = ((new Date()) - record.object.created_at) / (60*60*1000)
   points = record.object.points
   score = h*newness_factor + (points-1) / (Math.pow((d_h+timebase_hours),gravity))
-  console.log "t: #{t} h: #{h} d_h: #{d_h} points: #{points} score: #{score}"
+  # console.log "t: #{t} h: #{h} d_h: #{d_h} points: #{points} score: #{score}"
   record.object.score = score
 
 # recdata: the record data object

@@ -77,6 +77,7 @@
   App.set_default_text = function(input, default_text) {
     var on_blur, on_focus, orig_name;
     orig_name = input.attr('name');
+    default_text || (default_text = input.attr('data-default-text'));
     on_focus = __bind(function() {
       input.removeClass('default_text');
       input.attr('name', orig_name);
@@ -98,9 +99,11 @@
   };
   jQuery.fn.extend({
     'set_default_text': function(default_text) {
-      var elem;
-      elem = $(this);
-      return App.set_default_text(elem, default_text);
+      return this.each(function(i, thor) {
+        var elem;
+        elem = $(thor);
+        return App.set_default_text(elem, default_text);
+      });
     },
     'get_value': function() {
       var value;

@@ -69,20 +69,25 @@ http.ServerResponse.prototype.writeHead = (statusCode) ->
 # routes: an array of ['/route', fn(req, res)] pairs
 exports.Rowter = (routes) ->
   # convert [route, fn] to [regex, param_names, fn]
+  # or, [options, route, fn] to [regex, param_names, fn, options]
   parsed = []
   for route_fn in routes
-    [route, fn] = route_fn
+    if route_fn.length > 2
+      [options, route, fn] = route_fn
+    else
+      [route, fn] = route_fn
+      options = undefined
     symbols = (x.substr(1) for x in (route.match(/:[^\/]+/g) or []))
     regex = new RegExp("^"+route.replace(/:[^\/]+/g, "([^\/]+)")+"$")
     regex._re_string = route.replace(/:[^\/]+/g, "([^\/]+)")
-    parsed.push([regex, symbols, fn])
+    parsed.push([regex, symbols, fn, options])
 
   # create a giant function that takes a (req, res) pair and finds the right fn to call.
   # we need a giant function for each server because that's how node.js works.
   giant_function = (req, res) ->
     # find matching route
     for regex_symbols_fn in parsed
-      [regex, symbols, fn] = regex_symbols_fn
+      [regex, symbols, fn, options] = regex_symbols_fn
       matched = regex(req.url.split("?", 1))
       #console.log "/#{regex._re_string}/ matched #{req.url.split("?", 1)} to get #{matched}"
       if not matched?
@@ -93,10 +98,18 @@ exports.Rowter = (routes) ->
       if symbols.length > 0
         for i in [0..symbols.length]
           req.path_data[symbols[i]] = matched[i+1]
+      chain = if options and options.wrappers then options.wrappers.slice(0) else []
+      chain.push(default_wrapper(fn))
+      # This function will get passed through the wrapper chain like a hot potato.
+      # all wrappers (except the last one) will receive this function as the third parameter,
+      # and the wrapper is responsible for calling next(req, res) (or not).
+      # I love closures.
+      next = (req, res) ->
+        next_wrapper = chain.shift()
+        next_wrapper(req, res, next)
       # and finally
-      do_Rowt(fn, req, res)
+      next(req, res)
       return
-
     # if we're here, we failed to find a matching route.
     # TODO 
     return
@@ -105,46 +118,47 @@ exports.Rowter = (routes) ->
   server.routes = parsed # you can dynamically alter this array if you want.
   return server
       
-# most of the meat is here.      
-do_Rowt = (fn, req, res) ->
-  SERVER_LOG.write("#{(''+new Date()).substr(0,24)} #{req.headers['x-real-ip'] or req.connection.remoteAddress} #{req.httpVersion} #{req.method} #{req.url} #{req.headers.referer} \n")
-  SERVER_LOG.flush()
-  res.addListener 'writeHead', (statusCode) ->
-    SERVER_LOG.write("#{(''+new Date()).substr(0,24)} #{req.headers['x-real-ip'] or req.connection.remoteAddress} #{req.httpVersion} #{req.method} #{req.url} --> #{statusCode} \n")
+# a default decorator that handles logging and stuff
+default_wrapper = (fn) ->
+  return (req, res) ->
+    SERVER_LOG.write("#{(''+new Date()).substr(0,24)} #{req.headers['x-real-ip'] or req.connection.remoteAddress} #{req.httpVersion} #{req.method} #{req.url} #{req.headers.referer} \n")
     SERVER_LOG.flush()
-  try
-    if req.url.indexOf('?') != -1
-      req.query_data = qs.parse(url.parse(req.url).query)
-    else
-      req.query_data = {}
-    if (req.method == 'POST')
-      body = ''
-      req.setEncoding 'utf8'
-      req.addListener 'data', (chunk) ->
-        body += chunk
-      req.addListener 'end', ->
-        if body
-          try
-            if req.headers['content-type'].toLowerCase() == 'application/x-www-form-urlencoded'
-              req.post_data = www_forms.decodeForm(body)
-            else
-              req.post_data = body
-          catch e
-            console.log e.message
-            console.log e.stack
-            console.log "Exception in parsing post data #{body}. Ignoring exception."
-            req.post_data = body
-        return fn(req, res)
-    else
-      return fn(req, res)
-  catch e
-    console.log("error in Rowt: " + e)
-    console.log(e.stack)
+    res.addListener 'writeHead', (statusCode) ->
+      SERVER_LOG.write("#{(''+new Date()).substr(0,24)} #{req.headers['x-real-ip'] or req.connection.remoteAddress} #{req.httpVersion} #{req.method} #{req.url} --> #{statusCode} \n")
+      SERVER_LOG.flush()
     try
-      res.writeHead(500, status: 'woops')
-    catch _
-      # pass
-    res.end()
+      if req.url.indexOf('?') != -1
+        req.query_data = qs.parse(url.parse(req.url).query)
+      else
+        req.query_data = {}
+      if (req.method == 'POST')
+        body = ''
+        req.setEncoding 'utf8'
+        req.addListener 'data', (chunk) ->
+          body += chunk
+        req.addListener 'end', ->
+          if body
+            try
+              if req.headers['content-type'].toLowerCase() == 'application/x-www-form-urlencoded'
+                req.post_data = www_forms.decodeForm(body)
+              else
+                req.post_data = body
+            catch e
+              console.log e.message
+              console.log e.stack
+              console.log "Exception in parsing post data #{body}. Ignoring exception."
+              req.post_data = body
+          return fn(req, res)
+      else
+        return fn(req, res)
+    catch e
+      console.log("error in Rowt: " + e)
+      console.log(e.stack)
+      try
+        res.writeHead(500, status: 'woops')
+      catch _
+        # pass
+      res.end()
 
 # other utility stuff
 exports.randid = () ->

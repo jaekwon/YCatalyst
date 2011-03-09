@@ -38,6 +38,7 @@ db_info = {
       [['user_id', 1]]]
   'referrals': [
       [['email', 1]]]
+  'questions': null
   'diffbot': [
       [['guid', 1]]]
   'diffbot_subscriptions': null

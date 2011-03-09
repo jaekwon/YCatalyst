@@ -51,7 +51,7 @@ exports.send_referral = (referral, cb) ->
   body = """Hello #{referral.first_name},
 \n
 A member of YCatalyst who goes by #{referral.referred_by} referred you to the network.
-Please visit this link to continue: http://ycatalyst.com/apply?referral_id=#{referral._id}
+Please visit this link to continue: http://ycatalyst.com/apply?referral=#{referral._id}
 \n
 -ycat """
   mail_text {from: config.support_email, to: referral.email, subject: "You've been referred to YCatalyst by (#{referral.referred_by})", body: body}, (err) ->

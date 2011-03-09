@@ -521,6 +521,16 @@ server = utils.Rowter([
           return
   ]
 
+  ['/apply', (req, res) ->
+    switch req.method
+      when 'GET'
+        if req.query_data.referral
+          mongo.referrals.findOne {_id: req.query_data.referral}, (err, referral) ->
+            render_layout 'apply.jade', {referral: referral}, req, res
+        else
+          render_layout 'apply.jade', {referral: {}}, req, res
+  ]
+
   ['/register', (req, res) ->
     switch req.method
       when 'POST'
