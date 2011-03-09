@@ -103,6 +103,23 @@ render_layout = (template, locals, req, res, fn) ->
         res.writeHead 200, status: 'ok'
         res.end html
 
+# wrapper to require current_user
+require_login = (req, res, next) ->
+  if not req.current_user?
+    res.writeHead 401, status: 'login_error'
+    res.end 'not logged in'
+    return
+  else
+    next(req, res)
+# wrapper generator to require current_user, but also direct them to a login page with a nice message
+# message: string or optional
+require_login_nice = (message) ->
+  return (req, res, next) ->
+    if not req.current_user?
+      render_layout "login.jade", {message: message or 'You need to login to do that'}, req, res
+    else
+      next(req, res)
+
 server = utils.Rowter([
 
   ['/static/:filepath', (req, res) ->
@@ -186,12 +203,8 @@ server = utils.Rowter([
         res.simpleJSON(200, watching)
   ]
 
-  ['/r/:id/delete', (req, res) ->
-    console.log "qwe"
-    if not req.current_user?
-      res.writeHead 401, status: 'login_error'
-      res.end 'not logged in'
-      return
+  [wrappers: [require_login],
+   '/r/:id/delete', (req, res) ->
     switch req.method
       when 'POST'
         rid = req.path_data.id
@@ -207,11 +220,8 @@ server = utils.Rowter([
             res.end html
   ]
 
-  ['/r/:id/reply', (req, res) ->
-    if not req.current_user?
-      res.writeHead 401, status: 'login_error'
-      res.end 'not logged in'
-      return
+  [wrappers: [require_login],
+   '/r/:id/reply', (req, res) ->
     switch req.method
       when 'GET'
         parent_id = req.path_data.id
@@ -267,7 +277,8 @@ server = utils.Rowter([
             res.end html
   ]
 
-  ['/r/:key/recv', (req, res) ->
+  [wrappers: [require_login],
+   '/r/:key/recv', (req, res) ->
     switch req.method
       when 'GET'
         key = req.path_data.key
@@ -282,11 +293,8 @@ server = utils.Rowter([
           logic.sessions.touch_session(key, req.current_user.username)
   ]
 
-  ['/r/:id/upvote', (req, res) ->
-    if not req.current_user?
-      res.writeHead 401, status: 'login_error'
-      res.end 'not logged in'
-      return
+  [wrappers: [require_login],
+   '/r/:id/upvote', (req, res) ->
     switch req.method
       when 'POST'
         rid = req.path_data.id
@@ -335,10 +343,8 @@ server = utils.Rowter([
           res.redirect req.url
   ]
 
-  ['/submit', (req, res) ->
-    if not req.current_user?
-      render_layout "login.jade", {message: 'You need to log in to submit'}, req, res
-      return
+  [wrappers: [require_login_nice('You need to log in to submit')],
+   '/submit', (req, res) ->
     switch req.method
       when 'GET'
         render_layout "submit.jade", {headerbar_text: 'Submit', type: (req.query_data.type or 'link')}, req, res
@@ -493,12 +499,9 @@ server = utils.Rowter([
         res.redirect '/'
   ]
 
-  ['/refer', (req, res) ->
+  [wrappers: [require_login],
+   '/refer', (req, res) ->
     # refer someone to the network
-    if not req.current_user?
-      res.writeHead 401, status: 'login_error'
-      res.end 'not logged in'
-      return
     switch req.method
       when 'GET'
         render_layout "refer.jade", {}, req, res
@@ -582,52 +585,46 @@ server = utils.Rowter([
                   #pass
   ]
 
-  [
-    '/__pubsub__', (req, res) ->
-      switch req.method
-        when 'GET'
-          console.log "challenge accepted"
-          res.writeHead 200
-          res.write req.query_data['hub.challenge']
-          res.end()
-        when 'POST'
-          res.writeHead 200
-          require('./logic/diffbot').process_response(req.post_data)
-          res.end()
+  ['/__pubsub__', (req, res) ->
+    switch req.method
+      when 'GET'
+        console.log "challenge accepted"
+        res.writeHead 200
+        res.write req.query_data['hub.challenge']
+        res.end()
+      when 'POST'
+        res.writeHead 200
+        require('./logic/diffbot').process_response(req.post_data)
+        res.end()
   ]
 
-  [
-    '/admin/tracker', (req, res) ->
-      switch req.method
-        when 'GET'
-          mongo.diffbot.find {}, {sort: [['timestamp', -1]], limit: 20}, (err, cursor) ->
-            cursor.toArray (err, diffs) ->
-              if err
-                console.log err
-              render_layout "admin/diffs.jade", {diffs: diffs}, req, res
-  ]
-
-  [
-    '/admin/tracker/subscriptions', (req, res) ->
-      if not req.current_user?
-        res.writeHead 401, status: 'login_error'
-        res.end 'not logged in'
-        return
-      switch req.method
-        when 'GET'
-          logic.diffbot.get_subscriptions (err, subscriptions) ->
-            render_layout "admin/subscriptions.jade", {subscriptions: subscriptions}, req, res
-        when 'POST'
-          try
-            _v.check(req.post_data.url, 'url must be a valid http(s):// url.').isUrl()
-          catch e
-            render_layout "message.jade", {message: ''+e}, req, res
-            return
-          logic.diffbot.subscribe req.post_data.url, req.current_user.username, (err) ->
+  ['/admin/tracker', (req, res) ->
+    switch req.method
+      when 'GET'
+        mongo.diffbot.find {}, {sort: [['timestamp', -1]], limit: 20}, (err, cursor) ->
+          cursor.toArray (err, diffs) ->
             if err
-              render_layout "message.jade", {message: ''+err}, req, res
-              return
-            res.redirect "/admin/tracker/subscriptions"
+              console.log err
+            render_layout "admin/diffs.jade", {diffs: diffs}, req, res
+  ]
+
+  [wrappers: [require_login],
+   '/admin/tracker/subscriptions', (req, res) ->
+    switch req.method
+      when 'GET'
+        logic.diffbot.get_subscriptions (err, subscriptions) ->
+          render_layout "admin/subscriptions.jade", {subscriptions: subscriptions}, req, res
+      when 'POST'
+        try
+          _v.check(req.post_data.url, 'url must be a valid http(s):// url.').isUrl()
+        catch e
+          render_layout "message.jade", {message: ''+e}, req, res
+          return
+        logic.diffbot.subscribe req.post_data.url, req.current_user.username, (err) ->
+          if err
+            render_layout "message.jade", {message: ''+err}, req, res
+            return
+          res.redirect "/admin/tracker/subscriptions"
   ]
 ])
 
