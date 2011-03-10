@@ -343,11 +343,15 @@ server = utils.Rowter([
           res.redirect req.url
   ]
 
+  ['/bookmarklet', (req, res) ->
+    render_layout "bookmarklet.jade", {}, req, res
+  ]
+
   [wrappers: [require_login_nice('You need to log in to submit')],
    '/submit', (req, res) ->
     switch req.method
       when 'GET'
-        render_layout "submit.jade", {headerbar_text: 'Submit', type: (req.query_data.type or 'link')}, req, res
+        render_layout "submit.jade", {headerbar_text: 'Submit', type: (req.query_data.type or 'link'), link_title: req.query_data.title, link_url: req.query_data.url}, req, res
       when 'POST'
         data = req.post_data
         # validate data
