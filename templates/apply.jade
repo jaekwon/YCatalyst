@@ -3,16 +3,31 @@ p YCatalyst application
 p Membership requires screening by existing members. Please fill out the form below.
 
 form(action: "/apply", method: "POST")
+  - if (typeof application != 'undefined')
+    input(type: "hidden", name: "application_id", value: application._id)
+    - var referral = {};
+  - else
+    - var application = {};
   input(type: "hidden", name: "referral_id", value: referral._id)
-  input(type: "text", name: "first_name", data-default-text="first name", value: referral.first_name)
+  input(type: "text", name: "first_name", data-default-text="first name", value: (referral.first_name || application.first_name))#first_name
   br
-  input(type: "text", name: "last_name", data-default-text="last name", value: referral.last_name)
+  input(type: "text", name: "last_name", data-default-text="last name", value: (referral.last_name || application.last_name))#last_name
   br
-  input(type: "text", name: "email", data-default-text="email", value: referral.email)
+  input(type: "text", name: "email", data-default-text="email", value: (referral.email || application.email))#email
   br
-  input(type: "submit", name: "apply")
+  input(type: "text", name: "website", data-default-text="website", value: application.website)#website
+  br
+  p Please explain why you should be granted membership in the field below.
+  textarea(name: "comment", cols: 60, rows: 20)#comment #{application.comment || ''}
+  br
+  input(type: "submit", value: "apply")
+
+:sass
+  | #first_name, #last_name, #email
+  |   :width 200px
 
 :javascript
   | $(document).ready(function() {
   |   $('input[data-default-text]').set_default_text();
+  |   $('#comment').make_autoresizable();
   | });

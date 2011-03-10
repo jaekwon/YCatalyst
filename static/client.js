@@ -125,6 +125,10 @@
         var autoresize, cloned_textarea;
         textarea = $(textarea);
         cloned_textarea = $(document.createElement('div'));
+        cloned_textarea.attr({
+          cols: textarea.attr('cols'),
+          rows: textarea.attr('rows')
+        });
         cloned_textarea.css({
           minHeight: textarea.css('min-height'),
           minWidth: textarea.css('min-width'),

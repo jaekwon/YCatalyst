@@ -499,9 +499,9 @@ server = utils.Rowter([
         res.redirect '/'
   ]
 
+  # refer someone to the network
   [wrappers: [require_login],
    '/refer', (req, res) ->
-    # refer someone to the network
     switch req.method
       when 'GET'
         render_layout "refer.jade", {}, req, res
@@ -530,8 +530,30 @@ server = utils.Rowter([
         if req.query_data.referral
           mongo.referrals.findOne {_id: req.query_data.referral}, (err, referral) ->
             render_layout 'apply.jade', {referral: referral}, req, res
+        else if req.getSecureCookie 'application_id'
+          mongo.applications.findOne {_id: req.getSecureCookie 'application_id'}, (err, application) ->
+            render_layout 'apply.jade', {application: application}, req, res
         else
           render_layout 'apply.jade', {referral: {}}, req, res
+      when 'POST'
+        application = {_id: req.post_data.application_id or utils.randid(), created_at: (new Date())}
+        for key in ['first_name', 'last_name', 'email', 'referral_id', 'website', 'comment']
+          application[key] = req.post_data[key]
+        mongo.applications.save application, (err, stuff) ->
+          if err
+            render_layout 'message.jade', {message: ''+err}, req, res
+            return
+          res.setSecureCookie 'application_id', stuff._id
+          render_layout 'message.jade', {message: 'Thanks, your application has been saved. We\'ll email you shortly.'}, req, res
+  ]
+
+  [wrappers: [require_login],
+   '/applicants', (req, res) ->
+    switch req.method
+      when 'GET'
+        mongo.applications.find {}, {sort: [['created_at', -1]]}, (err, cursor) ->
+          cursor.toArray (err, applicants) ->
+            render_layout 'applicants.jade', {applicants: applicants}, req, res
   ]
 
   ['/register', (req, res) ->

@@ -115,6 +115,9 @@ jQuery.fn.extend(
       # we don't use a textarea because chrome has issues with undo's not working
       # when you interlace edits on multiple textareas.
       cloned_textarea = $(document.createElement('div')); #textarea.clone()
+      cloned_textarea.attr
+        cols: textarea.attr('cols')
+        rows: textarea.attr('rows')
       cloned_textarea.css
         minHeight: textarea.css('min-height')
         minWidth: textarea.css('min-width')
