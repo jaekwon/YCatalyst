@@ -120,6 +120,14 @@ require_login_nice = (message) ->
     else
       next(req, res)
 
+require_admin = (req, res, next) ->
+  if not req.current_user.is_admin
+    res.writeHead 401, status: 'privileges_error'
+    res.end 'not authorized'
+    return
+  else
+    next(req, res)
+
 server = utils.Rowter([
 
   ['/static/:filepath', (req, res) ->
@@ -624,7 +632,31 @@ server = utils.Rowter([
         res.end()
   ]
 
-  ['/admin/tracker', (req, res) ->
+  # resets the current_user cookie. for dev and debugging as of now
+  [wrappers: [require_login],
+   '/reset_current_user', (req, res) ->
+    mongo.users.findOne {_id: req.current_user._id}, (err, current_user) ->
+      res.current_user = current_user
+      render_layout "message.jade", {message: 'cookie reset!'}, req, res
+  ]
+
+  # i'm using this to send an email, too lazy to set up an imap server...
+  [wrappers: [require_login, require_admin],
+   '/admin/messages', (req, res) ->
+    switch req.method
+      when 'GET'
+        render_layout 'admin/messages.jade', {}, req, res
+      when 'POST'
+        mail = req.post_data
+        mail.created_at = new Date()
+        logic.mailer.mail_text mail, (err) ->
+          render_layout "message.jade", {message: 'Your email has been sent.'}, req, res
+          # save the email to the db for now
+          mongo.messages.save mail
+  ]
+
+  [wrappers: [require_login, require_admin],
+   '/admin/tracker', (req, res) ->
     switch req.method
       when 'GET'
         mongo.diffbot.find {}, {sort: [['timestamp', -1]], limit: 20}, (err, cursor) ->
@@ -634,7 +666,7 @@ server = utils.Rowter([
             render_layout "admin/diffs.jade", {diffs: diffs}, req, res
   ]
 
-  [wrappers: [require_login],
+  [wrappers: [require_login, require_admin],
    '/admin/tracker/subscriptions', (req, res) ->
     switch req.method
       when 'GET'
