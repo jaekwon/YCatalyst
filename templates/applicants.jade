@@ -13,9 +13,20 @@ ol.applicants
           span.applied_at (applied #{applicant.created_at.time_ago()})
         - }
         br
-        a(href: applicant.website).website #{applicant.website}
-        br
-        span.comment #{applicant.comment}
+        - if (applicant.website) {
+          a(href: applicant.website).website #{applicant.website}
+          br
+        - }
+        div.comment
+          !{Markz.prototype.markup(applicant.comment)}
+
+        // membership voting buttons
+        
+        text vote: 
+        a(href: "#")#vote_allow accept
+        text &nbsp;|&nbsp;
+        a(href: "#")#vote_allow deny
+        
   - })
 
 :sass
@@ -28,7 +39,10 @@ ol.applicants
   |     :color #333
   |   .applied_at
   |     :font-size 0.8em
-  |   
+  |   .comment
+  |     :padding 5px
+  |   ol>li>div.applicant
+  |     :margin-bottom 20px
 
 :javascript
   | $(document).ready(function() {

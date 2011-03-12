@@ -113,7 +113,7 @@ body {
     body ol li, body ul li {
       padding: 0px;
       margin: 0px; }
-      body ol li div, body ul li div {
+      body ol li > div, body ul li > div {
         color: #999999;
         position: relative;
         padding-left: 15px;

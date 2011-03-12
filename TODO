@@ -1,3 +1,8 @@
 # informal list of TODOs here until the Github Issues page takes off
 
  - need to fetch some top items and rescore them, otherwise stale items on the front page won't gravitate down as they should
+
+# keep a todo list of tests to write here
+TESTS
+ - need tests for routing logic in utils
+  - regression: header parsing in default_wrapper

@@ -139,7 +139,7 @@ default_wrapper = (fn) ->
         req.addListener 'end', ->
           if body
             try
-              if req.headers['content-type'].toLowerCase() == 'application/x-www-form-urlencoded'
+              if req.headers['content-type'].toLowerCase().indexOf('application/x-www-form-urlencoded') != -1
                 req.post_data = www_forms.decodeForm(body)
               else
                 req.post_data = body
