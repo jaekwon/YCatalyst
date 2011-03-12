@@ -6,12 +6,29 @@ ol.applicants
   - applicants.forEach(function(applicant) {
     li
       div.applicant
-        text someone
+        span.first_name #{applicant.first_name}
+        text &nbsp;
+        span.last_name #{applicant.last_name} 
+        - if (applicant.created_at) {
+          span.applied_at (applied #{applicant.created_at.time_ago()})
+        - }
+        br
+        a(href: applicant.website).website #{applicant.website}
+        br
+        span.comment #{applicant.comment}
   - })
 
 :sass
-  | .timeago
-  |   :font-size 0.8em
+  | body
+  |   .timeago
+  |     :font-size 0.8em
+  |   a.website
+  |     :color #66F
+  |   .first_name, .last_name
+  |     :color #333
+  |   .applied_at
+  |     :font-size 0.8em
+  |   
 
 :javascript
   | $(document).ready(function() {
