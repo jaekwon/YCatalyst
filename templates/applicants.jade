@@ -23,9 +23,11 @@ ol.applicants
         // membership voting buttons
         
         text vote: 
-        a(href: "#")#vote_allow accept
+        a(href: "#", title: applicant.accepted_by.join(" ")).vote_allow accept 
+          span.vote_allow_count #{applicant.accepted_by.length}
         text &nbsp;|&nbsp;
-        a(href: "#")#vote_allow deny
+        a(href: "#").vote_deny deny 
+          span.vote_deny_count #{applicant.denied_by.length}
         
   - })
 
@@ -43,7 +45,12 @@ ol.applicants
   |     :padding 5px
   |   ol>li>div.applicant
   |     :margin-bottom 20px
+  |   .vote_allow, .vote_allow:visited
+  |     :color green
+  |   .vote_deny, .vote_deny:visited
+  |     :color red
 
 :javascript
   | $(document).ready(function() {
+  |   
   | });

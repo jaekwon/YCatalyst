@@ -548,15 +548,24 @@ server = utils.Rowter([
         else
           render_layout 'apply.jade', {referral: {}}, req, res
       when 'POST'
-        application = {_id: req.post_data.application_id or utils.randid(), created_at: (new Date())}
+        application = {_id: req.post_data.application_id or utils.randid(), created_at: (new Date()), accepted_by: [], denied_by: []}
         for key in ['first_name', 'last_name', 'email', 'referral_id', 'website', 'comment']
           application[key] = req.post_data[key]
-        mongo.applications.save application, (err, stuff) ->
-          if err
-            render_layout 'message.jade', {message: ''+err}, req, res
-            return
-          res.setSecureCookie 'application_id', stuff._id
-          render_layout 'message.jade', {message: 'Thanks, your application has been saved. We\'ll email you shortly.'}, req, res
+        utils.compose (next) ->
+          if application.referral_id
+            mongo.referrals.findOne {_id: application.referral_id}, (err, referral) ->
+              application.referred_by = referral.referred_by
+              application.accepted_by.push referral.referred_by
+              next()
+          else
+            next()
+        , () ->
+          mongo.applications.save application, (err, stuff) ->
+            if err
+              render_layout 'message.jade', {message: ''+err}, req, res
+              return
+            res.setSecureCookie 'application_id', stuff._id
+            render_layout 'message.jade', {message: 'Thanks, your application has been saved. We\'ll email you shortly.'}, req, res
   ]
 
   [wrappers: [require_login],

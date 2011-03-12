@@ -206,3 +206,16 @@ exports.url_hostname = (url) ->
   catch e
     throw 'invalid url?'
   return host
+
+# sometimes you want to call a second block of code synchronously or asynchronously depending
+# on the first block of code. In this case, use the following convention:
+# compose( (next) ->
+#   if(synchronous?)
+#     next("some_arg")
+#   else
+#     db.asynchronous_call (err, values) ->
+#       next("other_arg")
+# , (arg) ->
+#   console.log arg
+exports.compose = (f, g) ->
+  f(g)
