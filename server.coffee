@@ -4,12 +4,13 @@
 # MIT Licensed
 ###
 
-require.paths.unshift 'vendor/jade'
 require.paths.unshift 'vendor'
 require.paths.unshift 'vendor/validator'
 
 http = require 'http'
-jade = require 'jade'
+coffeescript = require 'coffee-script'
+coffeekup = require './static/coffeekup'
+sass = require 'sass'
 utils = require './utils'
 mongo = require './mongo'
 fu = require './fu'
@@ -76,32 +77,66 @@ trigger_update = (records) ->
       callback.callback(recdatas)
     delete all_callbacks[key]
 
-# helper to render with layout
-render_layout = (template, locals, req, res, fn) ->
-  locals.title = 'YCatalyst' if not locals.title?
-  locals.require = require
-  locals.current_user = req.current_user
-  locals.Markz = require('./static/markz').Markz
-  jade.renderFile "templates/#{template}", locals: locals, (err, body) ->
-    if err?
-      console.log err
-      console.log err.stack
-      console.log err.message
-      if fn?
-        fn(err, undefined)
-      return
-    locals.body = body
-    jade.renderFile "templates/layout.jade", locals: locals, (err, html) ->
-      if err?
-        console.log err
-        console.log err.stack
-        console.log err.message
-        if fn?
-          fn(err, undefined)
-        return
-      if res?
-        res.writeHead 200, status: 'ok'
-        res.end html
+render_layout = (template, context, req, res) ->
+  # helper to render with layout, mind the closure
+  # this way you can always call 'render' from within template code, and
+  # the closure will be carreid through.
+  _render = (template, context) ->
+    locals =
+      require: require
+      render: _render
+      static_file: require('./utils').static_file
+      Markz: require('./static/markz').Markz
+    if req?
+      context.current_user = req.current_user
+    tmpl_module = require("./templates/#{template}")
+    # compile the coffeekup render fn
+    if not tmpl_module._compiled_fn?
+      if not tmpl_module.template?
+        throw new Error "The template file #{template} does not export a 'template' coffeekup function"
+      try
+        tmpl_module._compiled_fn = coffeekup.compile tmpl_module.template, dynamic_locals: true
+      catch err
+        console.log "err in compiling #{template}: " + err
+        throw err
+    # plugin: sass
+    if tmpl_module.sass and not tmpl_module["_compiled_sass"]?
+      try
+        tmpl_module["_compiled_sass"] = _csass = sass.render(tmpl_module.sass)
+        if not _csass
+          console.log "Warning: sass for template is empty: #{template}"
+      catch err
+        console.log "err in compiling sass for #{template}: " + err
+        throw err
+    # plugin: coffeescript
+    if tmpl_module.coffeescript and not tmpl_module["_compiled_coffeescript"]?
+      try
+        tmpl_module["_compiled_coffeescript"] = coffeescript.compile(tmpl_module.coffeescript)
+      catch err
+        console.log "err in compiling coffeescript for #{template}: " + err
+        throw err
+    # compile the body
+    html = ''
+    try
+      html += tmpl_module._compiled_fn(context: context, locals: locals)
+      if tmpl_module._compiled_coffeescript
+        html += "\n<script type='text/javascript'>#{tmpl_module._compiled_coffeescript}</script>"
+      if tmpl_module._compiled_sass
+        html += "\n<style type='text/css'>#{tmpl_module._compiled_sass}</style>"
+    catch err
+      console.log "err in rendering #{template}: " + err
+      throw err
+    return html
+
+  layout_context = {}
+  layout_context.title = 'YCatalyst' if not context.title?
+  layout_context.body_template = template
+  layout_context.body_context = context
+  layout_context.current_user = req.current_user
+  html = _render('layout', layout_context)
+  if res?
+    res.writeHead 200, status: 'ok'
+    res.end html
 
 # wrapper to require current_user
 require_login = (req, res, next) ->
@@ -116,7 +151,7 @@ require_login = (req, res, next) ->
 require_login_nice = (message) ->
   return (req, res, next) ->
     if not req.current_user?
-      render_layout "login.jade", {message: message or 'You need to login to do that'}, req, res
+      render_layout "login", {message: message or 'You need to login to do that'}, req, res
     else
       next(req, res)
 
@@ -156,7 +191,7 @@ server = utils.Rowter([
               console.log err
               return
             records = (new rec.Record(r) for r in records)
-            render_layout "index.jade", {records: records}, req, res
+            render_layout "index", {records: records}, req, res
   ]
 
   ['/r/:id', (req, res) ->
@@ -174,7 +209,7 @@ server = utils.Rowter([
               res.writeHead 404, status: 'error'
               res.end()
               return
-            render_layout "record.jade", {root: logic.records.dangle(all, root_id)}, req, res
+            render_layout "record", {root: logic.records.dangle(all, root_id)}, req, res
       when 'POST'
         # updating
         logic.records.get_one_record root_id, (err, record) ->
@@ -234,7 +269,7 @@ server = utils.Rowter([
       when 'GET'
         parent_id = req.path_data.id
         logic.records.get_one_record parent_id, (err, parent) ->
-          render_layout "reply.jade", {parent: parent}, req, res
+          render_layout "reply", {parent: parent}, req, res
       when 'POST'
         parent_id = req.path_data.id
         comment = req.post_data.comment
@@ -327,7 +362,7 @@ server = utils.Rowter([
       when 'GET'
         mongo.users.find {}, {sort: [['created_at', -1]]}, (err, cursor) ->
           cursor.toArray (err, users) ->
-            render_layout "users.jade", {users: users}, req, res
+            render_layout "users", {users: users}, req, res
   ]
 
   ['/user/:username', (req, res) ->
@@ -335,31 +370,31 @@ server = utils.Rowter([
     switch req.method
       when 'GET'
         mongo.users.findOne username: req.path_data.username, (err, user) ->
-          render_layout "user.jade", {user: user, is_self: is_self}, req, res
+          render_layout "user", {user: user, is_self: is_self}, req, res
       when 'POST'
         if not is_self
           res.writeHead 401, status: 'unauthorized'
           res.end 'unauthorized'
           return
         if req.post_data.bio.length > 10000
-          render_layout "message.jade", {message: "Your bio is too long. Please keep it under 10K characters."}, req, res
+          render_layout "message", {message: "Your bio is too long. Please keep it under 10K characters."}, req, res
           return
         mongo.users.update {username: req.path_data.username}, {$set: {bio: req.post_data.bio}}, (err, stuff) ->
           if err
-            render_layout "message.jade", {message: ''+err}, req, res
+            render_layout "message", {message: ''+err}, req, res
             return
           res.redirect req.url
   ]
 
   ['/bookmarklet', (req, res) ->
-    render_layout "bookmarklet.jade", {}, req, res
+    render_layout "bookmarklet", {}, req, res
   ]
 
   [wrappers: [require_login_nice('You need to log in to submit')],
    '/submit', (req, res) ->
     switch req.method
       when 'GET'
-        render_layout "submit.jade", {headerbar_text: 'Submit', type: (req.query_data.type or 'link'), link_title: req.query_data.title, link_url: req.query_data.url}, req, res
+        render_layout "submit", {headerbar_text: 'Submit', type: (req.query_data.type or 'link'), link_title: req.query_data.title, link_url: req.query_data.url}, req, res
       when 'POST'
         data = req.post_data
         # validate data
@@ -379,7 +414,7 @@ server = utils.Rowter([
             if not data.url and not data.text and not data.choices
               throw 'you must enter a URL or text'
         catch e
-          render_layout "message.jade", {message: ''+e}, req, res
+          render_layout "message", {message: ''+e}, req, res
           return
         # create new record
         recdata = {title: data.title, comment: data.text, created_by: req.current_user.username}
@@ -413,10 +448,10 @@ server = utils.Rowter([
     switch req.method
       when 'GET'
         res.setCookie 'goto', req.query_data.goto
-        render_layout "login.jade", {}, req, res
+        render_layout "login", {}, req, res
       when 'POST'
         form_error = (error) ->
-          render_layout "message.jade", {message: error}, req, res
+          render_layout "message", {message: error}, req, res
         try
           _v.check(req.post_data.username, 'username must be alphanumeric, 2 to 12 characters').len(2,12).isAlphanumeric()
           _v.check(req.post_data.password, 'password must be 5 to 1024 characters').len(5,1024)
@@ -444,19 +479,19 @@ server = utils.Rowter([
       when 'GET'
         if not req.query_data.key
           # show the email form
-          render_layout "password_reset.jade", {}, req, res
+          render_layout "password_reset", {}, req, res
         else
           # ask for the password & repeat
           mongo.users.findOne username: req.query_data.username, (err, user) ->
             if not user
               # invalid user
-              render_layout "message.jade", {message: "Sorry, invalid request"}, req, res
+              render_layout "message", {message: "Sorry, invalid request"}, req, res
             else if user.password_reset_nonce == req.query_data.key
               # reset the password
-              render_layout "password_reset.jade", {user: user}, req, res
+              render_layout "password_reset", {user: user}, req, res
             else
               # wrong key/nonce
-              render_layout "message.jade", {message: "Sorry, the URL is bad or expired. Check your latest email or try again"}, req, res
+              render_layout "message", {message: "Sorry, the URL is bad or expired. Check your latest email or try again"}, req, res
       when 'POST'
         if req.post_data.email
           # we got the user's email
@@ -465,26 +500,26 @@ server = utils.Rowter([
               res.clearCookie 'user'
               logic.mailer.send_password user: user, (err, results) ->
                 if err?
-                  render_layout "message.jade", {message: "Error sending an email, please try again."}, req, res
+                  render_layout "message", {message: "Error sending an email, please try again."}, req, res
                   return
-                render_layout "message.jade", {message: "check your email please."}, req, res
+                render_layout "message", {message: "check your email please."}, req, res
             else
-              render_layout "message.jade", {message: "Sorry, unknown email #{req.post_data.email}."}, req, res
+              render_layout "message", {message: "Sorry, unknown email #{req.post_data.email}."}, req, res
               return
         else if req.post_data.password
           # we got the password and all that. do all validation here.
           if req.post_data.password != req.post_data.password2
-            render_layout "message.jade", {message: "Password doesn't match. Go back."}, req, res
+            render_layout "message", {message: "Password doesn't match. Go back."}, req, res
             return
           mongo.users.findOne username: req.post_data.username, (err, user) ->
             if user
               # ensure that the nonce was actually there.
               if not user.password_reset_nonce or user.password_reset_nonce.length < 5 or (user.password_reset_nonce != req.post_data.password_reset_nonce)
-                render_layout "message.jade", {message: "Invalid request. Check your latest email or try again"}, req, res
+                render_layout "message", {message: "Invalid request. Check your latest email or try again"}, req, res
                 return
               # ensure good password
               if not (5 <= req.post_data.password.length <= 1024)
-                render_layout "message.jade", {message: "Invalid password. Your password must be between 5 and 1024 characters in length"}, req, res
+                render_layout "message", {message: "Invalid password. Your password must be between 5 and 1024 characters in length"}, req, res
                 return
               # save this new password and reset/delete the nonce
               salt = utils.randid()
@@ -496,7 +531,7 @@ server = utils.Rowter([
                 res.setSecureCookie 'user', JSON.stringify(user)
                 res.redirect '/'
             else
-              render_layout "message.jade", {message: "Sorry, unknown user #{req.post_data.username}."}, req, res
+              render_layout "message", {message: "Sorry, unknown user #{req.post_data.username}."}, req, res
               return
         else
           # dunno
@@ -516,7 +551,7 @@ server = utils.Rowter([
    '/refer', (req, res) ->
     switch req.method
       when 'GET'
-        render_layout "refer.jade", {}, req, res
+        render_layout "refer", {}, req, res
       when 'POST'
         try
           req.post_data.first_name ||= ''
@@ -525,14 +560,14 @@ server = utils.Rowter([
           _v.check(req.post_data.last_name.trim(), 'Please enter the last name of the person you are referring').len(1, 100)
           _v.check(req.post_data.email).isEmail()
         catch e
-          render_layout "message.jade", {message: ''+e}, req, res
+          render_layout "message", {message: ''+e}, req, res
           return
         referral = {first_name: req.post_data.first_name.trim(), last_name: req.post_data.last_name.trim(), email: req.post_data.email, referred_by: req.current_user.username}
         logic.referrals.submit referral, (err) ->
           if err
-            render_layout "message.jade", {message: err}, req, res
+            render_layout "message", {message: err}, req, res
             return
-          render_layout "message.jade", {message: "Thanks, we'll take it from here."}, req, res
+          render_layout "message", {message: "Thanks, we'll take it from here."}, req, res
           return
   ]
 
@@ -541,12 +576,12 @@ server = utils.Rowter([
       when 'GET'
         if req.query_data.referral
           mongo.referrals.findOne {_id: req.query_data.referral}, (err, referral) ->
-            render_layout 'apply.jade', {referral: referral}, req, res
+            render_layout 'apply', {referral: referral}, req, res
         else if req.getSecureCookie 'application_id'
           mongo.applications.findOne {_id: req.getSecureCookie 'application_id'}, (err, application) ->
-            render_layout 'apply.jade', {application: application}, req, res
+            render_layout 'apply', {application: application}, req, res
         else
-          render_layout 'apply.jade', {referral: {}}, req, res
+          render_layout 'apply', {referral: {}}, req, res
       when 'POST'
         application = {_id: req.post_data.application_id or utils.randid(), created_at: (new Date()), accepted_by: [], denied_by: []}
         for key in ['first_name', 'last_name', 'email', 'referral_id', 'website', 'comment']
@@ -562,10 +597,10 @@ server = utils.Rowter([
         , () ->
           mongo.applications.save application, (err, stuff) ->
             if err
-              render_layout 'message.jade', {message: ''+err}, req, res
+              render_layout 'message', {message: ''+err}, req, res
               return
             res.setSecureCookie 'application_id', stuff._id
-            render_layout 'message.jade', {message: 'Thanks, your application has been saved. We\'ll email you shortly.'}, req, res
+            render_layout 'message', {message: 'Thanks, your application has been saved. We\'ll email you shortly.'}, req, res
   ]
 
   [wrappers: [require_login],
@@ -574,14 +609,14 @@ server = utils.Rowter([
       when 'GET'
         mongo.applications.find {}, {sort: [['created_at', -1]]}, (err, cursor) ->
           cursor.toArray (err, applicants) ->
-            render_layout 'applicants.jade', {applicants: applicants}, req, res
+            render_layout 'applicants', {applicants: applicants}, req, res
   ]
 
   ['/register', (req, res) ->
     switch req.method
       when 'POST'
         form_error = (error) ->
-          render_layout "message.jade", {message: error}, req, res
+          render_layout "message", {message: error}, req, res
 
         # validate data
         data = req.post_data
@@ -628,25 +663,12 @@ server = utils.Rowter([
                   #pass
   ]
 
-  ['/__pubsub__', (req, res) ->
-    switch req.method
-      when 'GET'
-        console.log "challenge accepted"
-        res.writeHead 200
-        res.write req.query_data['hub.challenge']
-        res.end()
-      when 'POST'
-        res.writeHead 200
-        require('./logic/diffbot').process_response(req.post_data)
-        res.end()
-  ]
-
   # resets the current_user cookie. for dev and debugging as of now
   [wrappers: [require_login],
    '/reset_current_user', (req, res) ->
     mongo.users.findOne {_id: req.current_user._id}, (err, current_user) ->
       res.current_user = current_user
-      render_layout "message.jade", {message: 'cookie reset!'}, req, res
+      render_layout "message", {message: 'cookie reset!'}, req, res
   ]
 
   # i'm using this to send an email, too lazy to set up an imap server...
@@ -654,45 +676,16 @@ server = utils.Rowter([
    '/admin/messages', (req, res) ->
     switch req.method
       when 'GET'
-        render_layout 'admin/messages.jade', {}, req, res
+        render_layout 'admin/messages', {}, req, res
       when 'POST'
         mail = req.post_data
         mail.created_at = new Date()
         logic.mailer.mail_text mail, (err) ->
-          render_layout "message.jade", {message: 'Your email has been sent.'}, req, res
+          render_layout "message", {message: 'Your email has been sent.'}, req, res
           # save the email to the db for now
           mongo.messages.save mail
   ]
 
-  [wrappers: [require_login, require_admin],
-   '/admin/tracker', (req, res) ->
-    switch req.method
-      when 'GET'
-        mongo.diffbot.find {}, {sort: [['timestamp', -1]], limit: 20}, (err, cursor) ->
-          cursor.toArray (err, diffs) ->
-            if err
-              console.log err
-            render_layout "admin/diffs.jade", {diffs: diffs}, req, res
-  ]
-
-  [wrappers: [require_login, require_admin],
-   '/admin/tracker/subscriptions', (req, res) ->
-    switch req.method
-      when 'GET'
-        logic.diffbot.get_subscriptions (err, subscriptions) ->
-          render_layout "admin/subscriptions.jade", {subscriptions: subscriptions}, req, res
-      when 'POST'
-        try
-          _v.check(req.post_data.url, 'url must be a valid http(s):// url.').isUrl()
-        catch e
-          render_layout "message.jade", {message: ''+e}, req, res
-          return
-        logic.diffbot.subscribe req.post_data.url, req.current_user.username, (err) ->
-          if err
-            render_layout "message.jade", {message: ''+err}, req, res
-            return
-          res.redirect "/admin/tracker/subscriptions"
-  ]
 ])
 
 server.listen config.server.port, config.server.host

@@ -1,9 +1,3 @@
-[submodule "vendor/jade"]
-	path = vendor/jade
-	url = https://github.com/visionmedia/jade.git
-[submodule "vendor/mongoose"]
-	path = vendor/mongoose
-	url = https://github.com/LearnBoost/mongoose.git
 [submodule "vendor/node"]
 	path = vendor/node
 	url = https://github.com/joyent/node.git
@@ -16,9 +10,3 @@
 [submodule "vendor/cookie-node"]
 	path = vendor/cookie-node
 	url = https://github.com/jaekwon/cookie-node.git
-[submodule "vendor/nubnub"]
-	path = vendor/nubnub
-	url = git://github.com/jaekwon/nubnub.git
-[submodule "vendor/xml2js"]
-	path = vendor/xml2js
-  url = git://github.com/jaekwon/node-xml2js.git

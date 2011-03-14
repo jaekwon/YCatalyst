@@ -1,6 +1,6 @@
 (function() {
   var cache, coffee, coffeekup, skeleton, support, tags;
-  var __hasProp = Object.prototype.hasOwnProperty, __indexOf = Array.prototype.indexOf || function(item) {
+  var __indexOf = Array.prototype.indexOf || function(item) {
     for (var i = 0, l = this.length; i < l; i++) {
       if (this[i] === item) return i;
     }
@@ -13,10 +13,12 @@
     coffeekup = exports;
     coffee = require('coffee-script');
   }
-  coffeekup.version = '0.2.1';
+  coffeekup.version = '0.2.2';
   skeleton = function(ck_options) {
     var ck_buffer, ck_doctypes, ck_esc, ck_indent, ck_render_attrs, ck_repeat, ck_self_closing, ck_tabs, ck_tag, coffeescript, comment, doctype, h, tag, text, _ref, _ref2, _ref3, _ref4;
-    ck_options != null ? ck_options : ck_options = {};
+    if (ck_options == null) {
+      ck_options = {};
+    }
     (_ref = ck_options.context) != null ? _ref : ck_options.context = {};
     (_ref2 = ck_options.locals) != null ? _ref2 : ck_options.locals = {};
     (_ref3 = ck_options.format) != null ? _ref3 : ck_options.format = false;
@@ -26,7 +28,6 @@
       var k, str, v;
       str = '';
       for (k in obj) {
-        if (!__hasProp.call(obj, k)) continue;
         v = obj[k];
         str += " " + k + "=\"" + (ck_esc(v)) + "\"";
       }
@@ -43,7 +44,7 @@
       'basic': '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML Basic 1.1//EN" "http://www.w3.org/TR/xhtml-basic/xhtml-basic11.dtd">',
       'mobile': '<!DOCTYPE html PUBLIC "-//WAPFORUM//DTD XHTML Mobile 1.2//EN" "http://www.openmobilealliance.org/tech/DTD/xhtml-mobile12.dtd">'
     };
-    ck_self_closing = ['area', 'base', 'basefont', 'br', 'hr', 'img', 'input', 'link', 'meta'];
+    ck_self_closing = ['area', 'base', 'basefont', 'br', 'col', 'frame', 'hr', 'img', 'input', 'link', 'meta', 'param'];
     ck_esc = function(txt) {
       if (ck_options.autoescape) {
         return h(txt);
@@ -61,10 +62,12 @@
       }
     };
     h = function(txt) {
-      return String(txt).replace(/&(?!\w+;)/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+      return String(txt).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     };
     doctype = function(type) {
-      type != null ? type : type = 5;
+      if (type == null) {
+        type = 5;
+      }
       text(ck_doctypes[type]);
       if (ck_options.format) {
         return text('\n');
@@ -139,13 +142,15 @@
     };
     return null;
   };
-  support = 'var __slice = Array.prototype.slice;\nvar __hasProp = Object.prototype.hasOwnProperty;\nvar __indexOf = Array.prototype.indexOf || function(item) {\n  for (var i = 0, l = this.length; i < l; i++) {if (this[i] === item) return i;}; return -1;};\nvar __bind = function(fn, me){return function(){return fn.apply(me, arguments);};};\nvar __extends = function(child, parent) {\n  for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; }\n  function ctor() { this.constructor = child; }\n  ctor.prototype = parent.prototype; child.prototype = new ctor;\n  child.__super__ = parent.prototype; return child;\n};';
+  support = 'var __slice = Array.prototype.slice;\nvar __hasProp = Object.prototype.hasOwnProperty;\nvar __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };\nvar __extends = function(child, parent) {\n  for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; }\n  function ctor() { this.constructor = child; }\n  ctor.prototype = parent.prototype; child.prototype = new ctor; child.__super__ = parent.prototype;\n  return child;\n};\nvar __indexOf = Array.prototype.indexOf || function(item) {\n  for (var i = 0, l = this.length; i < l; i++) {\n    if (this[i] === item) return i;\n  }\n  return -1;\n};';
   skeleton = String(skeleton).replace(/function\s*\(ck_options\)\s*\{/, '').replace(/return null;\s*\}$/, '');
   skeleton = support + skeleton;
   tags = 'a|abbr|acronym|address|applet|area|article|aside|audio|b|base|basefont|bdo|big|blockquote|body|br|button|canvas|caption|center|cite|code|col|colgroup|command|datalist|dd|del|details|dfn|dir|div|dl|dt|em|embed|fieldset|figcaption|figure|font|footer|form|frame|frameset|h1|h2|h3|h4|h5|h6|head|header|hgroup|hr|html|i|iframe|img|input|ins|keygen|kbd|label|legend|li|link|map|mark|menu|meta|meter|nav|noframes|noscript|object|ol|optgroup|option|output|p|param|pre|progress|q|rp|rt|ruby|s|samp|script|section|select|small|source|span|strike|strong|style|sub|summary|sup|table|tbody|td|textarea|tfoot|th|thead|time|title|tr|tt|u|ul|video|xmp'.split('|');
   coffeekup.compile = function(template, options) {
     var code, k, t, tags_here, v, _i, _j, _len, _len2, _ref, _ref2;
-    options != null ? options : options = {};
+    if (options == null) {
+      options = {};
+    }
     (_ref = options.locals) != null ? _ref : options.locals = {};
     if (typeof template === 'function') {
       template = String(template);
@@ -169,7 +174,6 @@
     }
     _ref2 = options.locals;
     for (k in _ref2) {
-      if (!__hasProp.call(_ref2, k)) continue;
       v = _ref2[k];
       if (typeof v === 'function') {
         code += "var " + k + " = " + v + ";";
@@ -190,7 +194,9 @@
   cache = {};
   coffeekup.render = function(template, options) {
     var tpl, _ref, _ref2, _ref3;
-    options != null ? options : options = {};
+    if (options == null) {
+      options = {};
+    }
     (_ref = options.context) != null ? _ref : options.context = {};
     (_ref2 = options.locals) != null ? _ref2 : options.locals = {};
     (_ref3 = options.cache) != null ? _ref3 : options.cache = true;

@@ -15,8 +15,7 @@ Features
 ========
 
   * Real-time updates of comments
-  * Diffbot and PubsubHubbub integration for tracking updates to blogs
-  * Invite-only membership
+  * Invite-only membership with an application process
 
 Dependencies
 ============
@@ -30,7 +29,5 @@ Dependencies
   * coffee-script
   * node-mongodb-native
   * nodemailer
-  * jsdom
-  * //xml2js  actually, i forked on github here: git@github.com:jaekwon/node-xml2js.git
 
   git submodule init will install more dependencies, some from my personal forks.
