@@ -8,10 +8,10 @@ exports.sass = """
   body
     .record
       :margin 0px 0px
-    .item_info
-      :position relative
-      :top -4px
-      :font-size 7pt
+      .item_info
+        :position relative
+        :top -4px
+        :font-size 7pt
 """
 
 #exports.coffeescript = """

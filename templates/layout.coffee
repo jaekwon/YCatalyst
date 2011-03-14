@@ -36,3 +36,6 @@ exports.template = ->
       
       div id: "body_contents", ->
         text render(@body_template, @body_context)
+
+      if @current_user
+        div id: 'current_user', style: "display: none", 'data-id': @current_user._id, 'data-username': @current_user.username
