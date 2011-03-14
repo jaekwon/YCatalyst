@@ -64,7 +64,6 @@ exports.template = ->
     text "Or, submit via "
     a href: "/bookmarklet", -> "bookmarklet"
 
-exports.coffeescript = """
+exports.coffeescript = ->
   $(document).ready ->
     $('textarea').make_autoresizable()
-"""

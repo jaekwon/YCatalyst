@@ -27,7 +27,6 @@ exports.template = ->
           else
             i "no bio"
         
-exports.coffeescript = """
+exports.coffeescript = ->
   $(document).ready ->
     $('#bio').make_autoresizable()
-"""

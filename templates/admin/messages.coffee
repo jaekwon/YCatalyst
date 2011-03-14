@@ -12,8 +12,7 @@ exports.template = ->
     br()
     input type: "submit", value: "send"
 
-exports.coffeescript = """
+exports.coffeescript = ->
   $(document).ready ->
     $('[data-default-text]').set_default_text()
     $('#body').make_autoresizable()
-"""

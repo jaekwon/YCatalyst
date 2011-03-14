@@ -22,9 +22,8 @@ exports.sass = """
     :width 200px
 """
 
-exports.coffeescript = """
+exports.coffeescript = ->
   $(document).ready ->
     $('#first_name').set_default_text 'first name'
     $('#last_name').set_default_text 'last name'
     $('#email').set_default_text 'email'
-"""

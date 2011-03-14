@@ -11,6 +11,3 @@ exports.sass = """
   .timeago
     :font-size 0.8em
 """
-
-exports.coffeescript = """
-"""

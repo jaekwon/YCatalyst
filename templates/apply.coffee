@@ -27,8 +27,7 @@ exports.sass = """
     :width 200px
 """
 
-exports.coffeescript = """
+exports.coffeescript = ->
   $(document).ready ->
     $('input[data-default-text]').set_default_text()
     $('#comment').make_autoresizable()
-"""

@@ -111,7 +111,10 @@ render_layout = (template, context, req, res) ->
     # plugin: coffeescript
     if tmpl_module.coffeescript and not tmpl_module["_compiled_coffeescript"]?
       try
-        tmpl_module["_compiled_coffeescript"] = coffeescript.compile(tmpl_module.coffeescript)
+        if typeof tmpl_module.coffeescript == 'function'
+          tmpl_module["_compiled_coffeescript"] = "(#{""+tmpl_module.coffeescript})();"
+        else
+          tmpl_module["_compiled_coffeescript"] = coffeescript.compile(tmpl_module.coffeescript)
       catch err
         console.log "err in compiling coffeescript for #{template}: " + err
         throw err

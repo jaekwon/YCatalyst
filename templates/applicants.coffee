@@ -20,13 +20,13 @@ exports.template = ->
     
           # membership voting buttons
           text "vote: "
-          a href: "#", title: applicant.accepted_by.join(' '), class: "vote_allow", ->
+          a href: "#", title: applicant.accepted_by.join(' '), class: "vote_accept", ->
             text "accept"
-            span class: "vote_allow_count", -> applicant.accepted_by
+            span class: "vote_accept_count", -> applicant.accepted_by
           text " | "
           a href: "#", title: applicant.denied_by.join(' '), class: "vote_deny", ->
             text "deny"
-            span class: "vote_allow_count", -> applicant.denied_by
+            span class: "vote_deny_count", -> applicant.denied_by
           
 
 exports.sass = """
@@ -43,14 +43,15 @@ exports.sass = """
       :padding 5px
     ol>li>div.applicant
       :margin-bottom 20px
-    .vote_allow, .vote_allow:visited
+    .vote_accept, .vote_accept:visited
       :color green
     .vote_deny, .vote_deny:visited
       :color red
 """
 
-exports.coffeescript = """
+exports.coffeescript = ->
   $(document).ready ->
-    $('#vote_allow').live 'click', (event) ->
-      alert "OH YOU CLICKED IT!!!"
-"""
+    $('.vote_accept').live 'click', (event) ->
+      # XXX look for callback logic      
+    $('.vote_deny').live 'click', (event) ->
+      # FOO

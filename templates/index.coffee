@@ -14,6 +14,3 @@ exports.sass = """
         :font-size 7pt
 """
 
-#exports.coffeescript = """
-#  $(document).ready ->
-#"""
