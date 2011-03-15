@@ -17,7 +17,7 @@ template_require = (filename) ->
   path = require.resolve("../templates/#{filename}.coffee")
   if config.env and config.env == 'development'
     stat = require('fs').statSync(path)
-    if template_mtimes[path] != stat.mtime
+    if not template_mtimes[path] or template_mtimes[path] < stat.mtime
       console.log "loading templates/#{filename}.coffee template..."
       template_mtimes[path] = stat.mtime
       delete require.cache[path]
