@@ -21,7 +21,7 @@ Dependencies
 ============
 
   * Node.js v0.3.2
-  * Coffeescript v1.0.0
+  * Coffeescript v1.0.1
   * Sass (as in Haml/Sass)
 
   npm install: 

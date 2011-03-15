@@ -20,13 +20,13 @@ exports.template = ->
     
           # membership voting buttons
           text "vote: "
-          a href: "#", title: applicant.accepted_by.join(' '), class: "vote_accept", ->
-            text "accept"
-            span class: "vote_accept_count", -> applicant.accepted_by.length
+          a href: "#", title: applicant.accepted_by.join(' '), class: "vote_accept #{'chosen' if applicant.accepted_by.indexOf(@current_user.username) != -1}", ->
+            text "accept "
+            span class: "vote_accept_count", -> "#{applicant.accepted_by.length}"
           text " | "
-          a href: "#", title: applicant.denied_by.join(' '), class: "vote_deny", ->
-            text "deny"
-            span class: "vote_deny_count", -> applicant.denied_by.length
+          a href: "#", title: applicant.denied_by.join(' '), class: "vote_deny #{'chosen' if applicant.denied_by.indexOf(@current_user.username) != -1}", ->
+            text "deny "
+            span class: "vote_deny_count", -> "#{applicant.denied_by.length}"
           
 
 exports.sass = """
@@ -47,6 +47,8 @@ exports.sass = """
       :color green
     .vote_deny, .vote_deny:visited
       :color red
+    .chosen
+      :font-weight bold
 """
 
 exports.coffeescript = ->
@@ -57,25 +59,32 @@ exports.coffeescript = ->
       $.ajax
         cache: false
         type: "POST"
-        url: "/applicants/#{element.attr('data-applicaiton-id')}/vote"
+        url: "/applicants/#{element.attr('data-application-id')}/vote"
         data: {vote: vote_type}
         dataType: "json"
         error: ->
           alert "Error, please refresh and try again later."
         success: (data) ->
+          # NOTE: requires coffeescript version 1.0.1
           switch vote_type
             when 'accept'
-              element.find('.vote_accept').addClass('chosen')
-              element.find('.vote_accept_count').increment()
-              element.find('.vote_deny').removeClass('chosen')
-              element.find('.vote_deny_count').decrement()
+              if not element.find('.vote_accept').hasClass('chosen')
+                element.find('.vote_accept').addClass('chosen')
+                element.find('.vote_accept_count').increment()
+              if element.find('.vote_deny').hasClass('chosen')
+                element.find('.vote_deny').removeClass('chosen')
+                element.find('.vote_deny_count').decrement()
             when 'deny'
-              element.find('.vote_deny').addClass('chosen')
-              element.find('.vote_deny_count').increment()
-              element.find('.vote_accept').removeClass('chosen')
-              element.find('.vote_accept_count').decrement()
+              if not element.find('.vote_deny').hasClass('chosen')
+                element.find('.vote_deny').addClass('chosen')
+                element.find('.vote_deny_count').increment()
+              if element.find('.vote_accept').hasClass('chosen')
+                element.find('.vote_accept').removeClass('chosen')
+                element.find('.vote_accept_count').decrement()
     # bind events 
     $('.vote_accept').live 'click', (event) ->
       vote($(this).parents('.applicant:eq(0)'), 'accept')
+      return false
     $('.vote_deny').live 'click', (event) ->
       vote($(this).parents('.applicant:eq(0)'), 'deny')
+      return false

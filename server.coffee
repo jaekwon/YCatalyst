@@ -549,6 +549,23 @@ server = utils.Rowter([
             render_layout 'applicants', {applicants: applicants}, req, res
   ]
 
+  [wrappers: [require_login],
+   '/applicants/:application_id/vote', (req, res) ->
+    switch req.method
+      when 'POST'
+        switch req.post_data.vote
+          when 'accept'
+            update_operation = {$addToSet: {accepted_by: req.current_user.username}, $pull: {denied_by: req.current_user.username}}
+          when 'deny'
+            update_operation = {$addToSet: {denied_by: req.current_user.username}, $pull: {accepted_by: req.current_user.username}}
+        mongo.applications.update {_id: req.path_data.application_id}, update_operation, (err, stuff) ->
+          if err
+            console.log ''+err
+            res.simpleJSON 500, status: 'internal_error'
+            return
+          res.simpleJSON 200, status: 'ok'
+  ]
+
   ['/register', (req, res) ->
     switch req.method
       when 'GET'
