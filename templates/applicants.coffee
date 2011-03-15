@@ -1,6 +1,5 @@
 exports.template = ->
   p "Recent applicants:"
-  text "TODO show some voting functionality here."
   
   ol class: "applicants", ->
     @applicants.forEach (applicant) ->

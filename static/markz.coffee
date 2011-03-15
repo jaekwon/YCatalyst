@@ -4,7 +4,7 @@
 # MIT Licensed
 ###
 
-coffeekup = if CoffeeKup? then CoffeeKup else require 'coffeekup'
+coffeekup = if CoffeeKup? then CoffeeKup else require './coffeekup'
 
 # regexes ripped from the node.js validator project
 # https://github.com/chriso/node-validator.git

@@ -1,6 +1,3 @@
-[submodule "vendor/node"]
-	path = vendor/node
-	url = https://github.com/joyent/node.git
 [submodule "vendor/connect-auth"]
 	path = vendor/connect-auth
 	url = http://github.com/ciaranj/connect-auth.git

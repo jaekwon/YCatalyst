@@ -9,11 +9,11 @@ exports.template = ->
     else
       @application = {}
     input type: "hidden", name: "referral_id", value: @referral._id
-    input id: "first_name", type: "text", name: "first_name", 'data-default-text': "first name", value: @referral.first_name or @application.first_name
+    input id: "first_name", type: "text", name: "first_name", 'data-default-text': "first name", value: @referral.first_name or @application.first_name or ''
     br()
-    input id: "last_name", type: "text", name: "last_name", 'data-default-text': "last name", value: @referral.last_name or @application.last_name
+    input id: "last_name", type: "text", name: "last_name", 'data-default-text': "last name", value: @referral.last_name or @application.last_name or ''
     br()
-    input id: "email", type: "text", name: "email", 'data-default-text': "email", value: @referral.email or @application.email
+    input id: "email", type: "text", name: "email", 'data-default-text': "email", value: @referral.email or @application.email or ''
     br()
     input id: "website", type: "text", name: "website", 'data-default-text': "website"
     br()

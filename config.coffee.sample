@@ -12,8 +12,8 @@ exports.cookie_secret = 'SOME SECRET STRING'
 
 exports.mongo = {
   dbname: 'ycatalyst'
-  host = 'localhost'
-  port = 27017
+  host: 'localhost'
+  port: 27017
 }
 
 exports.server = {

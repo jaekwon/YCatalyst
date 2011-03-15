@@ -9,6 +9,19 @@ coffeescript = require 'coffee-script'
 sass = require 'sass'
 utils = require '../utils'
 Markz = require('../static/markz').Markz
+config = require '../config'
+
+# autoreloading of templates for development environment
+template_mtimes = {}
+template_require = (filename) ->
+  path = require.resolve("../templates/#{filename}.coffee")
+  if config.env and config.env == 'development'
+    stat = require('fs').statSync(path)
+    if template_mtimes[path] != stat.mtime
+      console.log "loading templates/#{filename}.coffee template..."
+      template_mtimes[path] = stat.mtime
+      delete require.cache[path]
+  return require(path)
 
 exports.render_layout = (template, context, req, res) ->
   # helper to render with layout, mind the closure
@@ -22,7 +35,7 @@ exports.render_layout = (template, context, req, res) ->
       Markz: Markz
     if req?
       context.current_user = req.current_user
-    tmpl_module = require("../templates/#{template}")
+    tmpl_module = template_require(template)
     # compile the coffeekup render fn
     if not tmpl_module._compiled_fn?
       if not tmpl_module.template?

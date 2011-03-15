@@ -20,7 +20,7 @@ Features
 Dependencies
 ============
 
-  * Node.js v0.3.2
+  * Node.js v0.3.2 or higher, preferably v0.4.2
   * Coffeescript v1.0.1
   * Sass (as in Haml/Sass)
 
