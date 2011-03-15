@@ -13,4 +13,3 @@ exports.sass = """
         :top -4px
         :font-size 7pt
 """
-

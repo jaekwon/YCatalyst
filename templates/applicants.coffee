@@ -22,11 +22,11 @@ exports.template = ->
           text "vote: "
           a href: "#", title: applicant.accepted_by.join(' '), class: "vote_accept", ->
             text "accept"
-            span class: "vote_accept_count", -> applicant.accepted_by
+            span class: "vote_accept_count", -> applicant.accepted_by.length
           text " | "
           a href: "#", title: applicant.denied_by.join(' '), class: "vote_deny", ->
             text "deny"
-            span class: "vote_deny_count", -> applicant.denied_by
+            span class: "vote_deny_count", -> applicant.denied_by.length
           
 
 exports.sass = """
@@ -51,7 +51,31 @@ exports.sass = """
 
 exports.coffeescript = ->
   $(document).ready ->
+    # vote up or down.
+    # vote_type: 'accept' or 'deny'
+    vote = (element, vote_type) ->
+      $.ajax
+        cache: false
+        type: "POST"
+        url: "/applicants/#{element.attr('data-applicaiton-id')}/vote"
+        data: {vote: vote_type}
+        dataType: "json"
+        error: ->
+          alert "Error, please refresh and try again later."
+        success: (data) ->
+          switch vote_type
+            when 'accept'
+              element.find('.vote_accept').addClass('chosen')
+              element.find('.vote_accept_count').increment()
+              element.find('.vote_deny').removeClass('chosen')
+              element.find('.vote_deny_count').decrement()
+            when 'deny'
+              element.find('.vote_deny').addClass('chosen')
+              element.find('.vote_deny_count').increment()
+              element.find('.vote_accept').removeClass('chosen')
+              element.find('.vote_accept_count').decrement()
+    # bind events 
     $('.vote_accept').live 'click', (event) ->
-      # XXX look for callback logic      
+      vote($(this).parents('.applicant:eq(0)'), 'accept')
     $('.vote_deny').live 'click', (event) ->
-      # FOO
+      vote($(this).parents('.applicant:eq(0)'), 'deny')
