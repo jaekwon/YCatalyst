@@ -31,7 +31,7 @@ body {
     border: 0px;
     margin: 0px;
     padding: 0px; }
-  body input[type=text] {
+  body input[type=text], body input[type=password] {
     width: 460px;
     padding: 2px;
     font-family: Verdana, Verdana, Geneva, sans-serif;
