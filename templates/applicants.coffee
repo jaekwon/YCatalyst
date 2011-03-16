@@ -1,5 +1,8 @@
 exports.template = ->
-  p "Recent applicants:"
+  if @applicants
+    p "Recent applicants:"
+  else
+    p "No new applicants"
   
   ol class: "applicants", ->
     @applicants.forEach (applicant) ->

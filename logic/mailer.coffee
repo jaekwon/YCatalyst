@@ -74,10 +74,11 @@ Please visit this link to register: http://ycatalyst.com/register?invite_code=#{
 -ycat """
   mail_text {from: config.support_email, to: application.email, subject: "You've been invited to YCatalyst!", body: body}, (err) ->
     if err
-      application.err = ''+err
+      update_operation = {$set: {err: ''+err}}
     else
-      application.emailed_at = new Date()
+      update_operation = {$set: {emailed_at: new Date()}}
     cb(err) if cb
-    mongo.applications.save application, (err, stuff) ->
+    # update the application. we can't save here because that may trample a prior save.
+    mongo.applications.update {_id: application._id}, (err, stuff) ->
       if err
         console.log "Error in updating application: #{err}"
