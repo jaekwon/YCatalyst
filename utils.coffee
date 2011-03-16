@@ -111,7 +111,7 @@ exports.Rowter = (routes) ->
       next(req, res)
       return
     # if we're here, we failed to find a matching route.
-    # TODO 
+    console.log("TODO request to unknown path #{req.url}")
     return
 
   server = http.createServer(giant_function)

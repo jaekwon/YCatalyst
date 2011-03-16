@@ -26,6 +26,13 @@ exports.template = ->
           a href: "#", title: applicant.denied_by.join(' '), class: "vote_deny #{'chosen' if applicant.denied_by.indexOf(@current_user.username) != -1}", ->
             text "deny "
             span class: "vote_deny_count", -> "#{applicant.denied_by.length}"
+          if @current_user.is_admin
+            text " | "
+            a href: "#", class: "invite", ->
+              text "invite"
+            text " | "
+            a href: "#", class: "delete", ->
+              text "delete"
           
 
 exports.sass = """
@@ -54,7 +61,7 @@ exports.coffeescript = ->
   $(document).ready ->
     # vote up or down.
     # vote_type: 'accept' or 'deny'
-    vote = (element, vote_type) ->
+    vote = (element, vote_type, cb) ->
       $.ajax
         cache: false
         type: "POST"
@@ -80,10 +87,19 @@ exports.coffeescript = ->
               if element.find('.vote_accept').hasClass('chosen')
                 element.find('.vote_accept').removeClass('chosen')
                 element.find('.vote_accept_count').decrement()
+          cb()
     # bind events 
     $('.vote_accept').live 'click', (event) ->
-      vote($(this).parents('.applicant:eq(0)'), 'accept')
+      vote $(this).parents('.applicant:eq(0)'), 'accept'
       return false
     $('.vote_deny').live 'click', (event) ->
-      vote($(this).parents('.applicant:eq(0)'), 'deny')
+      vote $(this).parents('.applicant:eq(0)'), 'deny'
       return false
+    $('.invite').live 'click', (event) ->
+      if confirm 'invite?'
+        vote $(this).parents('.applicant:eq(0)'), 'invite', ->
+          window.location.reload(true)
+    $('.delete').live 'click', (event) ->
+      if confirm 'delete?'
+        vote $(this).parents('.applicant:eq(0)'), 'delete', ->
+          window.location.reload(true)

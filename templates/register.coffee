@@ -1,8 +1,8 @@
 exports.template = ->
   if @invite_code
-    p "Register here."
+    p "Please register here."
   else
-    p "Register here if you have an invite code."
+    p "Please register here if you have an invite code."
 
   form action: "/register", method: "POST", ->
     table ->
@@ -25,7 +25,7 @@ exports.template = ->
         td ->
           label "email"
         td ->
-          input name: "email"
+          input name: "email", value: @email or ''
       tr ->
         td ->
           label "invite code"
@@ -34,3 +34,11 @@ exports.template = ->
       tr ->
         td colspan: 2, ->
           input type: "submit", value: "register"
+
+exports.sass = """
+  body
+    table
+      td
+        input[name="email"]
+          :width 250px
+"""

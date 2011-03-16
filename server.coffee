@@ -544,7 +544,7 @@ server = utils.Rowter([
    '/applicants', (req, res) ->
     switch req.method
       when 'GET'
-        mongo.applications.find {}, {sort: [['created_at', -1]]}, (err, cursor) ->
+        mongo.applications.find {deleted_at: {$exists: false}, invited_at: {$exists: false}}, {sort: [['created_at', -1]]}, (err, cursor) ->
           cursor.toArray (err, applicants) ->
             render_layout 'applicants', {applicants: applicants}, req, res
   ]
@@ -553,15 +553,12 @@ server = utils.Rowter([
    '/applicants/:application_id/vote', (req, res) ->
     switch req.method
       when 'POST'
-        switch req.post_data.vote
-          when 'accept'
-            update_operation = {$addToSet: {accepted_by: req.current_user.username}, $pull: {denied_by: req.current_user.username}}
-          when 'deny'
-            update_operation = {$addToSet: {denied_by: req.current_user.username}, $pull: {accepted_by: req.current_user.username}}
-        mongo.applications.update {_id: req.path_data.application_id}, update_operation, (err, stuff) ->
+        logic.applications.vote req.path_data.application_id, req.current_user, req.post_data.vote, (err) ->
+          if err == 'unauthorized'
+            res.simpleJSON 400, 'unauthorized'
+            return
           if err
-            console.log ''+err
-            res.simpleJSON 500, status: 'internal_error'
+            req.simpleJSON 500, ''+err
             return
           res.simpleJSON 200, status: 'ok'
   ]
@@ -569,7 +566,7 @@ server = utils.Rowter([
   ['/register', (req, res) ->
     switch req.method
       when 'GET'
-        render_layout "register", {invite_code: req.query_data.invite_code}, req, res
+        render_layout "register", {invite_code: req.query_data.invite_code, email: req.query_data.email}, req, res
       when 'POST'
         form_error = (error) ->
           render_layout "message", {message: error}, req, res
@@ -606,6 +603,7 @@ server = utils.Rowter([
               hashtimes = 10000 # runs about 80ms on my laptop
               user.password = [utils.passhash(user.password, salt, hashtimes), salt, hashtimes]
               user.created_at = new Date()
+              user.application_id = invite.application_id if invite.application_id
               mongo.users.save user, (err, stuff) ->
                 # set the user in session
                 res.setSecureCookie 'user', JSON.stringify(user)
