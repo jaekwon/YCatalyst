@@ -1,5 +1,5 @@
 exports.template = ->
-  if @applicants
+  if @applicants and @applicants.length > 0
     p "Recent applicants:"
   else
     p "No new applicants"

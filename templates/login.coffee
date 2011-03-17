@@ -10,7 +10,7 @@ exports.template = ->
     input id: "password", type: "password", name: "password", 'data-default-text': "****"
     label " password"
     br()
-    input type: "submit", value: "register"
+    input type: "submit", value: "login"
 
   p ->
     text "New user?"

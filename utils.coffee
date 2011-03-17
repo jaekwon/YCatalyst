@@ -168,11 +168,15 @@ exports.randid = () ->
         text += possible.charAt(Math.floor(Math.random() * possible.length))
     return text
 
+# a function to add a digest nonce parameter to a static file to help with client cache busting
+_static_file_cache = {}
 exports.static_file = (filepath) ->
-  filepath = "static/#{filepath}"
-  nonce = require('hashlib').md5(require('fs').statSync(filepath).mtime)[1..10]
-  console.log("XXX static_file, nonce = #{nonce}")
-  return "/#{filepath}?v=#{nonce}"
+  if not _static_file_cache[filepath]
+    fullfilepath = "static/#{filepath}"
+    nonce = require('hashlib').md5(require('fs').statSync(fullfilepath).mtime)[1..10]
+    console.log("SYNC CALL: static_file, nonce = #{nonce}")
+    _static_file_cache[filepath] = "/#{fullfilepath}?v=#{nonce}"
+  return _static_file_cache[filepath]
 
 crypto = require('crypto')
 exports.passhash = (password, salt, times) ->
@@ -208,8 +212,9 @@ exports.url_hostname = (url) ->
   return host
 
 # sometimes you want to call a second block of code synchronously or asynchronously depending
-# on the first block of code. In this case, use the following convention:
-# compose( (next) ->
+# on the first block of code. In this case, use the 'compose' method.
+#
+# compose (next) ->
 #   if(synchronous?)
 #     next("some_arg")
 #   else
@@ -217,5 +222,29 @@ exports.url_hostname = (url) ->
 #       next("other_arg")
 # , (arg) ->
 #   console.log arg
-exports.compose = (f, g) ->
-  f(g)
+# 
+# You can chain many functions together.
+#
+# compose (next) ->
+#   console.log "this is the first line"
+#   next("this is the second line")
+#
+# , (next, line) ->
+#   console.log line
+#   next("this is", "the third line")
+#
+# , (part1, part2) ->
+#   console.log "#{part1} {part2}"
+
+compose = (fns...) ->
+  _this = if (typeof(fns[0]) == 'function') then null else fns.shift()
+  # return a function that calls the index'th function in fns
+  next_gen = (index) ->
+    () ->
+      if not (0 <= index < fns.length)
+        throw new Error "should not happen: 0 <= #{index} < #{fns.length}"
+      next_block = fns[index]
+      if index < fns.length - 1
+        Array::unshift.call(arguments, next_gen(index+1))
+      next_block.apply(_this, arguments)
+  next_gen(0)()

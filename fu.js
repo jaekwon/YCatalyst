@@ -67,7 +67,6 @@ fu.staticHandler = function (filename) {
       return;
     }
 
-    sys.puts("loading " + filename + "...");
     readFile(filename, function (err, data) {
       if (err) {
         console.log(err.message);
@@ -78,7 +77,7 @@ fu.staticHandler = function (filename) {
                   , "Content-Length": body.length
                   };
         if (!DEBUG) headers["Cache-Control"] = "public";
-        sys.puts("static file " + filename + " loaded");
+        sys.puts("ASYNC CALL: static file " + filename + " loaded");
         callback();
       }
     });
