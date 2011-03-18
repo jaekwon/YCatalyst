@@ -44,6 +44,9 @@ body
     margin: 0px
     padding: 0px
 
+  input, textarea, button
+    margin: 2px 0px
+
   input[type=text], input[type=password]
     width: 460px
     padding: 2px
@@ -67,6 +70,7 @@ body
     .host
       font-size: 10px
       color: $light_text
+    // triangle upvote button
     a.upvote
       position: absolute
       left: 0px
@@ -74,6 +78,13 @@ body
       text-decoration: none
       font-size: 10px
       color: $light_text
+    // the asterisk * when the post/comment is created by current_user
+    span.self_made
+      position: absolute
+      left: 0px
+      top: 3px
+      color: #CC00CC
+    // x points by user xyz ago | link | edit | delete
     .item_info
       position: relative
       color: $light_text

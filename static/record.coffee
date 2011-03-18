@@ -65,8 +65,11 @@ class Record
     # NOTE: locals like 'current_user', 'upvoted' are passed in from the render function
     div class: "record", id: @object._id, "data-root": is_root, "data-upvoted": upvoted, ->
       if not @object.deleted_at?
-        if current_user? and not upvoted
-          a class: "upvote", href: '#', onclick: "Record.upvote('#{h(@object._id)}'); return false;", -> "&#9650;"
+        if current_user?
+          if @object.created_by == current_user.username and @object.type != 'choice'
+            span class: "self_made", -> "*"
+          else if not upvoted
+            a class: "upvote", href: '#', onclick: "Record.upvote('#{h(@object._id)}'); return false;", -> "&#9650;"
         if @object.title
           if @object.url
             a href: @object.url, class: "title", -> @object.title
@@ -137,8 +140,11 @@ class Record
 
   render_headline_kup: ->
     div class: "record", id: @object._id, ->
-      if current_user? and not upvoted
-        a class: "upvote", href: '#', onclick: "Record.upvote('#{h(@object._id)}'); $(this).parent().find('>.item_info>.points').increment(); $(this).remove(); return false;", -> "&#9650;"
+      if current_user
+        if @object.created_by == current_user.username and @object.type != 'choice'
+          span class: "self_made", -> "*"
+        else if not upvoted
+          a class: "upvote", href: '#', onclick: "Record.upvote('#{h(@object._id)}'); $(this).parent().find('>.item_info>.points').increment(); $(this).remove(); return false;", -> "&#9650;"
       if @object.url
         a href: @object.url, class: "title", -> @object.title
         if @object.host

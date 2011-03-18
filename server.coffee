@@ -213,7 +213,7 @@ server = utils.Rowter([
         logic.records.get_one_record parent_id, (err, parent) ->
           if parent
             root_id = if parent.object.root_id? then parent.object.root_id else parent.object._id
-            recdata = _id: utils.randid(), comment: comment, created_by: req.current_user.username, root_id: root_id
+            recdata = _id: utils.randid(), comment: comment, created_by: req.current_user.username, root_id: root_id, upvoters: [req.current_user._id]
             if req.post_data.type == 'choice'
               # only the parent's creator can add a poll choice
               if parent.object.created_by != req.current_user.username
@@ -354,7 +354,7 @@ server = utils.Rowter([
           render_layout "message", {message: ''+e}, req, res
           return
         # create new record
-        recdata = {title: data.title, comment: data.text, created_by: req.current_user.username}
+        recdata = {title: data.title, comment: data.text, created_by: req.current_user.username, upvoters: [req.current_user._id]}
         if data.url
           recdata.url = data.url
           try

@@ -61,14 +61,22 @@
         "data-upvoted": upvoted
       }, function() {
         if (!(this.object.deleted_at != null)) {
-          if ((typeof current_user != "undefined" && current_user !== null) && !upvoted) {
-            a({
-              "class": "upvote",
-              href: '#',
-              onclick: "Record.upvote('" + (h(this.object._id)) + "'); return false;"
-            }, function() {
-              return "&#9650;";
-            });
+          if (typeof current_user != "undefined" && current_user !== null) {
+            if (this.object.created_by === current_user.username && this.object.type !== 'choice') {
+              span({
+                "class": "self_made"
+              }, function() {
+                return "*";
+              });
+            } else if (!upvoted) {
+              a({
+                "class": "upvote",
+                href: '#',
+                onclick: "Record.upvote('" + (h(this.object._id)) + "'); return false;"
+              }, function() {
+                return "&#9650;";
+              });
+            }
           }
           if (this.object.title) {
             if (this.object.url) {
@@ -266,14 +274,22 @@
         "class": "record",
         id: this.object._id
       }, function() {
-        if ((typeof current_user != "undefined" && current_user !== null) && !upvoted) {
-          a({
-            "class": "upvote",
-            href: '#',
-            onclick: "Record.upvote('" + (h(this.object._id)) + "'); $(this).parent().find('>.item_info>.points').increment(); $(this).remove(); return false;"
-          }, function() {
-            return "&#9650;";
-          });
+        if (current_user) {
+          if (this.object.created_by === current_user.username && this.object.type !== 'choice') {
+            span({
+              "class": "self_made"
+            }, function() {
+              return "*";
+            });
+          } else if (!upvoted) {
+            a({
+              "class": "upvote",
+              href: '#',
+              onclick: "Record.upvote('" + (h(this.object._id)) + "'); $(this).parent().find('>.item_info>.points').increment(); $(this).remove(); return false;"
+            }, function() {
+              return "&#9650;";
+            });
+          }
         }
         if (this.object.url) {
           a({

@@ -82,6 +82,7 @@ exports.create_record = (recdata, parent) ->
     recdata._id = utils.randid()
   recdata.created_at = new Date()
   recdata.parents = parents
+  recdata.points = if recdata.upvoters then recdata.upvoters.length else 0
   record = new rec.Record(recdata)
   record.is_new = true
   exports.score_record(record)
