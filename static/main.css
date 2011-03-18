@@ -77,15 +77,12 @@ body {
           text-decoration: underline; }
       body .record .item_info .unfollow {
         color: #ff9999; }
-    body .record[data-root="true"] > .contents {
-      margin: 10px 0px; }
-    body .record[data-root="true"] > .item_info {
-      font-size: 7pt; }
     body .record .contents {
       margin: 2px 0px; }
       body .record .contents.deleted {
         color: gray; }
     body .record .reply, body .record .addchoice {
+      text-decoration: underline;
       margin-right: 1em;
       font-size: 0.8em; }
     body .record .edit_box {

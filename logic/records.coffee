@@ -83,6 +83,7 @@ exports.create_record = (recdata, parent) ->
   recdata.created_at = new Date()
   recdata.parents = parents
   recdata.points = if recdata.upvoters then recdata.upvoters.length else 0
+  recdata.parent_followers = parent.object.followers if parent.object.followers
   record = new rec.Record(recdata)
   record.is_new = true
   exports.score_record(record)

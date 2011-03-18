@@ -31,7 +31,8 @@ exports.after_open = (name, cb) ->
 
 db_info = {
   'records': [
-      [['parent_id', 1], ['score', 1]]]
+      [['parent_id', 1], ['score', 1]]
+      [['parent_followers', 1], ['created_at', -1]]]
   'users': [
       [['email', 1]]]
   'invites': [

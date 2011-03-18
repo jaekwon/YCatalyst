@@ -305,6 +305,19 @@ server = utils.Rowter([
           res.simpleJSON(200, status: 'ok')
   ]
 
+  [wrappers: [require_login_nice('You need to log again')],
+   '/inbox', (req, res) ->
+    switch req.method
+      when 'GET'
+        mongo.records.find {parent_followers: req.current_user._id, created_by: {$ne: req.current_user.username} }, {sort: [['created_at', -1]]}, (err, cursor) ->
+          cursor.toArray (err, records) ->
+            if err
+              console.log err
+              return
+            records = (new rec.Record(r) for r in records)
+            render_layout "inbox", {records: records}, req, res
+  ]
+
   ['/users', (req, res) ->
     # show all users
     switch req.method

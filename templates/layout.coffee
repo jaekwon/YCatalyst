@@ -20,6 +20,9 @@ exports.template = ->
           a href: "/submit", -> "submit"
           text " | "
           a href: "/submit?type=poll", -> "poll"
+          if @current_user
+            text " | "
+            a href: "/inbox", -> "inbox"
         div style: "float: right", ->
           if @current_user
             a href: "/refer", -> "refer a friend"
