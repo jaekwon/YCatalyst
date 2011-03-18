@@ -110,3 +110,11 @@ exports.dangle = (records, root_id) ->
       else
         root.children.push(child)
   return root
+
+# follow or unfollow the given record...
+exports.follow = (rid, user, do_follow, cb) ->
+  if do_follow
+    update_operation = {$addToSet: {followers: user._id}}
+  else
+    update_operation = {$pull: {followers: user._id}}
+  mongo.records.update {_id: rid}, update_operation, cb

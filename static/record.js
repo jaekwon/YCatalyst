@@ -58,10 +58,11 @@
         "class": "record",
         id: this.object._id,
         "data-root": is_root,
-        "data-upvoted": upvoted
+        "data-upvoted": upvoted,
+        "data-following": following
       }, function() {
         if (!(this.object.deleted_at != null)) {
-          if (typeof current_user != "undefined" && current_user !== null) {
+          if (current_user) {
             if (this.object.created_by === current_user.username && this.object.type !== 'choice') {
               span({
                 "class": "self_made"
@@ -72,7 +73,7 @@
               a({
                 "class": "upvote",
                 href: '#',
-                onclick: "Record.upvote('" + (h(this.object._id)) + "'); return false;"
+                onclick: "Record.upvote('" + this.object._id + "'); return false;"
               }, function() {
                 return "&#9650;";
               });
@@ -140,12 +141,32 @@
                 return "link";
               });
             }
-            if ((typeof current_user != "undefined" && current_user !== null) && this.object.created_by === current_user.username) {
+            if (current_user && this.object.type !== 'choice') {
+              text(" | ");
+              if (following) {
+                a({
+                  "class": "follow unfollow",
+                  href: "#",
+                  onclick: "Record.follow('" + this.object._id + "', false); return false;"
+                }, function() {
+                  return "unfollow";
+                });
+              } else {
+                a({
+                  "class": "follow",
+                  href: "#",
+                  onclick: "Record.follow('" + this.object._id + "', true); return false;"
+                }, function() {
+                  return "follow";
+                });
+              }
+            }
+            if (current_user && this.object.created_by === current_user.username) {
               text(" | ");
               a({
                 "class": "edit",
                 href: "#",
-                onclick: "Record.show_edit_box('" + (h(this.object._id)) + "'); return false;"
+                onclick: "Record.show_edit_box('" + this.object._id + "'); return false;"
               }, function() {
                 return "edit";
               });
@@ -153,7 +174,7 @@
               return a({
                 "class": "delete",
                 href: "#",
-                onclick: "Record.delete('" + (h(this.object._id)) + "'); return false;"
+                onclick: "Record.delete('" + this.object._id + "'); return false;"
               }, function() {
                 return "delete";
               });
@@ -189,11 +210,11 @@
           div({
             "class": "footer"
           }, function() {
-            if ((typeof current_user != "undefined" && current_user !== null) && this.object.type === 'poll' && this.object.created_by === current_user.username) {
+            if (current_user && this.object.type === 'poll' && this.object.created_by === current_user.username) {
               a({
                 "class": "addchoice",
                 href: "#",
-                onclick: "Record.show_reply_box('" + (h(this.object._id)) + "', {choice: true}); return false;"
+                onclick: "Record.show_reply_box('" + this.object._id + "', {choice: true}); return false;"
               }, function() {
                 return "add choice";
               });
@@ -202,7 +223,7 @@
               a({
                 "class": "reply",
                 href: "/r/" + this.object._id + "/reply",
-                onclick: "Record.show_reply_box('" + (h(this.object._id)) + "'); return false;"
+                onclick: "Record.show_reply_box('" + this.object._id + "'); return false;"
               }, function() {
                 return "reply";
               });
@@ -252,18 +273,20 @@
       });
     };
     Record.prototype.render = function(options) {
-      var current_user, is_root, upvoted;
+      var current_user, following, is_root, upvoted;
       is_root = !(options != null) || options.is_root;
       if (options != null) {
         current_user = options.current_user;
       }
-      upvoted = typeof window != "undefined" && window !== null ? App.upvoted.indexOf(this.object._id) !== -1 : current_user != null ? (this.object.upvoters != null) && this.object.upvoters.indexOf(current_user._id) !== -1 : void 0;
+      upvoted = typeof window != "undefined" && window !== null ? App.upvoted.indexOf(this.object._id) !== -1 : current_user ? (this.object.upvoters != null) && this.object.upvoters.indexOf(current_user._id) !== -1 : void 0;
+      following = typeof window != "undefined" && window !== null ? App.following.indexOf(this.object._id) !== -1 : current_user ? (this.object.followers != null) && this.object.followers.indexOf(current_user._id) !== -1 : void 0;
       return CoffeeKup.render(this.render_kup, {
         context: this,
         locals: {
           Markz: Markz,
           is_root: is_root,
           upvoted: upvoted,
+          following: following,
           current_user: current_user
         },
         dynamic_locals: true
@@ -285,7 +308,7 @@
             a({
               "class": "upvote",
               href: '#',
-              onclick: "Record.upvote('" + (h(this.object._id)) + "'); $(this).parent().find('>.item_info>.points').increment(); $(this).remove(); return false;"
+              onclick: "Record.upvote('" + this.object._id + "'); $(this).parent().find('>.item_info>.points').increment(); $(this).remove(); return false;"
             }, function() {
               return "&#9650;";
             });
@@ -357,7 +380,7 @@
       if (options != null) {
         current_user = options.current_user;
       }
-      upvoted = typeof window != "undefined" && window !== null ? App.upvoted.indexOf(this.object._id) !== -1 : current_user != null ? (this.object.upvoters != null) && this.object.upvoters.indexOf(current_user._id) !== -1 : void 0;
+      upvoted = typeof window != "undefined" && window !== null ? App.upvoted.indexOf(this.object._id) !== -1 : current_user ? (this.object.upvoters != null) && this.object.upvoters.indexOf(current_user._id) !== -1 : void 0;
       return CoffeeKup.render(this.render_headline_kup, {
         context: this,
         locals: {
@@ -401,7 +424,7 @@
     };
     Record.prototype.show_reply_box = function(rid, options) {
       var container, kup, record_e;
-      if (!(App.current_user != null)) {
+      if (!App.current_user) {
         window.location = "/login?goto=/r/" + rid + "/reply";
         return;
       }
@@ -593,6 +616,53 @@
         }
       });
     };
+    Record.prototype.follow = function(rid, do_follow) {
+      var record_e;
+      record_e = $('#' + rid);
+      return $.ajax({
+        cache: false,
+        type: "POST",
+        url: "/r/" + rid + "/follow",
+        data: {
+          follow: do_follow
+        },
+        dataType: "json",
+        error: function() {
+          return console.log('meh');
+        },
+        success: function(data) {
+          var x;
+          if (data != null) {
+            if (do_follow) {
+              App.following.push(rid);
+              return record_e.attr('data-following', true).find('>.item_info>.follow').addClass('unfollow').unbind('click').attr('onclick', null).click(function(event) {
+                Record.follow(rid, false);
+                return false;
+              }).text('unfollow');
+            } else {
+              App.following = (function() {
+                var _i, _len, _ref, _results;
+                _ref = App.following;
+                _results = [];
+                for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+                  x = _ref[_i];
+                  if (x !== rid) {
+                    _results.push(x);
+                  }
+                }
+                return _results;
+              })();
+              return record_e.attr('data-following', false).find('>.item_info>.follow').removeClass('unfollow').unbind('click').attr('onclick', null).click(function(event) {
+                Record.follow(rid, true);
+                return false;
+              }).text('follow');
+            }
+          } else {
+            return alert('uh oh, server might be down. try again later?');
+          }
+        }
+      });
+    };
     return Record;
   })();
   if (typeof exports != "undefined" && exports !== null) {
@@ -601,6 +671,7 @@
   if (typeof window != "undefined" && window !== null) {
     window.Record = Record;
     Record.upvote = Record.prototype.upvote;
+    Record.follow = Record.prototype.follow;
     Record.show_reply_box = Record.prototype.show_reply_box;
     Record.show_edit_box = Record.prototype.show_edit_box;
     Record.post_reply = Record.prototype.post_reply;

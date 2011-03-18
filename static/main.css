@@ -75,6 +75,8 @@ body {
         text-decoration: none; }
         body .record .item_info a:hover {
           text-decoration: underline; }
+      body .record .item_info .unfollow {
+        color: #ff9999; }
     body .record[data-root="true"] > .contents {
       margin: 10px 0px; }
     body .record[data-root="true"] > .item_info {

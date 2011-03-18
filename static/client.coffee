@@ -14,6 +14,7 @@ App.DEFAULT_DEPTH = 5
 
 # list of all newly upvoted records
 App.upvoted = null
+App.following = null
 
 # include a javascript file TODO support jsonp
 App.include = (filename) ->
@@ -159,3 +160,5 @@ $(document).ready ->
 
   # find all upvoted records
   App.upvoted = $.map($('.record[data-upvoted="true"]'), (e) -> e.id)
+  # find all following records
+  App.following = $.map($('.record[data-following="true"]'), (e) -> e.id)

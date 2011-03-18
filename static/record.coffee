@@ -63,13 +63,13 @@ class Record
 
   render_kup: ->
     # NOTE: locals like 'current_user', 'upvoted' are passed in from the render function
-    div class: "record", id: @object._id, "data-root": is_root, "data-upvoted": upvoted, ->
+    div class: "record", id: @object._id, "data-root": is_root, "data-upvoted": upvoted, "data-following": following, ->
       if not @object.deleted_at?
-        if current_user?
+        if current_user
           if @object.created_by == current_user.username and @object.type != 'choice'
             span class: "self_made", -> "*"
           else if not upvoted
-            a class: "upvote", href: '#', onclick: "Record.upvote('#{h(@object._id)}'); return false;", -> "&#9650;"
+            a class: "upvote", href: '#', onclick: "Record.upvote('#{@object._id}'); return false;", -> "&#9650;"
         if @object.title
           if @object.url
             a href: @object.url, class: "title", -> @object.title
@@ -90,11 +90,17 @@ class Record
             text " | "
           if @object.type != 'choice'
             a class: "link", href: "/r/#{@object._id}", -> "link"
-          if current_user? and @object.created_by == current_user.username
+          if current_user and @object.type != 'choice'
             text " | "
-            a class: "edit", href: "#", onclick: "Record.show_edit_box('#{h(@object._id)}'); return false;", -> "edit"
+            if following
+              a class: "follow unfollow", href: "#", onclick: "Record.follow('#{@object._id}', false); return false;", -> "unfollow"
+            else
+              a class: "follow", href: "#", onclick: "Record.follow('#{@object._id}', true); return false;", -> "follow"
+          if current_user and @object.created_by == current_user.username
             text " | "
-            a class: "delete", href: "#", onclick: "Record.delete('#{h(@object._id)}'); return false;", -> "delete"
+            a class: "edit", href: "#", onclick: "Record.show_edit_box('#{@object._id}'); return false;", -> "edit"
+            text " | "
+            a class: "delete", href: "#", onclick: "Record.delete('#{@object._id}'); return false;", -> "delete"
         div class: "contents", ->
           # main body
           text Markz::markup(@object.comment) if @object.comment
@@ -106,11 +112,11 @@ class Record
                 text choice.render(is_root: false, current_user: current_user)
         div class: "footer", ->
           # add poll choice
-          if current_user? and @object.type == 'poll' and @object.created_by == current_user.username
-            a class: "addchoice", href: "#", onclick: "Record.show_reply_box('#{h(@object._id)}', {choice: true}); return false;", -> "add choice"
+          if current_user and @object.type == 'poll' and @object.created_by == current_user.username
+            a class: "addchoice", href: "#", onclick: "Record.show_reply_box('#{@object._id}', {choice: true}); return false;", -> "add choice"
           # reply link
           if @object.type != 'choice'
-            a class: "reply", href: "/r/#{@object._id}/reply", onclick: "Record.show_reply_box('#{h(@object._id)}'); return false;", -> "reply"
+            a class: "reply", href: "/r/#{@object._id}/reply", onclick: "Record.show_reply_box('#{@object._id}'); return false;", -> "reply"
           # placeholders
           div class: "edit_box_container"
           if @object.type != 'choice'
@@ -131,12 +137,19 @@ class Record
   render: (options) ->
     is_root = not options? or options.is_root
     current_user = options.current_user if options?
+    # TODO could be a property of Record
     upvoted =
       if window?
         App.upvoted.indexOf(@object._id) != -1
-      else if current_user?
+      else if current_user
         @object.upvoters? and @object.upvoters.indexOf(current_user._id) != -1
-    CoffeeKup.render @render_kup, context: this, locals: {Markz: Markz, is_root: is_root, upvoted: upvoted, current_user: current_user}, dynamic_locals: true
+    # TODO could be a property of Record
+    following =
+      if window?
+        App.following.indexOf(@object._id) != -1
+      else if current_user
+        @object.followers? and @object.followers.indexOf(current_user._id) != -1
+    CoffeeKup.render @render_kup, context: this, locals: {Markz: Markz, is_root: is_root, upvoted: upvoted, following: following, current_user: current_user}, dynamic_locals: true
 
   render_headline_kup: ->
     div class: "record", id: @object._id, ->
@@ -144,7 +157,7 @@ class Record
         if @object.created_by == current_user.username and @object.type != 'choice'
           span class: "self_made", -> "*"
         else if not upvoted
-          a class: "upvote", href: '#', onclick: "Record.upvote('#{h(@object._id)}'); $(this).parent().find('>.item_info>.points').increment(); $(this).remove(); return false;", -> "&#9650;"
+          a class: "upvote", href: '#', onclick: "Record.upvote('#{@object._id}'); $(this).parent().find('>.item_info>.points').increment(); $(this).remove(); return false;", -> "&#9650;"
       if @object.url
         a href: @object.url, class: "title", -> @object.title
         if @object.host
@@ -168,7 +181,7 @@ class Record
     upvoted =
       if window?
         App.upvoted.indexOf(@object._id) != -1
-      else if current_user?
+      else if current_user
         @object.upvoters? and @object.upvoters.indexOf(current_user._id) != -1
     CoffeeKup.render @render_headline_kup, context: this, locals: {Markz: Markz, upvoted: upvoted, current_user: current_user}, dynamic_locals: true
 
@@ -211,7 +224,7 @@ class Record
   # client side #
   # static method #
   show_reply_box: (rid, options) ->
-    if not App.current_user?
+    if not App.current_user
       window.location = "/login?goto=/r/#{rid}/reply"
       return
     record_e = $('#'+rid)
@@ -315,6 +328,44 @@ class Record
         else
           alert 'uh oh, server might be down. try again later?'
 
+  # client side #
+  # static method #
+  # do_follow: false means unfollow, otherwise should be true
+  follow: (rid, do_follow) ->
+    record_e = $('#'+rid)
+    $.ajax
+      cache: false
+      type: "POST"
+      url: "/r/#{rid}/follow"
+      data: {follow: do_follow}
+      dataType: "json"
+      error: ->
+        console.log('meh')
+      success: (data) ->
+        if data?
+          if do_follow
+            App.following.push rid
+            record_e
+              .attr('data-following', true)
+              .find('>.item_info>.follow')
+                .addClass('unfollow')
+                .unbind('click')
+                .attr('onclick', null)
+                .click( (event) -> Record.follow(rid, false); false )
+                .text('unfollow')
+          else
+            App.following = (x for x in App.following when x != rid)
+            record_e
+              .attr('data-following', false)
+              .find('>.item_info>.follow')
+                .removeClass('unfollow')
+                .unbind('click')
+                .attr('onclick', null)
+                .click( (event) -> Record.follow(rid, true); false )
+                .text('follow')
+        else
+          alert 'uh oh, server might be down. try again later?'
+
 # if server-side
 if exports?
   exports.Record = Record
@@ -322,6 +373,7 @@ if exports?
 if window?
   window.Record = Record
   Record.upvote = Record::upvote
+  Record.follow = Record::follow
   Record.show_reply_box = Record::show_reply_box
   Record.show_edit_box = Record::show_edit_box
   Record.post_reply = Record::post_reply

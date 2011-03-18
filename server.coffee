@@ -293,6 +293,18 @@ server = utils.Rowter([
             trigger_update [record]
   ]
 
+  [wrappers: [require_login],
+   '/r/:id/follow', (req, res) ->
+    switch req.method
+      when 'POST'
+        rid = req.path_data.id
+        logic.records.follow rid, req.current_user, req.post_data.follow=='true', (err) ->
+          if err
+            res.simpleJSON(500, status: 'internal_error')
+            return
+          res.simpleJSON(200, status: 'ok')
+  ]
+
   ['/users', (req, res) ->
     # show all users
     switch req.method

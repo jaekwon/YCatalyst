@@ -9,6 +9,7 @@
   App.current_user = null;
   App.DEFAULT_DEPTH = 5;
   App.upvoted = null;
+  App.following = null;
   App.include = function(filename) {
     var script;
     script = document.createElement('script');
@@ -175,7 +176,10 @@
         return App.poll(root);
       }), 500);
     }
-    return App.upvoted = $.map($('.record[data-upvoted="true"]'), function(e) {
+    App.upvoted = $.map($('.record[data-upvoted="true"]'), function(e) {
+      return e.id;
+    });
+    return App.following = $.map($('.record[data-following="true"]'), function(e) {
       return e.id;
     });
   });
