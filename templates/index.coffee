@@ -13,3 +13,6 @@ exports.sass = """
         :top -4px
         :font-size 7pt
 """
+
+exports.coffeescript = ->
+  App.start_longpolling()

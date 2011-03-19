@@ -10,6 +10,9 @@ $blue_text: #22A
 $light_blue_text: #66F
 $the_font: Verdana, Verdana, Geneva, sans-serif
 
+.hidden
+  display: none
+
 body
   color: black
   font-family: $the_font
@@ -97,23 +100,25 @@ body
       .unfollow
         color: #F99
     .contents
+      color: $dark_text
       margin: 2px 0px
       &.deleted
         color: gray
     .reply, .addchoice
+      color: $light_text
       text-decoration: underline
       margin-right: 1em
       font-size: 0.8em
     .edit_box
       margin: 10px 0px
       button
-        margin-top: 5px
+        margin: 5px 5px 0px 0px
     .reply_box
       margin: 10px 0px 10px 5px
       padding-left: 10px
       border-left: 1px solid #eee
       button
-        margin-top: 5px
+        margin: 5px 5px 0px 0px
     .choices
       border-left: 2px solid #bbf
       margin-left: 5px

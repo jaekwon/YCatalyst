@@ -248,7 +248,7 @@
           return div({
             "class": "children"
           }, function() {
-            var child, loaded_children, _i, _len, _ref;
+            var child, loaded_children, show_more_link, _i, _len, _ref;
             if (this.children) {
               _ref = this.children;
               for (_i = 0, _len = _ref.length; _i < _len; _i++) {
@@ -260,14 +260,18 @@
               }
             }
             loaded_children = this.children ? this.children.length : 0;
-            if (loaded_children < this.object.num_children) {
-              return a({
-                "class": "more",
-                href: "/r/" + this.object._id
+            show_more_link = loaded_children < this.object.num_children;
+            return a({
+              "class": "more " + (!show_more_link ? 'hidden' : void 0),
+              href: "/r/" + this.object._id
+            }, function() {
+              span({
+                "class": "number"
               }, function() {
-                return "" + (this.object.num_children - loaded_children) + " more replies";
+                return "" + (this.object.num_children - loaded_children);
               });
-            }
+              return text(" more replies");
+            });
           });
         }
       });
@@ -405,9 +409,7 @@
       if (choices.length > 0) {
         $("\#" + this.object._id).find('>.contents').append(choices);
       }
-      if (!(options != null) || !options.is_leaf) {
-        return $("\#" + this.object._id).find('>.children').replaceWith(children);
-      }
+      return $("\#" + this.object._id).find('>.children').replaceWith(children);
     };
     Record.prototype.upvote = function(rid) {
       App.upvoted.push(rid);
@@ -419,7 +421,11 @@
         error: function() {
           return console.log('meh');
         },
-        success: function(data) {}
+        success: function(data) {
+          if (data && data.updates && !App.is_longpolling) {
+            return App.handle_updates(data.updates);
+          }
+        }
       });
     };
     Record.prototype.show_reply_box = function(rid, options) {
@@ -581,7 +587,10 @@
         },
         success: function(data) {
           if (data != null) {
-            return record_e.find('>.footer>.reply_box_container>.reply_box').remove();
+            record_e.find('>.footer>.reply_box_container>.reply_box').remove();
+            if (data.updates && !App.is_longpolling) {
+              return App.handle_updates(data.updates);
+            }
           } else {
             return alert('uh oh, server might be down. try again later?');
           }

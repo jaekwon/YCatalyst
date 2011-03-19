@@ -128,9 +128,12 @@ class Record
           if @children
             for child in @children
               text child.render(is_root: false, current_user: current_user)
+
           loaded_children = if @children then @children.length else 0
-          if loaded_children < @object.num_children
-            a class: "more", href: "/r/#{@object._id}", -> "#{@object.num_children - loaded_children} more replies"
+          show_more_link = loaded_children < @object.num_children
+          a class: "more #{'hidden' if not show_more_link}", href: "/r/#{@object._id}", ->
+            span class: "number", -> "#{@object.num_children - loaded_children}"
+            text " more replies"
 
   # options:
   #   is_root -> default true, if false, doesn't show parent_link,
@@ -190,7 +193,7 @@ class Record
 
   # client side #
   # update the record (which already exists in the dom)
-  # is_leaf: default false. if true, renders the new num_children
+  # this may not increment 'xyz more replies' correctly.
   # current_user: the current user XXX find better way
   redraw: (options) ->
     old = $("\##{@object._id}")
@@ -201,8 +204,7 @@ class Record
     old.replaceWith(this.render(options))
     if choices.length > 0
       $("\##{@object._id}").find('>.contents').append(choices)
-    if not options? or not options.is_leaf
-      $("\##{@object._id}").find('>.children').replaceWith(children)
+    $("\##{@object._id}").find('>.children').replaceWith(children)
 
   # client side #
   # static method #
@@ -217,8 +219,8 @@ class Record
       error: ->
         console.log('meh')
       success: (data) ->
-        # updating the new record happens 
-        # with longpolling below.
+        if data and data.updates and not App.is_longpolling
+          App.handle_updates data.updates
     }
 
   # client side #
@@ -304,6 +306,8 @@ class Record
       success: (data) ->
         if data?
           record_e.find('>.footer>.reply_box_container>.reply_box').remove()
+          if data.updates and not App.is_longpolling
+            App.handle_updates data.updates
         else
           alert 'uh oh, server might be down. try again later?'
 

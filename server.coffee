@@ -180,7 +180,7 @@ server = utils.Rowter([
       when 'GET'
         rid = req.path_data.id
         watching = logic.sessions.get_watching(rid)
-        res.simpleJSON(200, watching)
+        res.simpleJSON 200, watching
   ]
 
   [wrappers: [require_login],
@@ -224,7 +224,7 @@ server = utils.Rowter([
             record = logic.records.create_record(recdata, parent)
             mongo.records.save record.object, (err, stuff) ->
               if req.headers['x-requested-with'] == 'XMLHttpRequest'
-                res.simpleJSON 200, status: 'ok'
+                res.simpleJSON 200, status: 'ok', updates: [logic.records.scrubbed_recdata(record)]
               else
                 res.writeHead 302, Location: '/r/'+parent_id
                 res.end()
@@ -265,8 +265,8 @@ server = utils.Rowter([
         if not all_callbacks[key]
           all_callbacks[key] = []
         all_callbacks[key].push
-          callback: ((recdatas) ->
-            res.simpleJSON(200, recdatas))
+          callback: (recdatas) ->
+            res.simpleJSON 200, recdatas
           timestamp: new Date()
           username: req.current_user.username if req.current_user?
         if req.current_user?
@@ -288,7 +288,7 @@ server = utils.Rowter([
           logic.records.score_record(record)
           # save this record
           mongo.records.save record.object, (err, stuff) ->
-            res.simpleJSON(200, status: 'ok')
+            res.simpleJSON 200, status: 'ok', updates: [logic.records.scrubbed_recdata(record)]
             # notify clients
             trigger_update [record]
   ]
@@ -300,9 +300,9 @@ server = utils.Rowter([
         rid = req.path_data.id
         logic.records.follow rid, req.current_user, req.post_data.follow=='true', (err) ->
           if err
-            res.simpleJSON(500, status: 'internal_error')
+            res.simpleJSON 500, status: 'internal_error'
             return
-          res.simpleJSON(200, status: 'ok')
+          res.simpleJSON 200, status: 'ok'
   ]
 
   [wrappers: [require_login_nice('You need to log again')],

@@ -6,6 +6,7 @@
   */  var App;
   var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
   App = window.App = {};
+  App.is_longpolling = false;
   App.current_user = null;
   App.DEFAULT_DEPTH = 5;
   App.upvoted = null;
@@ -18,6 +19,24 @@
     return $('head').append(script);
   };
   App.poll_errors = 0;
+  App.handle_updates = function(recdatas) {
+    var parent, recdata, record, _i, _len, _results;
+    _results = [];
+    for (_i = 0, _len = recdatas.length; _i < _len; _i++) {
+      recdata = recdatas[_i];
+      parent = $('#' + recdata.parent_id);
+      _results.push($('#' + recdata.parent_id).length > 0 && $('#' + recdata._id).length === 0 ? parent.parents('.record').length >= App.DEFAULT_DEPTH ? parent.find('>.children>.more').removeClass('hidden').find('>.number').increment() : (record = new Record(recdata), record.object.type === 'choice' ? parent.find('>.contents>.choices').append(record.render({
+        is_root: false,
+        current_user: App.current_user
+      })) : parent.find('>.children').prepend(record.render({
+        is_root: false,
+        current_user: App.current_user
+      }))) : (record = new Record(recdata), record.redraw({
+        current_user: App.current_user
+      })));
+    }
+    return _results;
+  };
   App.poll = function(root) {
     return $.ajax({
       cache: false,
@@ -31,37 +50,10 @@
         }), 10 * 1000);
       },
       success: function(data) {
-        var is_leaf, parent, recdata, record, _i, _len;
         try {
           App.poll_errors = 0;
           if (data) {
-            for (_i = 0, _len = data.length; _i < _len; _i++) {
-              recdata = data[_i];
-              parent = $('#' + recdata.parent_id);
-              if ($('#' + recdata.parent_id).length > 0 && $('#' + recdata._id).length === 0) {
-                if (parent.parents('.record').length >= App.DEFAULT_DEPTH) {} else {
-                  record = new Record(recdata);
-                  if (record.object.type === 'choice') {
-                    parent.find('>.contents>.choices').append(record.render({
-                      is_root: false,
-                      current_user: App.current_user
-                    }));
-                  } else {
-                    parent.find('>.children').prepend(record.render({
-                      is_root: false,
-                      current_user: App.current_user
-                    }));
-                  }
-                }
-              } else {
-                is_leaf = parent.parents('.record').length >= (App.DEFAULT_DEPTH - 1);
-                record = new Record(recdata);
-                record.redraw({
-                  is_leaf: is_leaf,
-                  current_user: App.current_user
-                });
-              }
-            }
+            App.handle_updates(data);
             return App.poll(root);
           } else {
             App.poll_errors += 1;
@@ -164,18 +156,21 @@
       });
     }
   });
-  $(document).ready(function() {
+  App.start_longpolling = function() {
     var root;
+    App.is_longpolling = true;
+    if ($('[data-root="true"]').length > 0) {
+      root = $('[data-root="true"]:eq(0)');
+      return setTimeout((function() {
+        return App.poll(root);
+      }), 500);
+    }
+  };
+  $(document).ready(function() {
     App.current_user = $('#current_user').length > 0 ? {
       _id: $("#current_user").attr('data-id'),
       username: $("#current_user").attr('data-username')
     } : null;
-    if ($('[data-root="true"]').length > 0) {
-      root = $('[data-root="true"]:eq(0)');
-      setTimeout((function() {
-        return App.poll(root);
-      }), 500);
-    }
     App.upvoted = $.map($('.record[data-upvoted="true"]'), function(e) {
       return e.id;
     });

@@ -2,6 +2,9 @@
  * Copyright(c) 2011 Jae Kwon (jae@ycatalyst.com)
  * MIT Licensed
  */
+.hidden {
+  display: none; }
+
 body {
   color: black;
   font-family: Verdana, Verdana, Geneva, sans-serif;
@@ -78,23 +81,25 @@ body {
       body .record .item_info .unfollow {
         color: #ff9999; }
     body .record .contents {
+      color: #333333;
       margin: 2px 0px; }
       body .record .contents.deleted {
         color: gray; }
     body .record .reply, body .record .addchoice {
+      color: #999999;
       text-decoration: underline;
       margin-right: 1em;
       font-size: 0.8em; }
     body .record .edit_box {
       margin: 10px 0px; }
       body .record .edit_box button {
-        margin-top: 5px; }
+        margin: 5px 5px 0px 0px; }
     body .record .reply_box {
       margin: 10px 0px 10px 5px;
       padding-left: 10px;
       border-left: 1px solid #eeeeee; }
       body .record .reply_box button {
-        margin-top: 5px; }
+        margin: 5px 5px 0px 0px; }
     body .record .choices {
       border-left: 2px solid #bbbbff;
       margin-left: 5px;

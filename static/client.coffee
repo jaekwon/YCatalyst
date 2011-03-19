@@ -6,6 +6,11 @@
 
 App = window.App = {}
 
+# most pages are real time, but the inbox is not.
+# this flag determines whether to update records
+# from the synchronous response data, or from longpolling.
+App.is_longpolling = false
+
 # gets set at document.ready
 App.current_user = null
 
@@ -26,6 +31,28 @@ App.include = (filename) ->
 # counter to prevent server flooding
 App.poll_errors = 0
 
+# insert/render or redraw the records based on new/updated recdata from the server
+App.handle_updates = (recdatas) ->
+  for recdata in recdatas
+    parent = $('#'+recdata.parent_id)
+    # if we need to insert a new record
+    if $('#'+recdata.parent_id).length > 0 and $('#'+recdata._id).length == 0
+      # insert if parent is not a leaf node
+      if parent.parents('.record').length >= App.DEFAULT_DEPTH
+        # this is too far. just increment 'xyz more replies' of the parent.
+        parent.find('>.children>.more').removeClass('hidden').find('>.number').increment()
+      else
+        # render it
+        record = new Record(recdata)
+        if record.object.type == 'choice'
+          parent.find('>.contents>.choices').append(record.render(is_root: false, current_user: App.current_user))
+        else
+          parent.find('>.children').prepend(record.render(is_root: false, current_user: App.current_user))
+    # otherwise we're updating possibly an existing record
+    else
+      record = new Record(recdata)
+      record.redraw(current_user: App.current_user)
+
 # poll for updates for root and its near children
 App.poll = (root) ->
   $.ajax {
@@ -40,28 +67,7 @@ App.poll = (root) ->
       try
         App.poll_errors = 0
         if data
-          for recdata in data
-            parent = $('#'+recdata.parent_id)
-            # if we need to insert a new record
-            if $('#'+recdata.parent_id).length > 0 and $('#'+recdata._id).length == 0
-              # insert if parent is not a leaf node
-              if parent.parents('.record').length >= App.DEFAULT_DEPTH
-                # this is too far. skip it.
-                # instead, the parent should be in the data as well 
-                # and that, updated w/ is_root option, should display 
-                # the new number of children
-              else
-                # render it
-                record = new Record(recdata)
-                if record.object.type == 'choice'
-                  parent.find('>.contents>.choices').append(record.render(is_root: false, current_user: App.current_user))
-                else
-                  parent.find('>.children').prepend(record.render(is_root: false, current_user: App.current_user))
-            # otherwise we're updating possibly an existing record
-            else
-              is_leaf = parent.parents('.record').length >= (App.DEFAULT_DEPTH-1)
-              record = new Record(recdata)
-              record.redraw(is_leaf: is_leaf, current_user: App.current_user)
+          App.handle_updates data
           App.poll(root)
         else
           # might be a broken connection.
@@ -144,6 +150,14 @@ jQuery.fn.extend(
       setTimeout(autoresize, 0)
 )
 
+# start longpoll'n
+App.start_longpolling = ->
+  App.is_longpolling = true
+  if $('[data-root="true"]').length > 0
+    root = $('[data-root="true"]:eq(0)')
+    # http://stackoverflow.com/questions/2703861/chromes-loading-indicator-keeps-spinning-during-xmlhttprequest
+    setTimeout(( -> App.poll(root)), 500)
+
 $(document).ready ->
   # get the id of the current user
   App.current_user =
@@ -151,13 +165,6 @@ $(document).ready ->
       _id: $("#current_user").attr('data-id'), username: $("#current_user").attr('data-username')
     else
       null
-
-  # start longpoll'n
-  if $('[data-root="true"]').length > 0
-    root = $('[data-root="true"]:eq(0)')
-    # http://stackoverflow.com/questions/2703861/chromes-loading-indicator-keeps-spinning-during-xmlhttprequest
-    setTimeout(( -> App.poll(root)), 500)
-
   # find all upvoted records
   App.upvoted = $.map($('.record[data-upvoted="true"]'), (e) -> e.id)
   # find all following records
