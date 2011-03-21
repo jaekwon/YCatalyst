@@ -51,6 +51,13 @@ body {
     position: relative;
     margin: 10px 0px;
     padding-left: 15px; }
+    body .record h1, body .record h2, body .record h3, body .record h4, body .record h5, body .record h6, body .record pre {
+      margin: 5px 0px; }
+    body .record h1.title {
+      font-size: 12pt;
+      line-height: 12pt; }
+      body .record h1.title a.title {
+        font-size: 12pt; }
     body .record a.title {
       text-decoration: none;
       font-size: 10pt; }
@@ -85,8 +92,6 @@ body {
       margin: 2px 0px; }
       body .record .contents.deleted {
         color: gray; }
-      body .record .contents h1, body .record .contents h2, body .record .contents h3, body .record .contents h4, body .record .contents h5, body .record .contents h6, body .record .contents pre {
-        margin: 5px 0px; }
     body .record .reply, body .record .addchoice {
       color: #999999;
       text-decoration: underline;

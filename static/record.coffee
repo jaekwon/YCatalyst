@@ -71,13 +71,18 @@ class Record
           else if not upvoted
             a class: "upvote", href: '#', onclick: "Record.upvote('#{@object._id}'); return false;", -> "&#9650;"
         if @object.title
-          if @object.url
-            a href: @object.url, class: "title", -> @object.title
-            if @object.host
-              span class: "host", -> "&nbsp;(#{@object.host})"
+          title_line = =>
+            if @object.url
+              a href: @object.url, class: "title", -> @object.title
+              if @object.host
+                span class: "host", -> "&nbsp;(#{@object.host})"
+            else
+              a href: "/r/#{@object._id}", class: "title", -> @object.title
+          if heading_title
+            h1 class: "title", -> title_line()
           else
-            a href: "/r/#{@object._id}", class: "title", -> @object.title
-          br foo: "bar"
+            title_line()
+            br foo: "bar"
         span class: "item_info", ->
           span -> " #{@object.points or 0} pts "
           if @object.type != 'choice'
@@ -137,22 +142,26 @@ class Record
 
   # options:
   #   is_root -> default true, if false, doesn't show parent_link,
+  #   heading_title -> the title is rendered as a heading
+  #   current_user -> the user for which we are rendering the record
   render: (options) ->
-    is_root = not options? or options.is_root
-    current_user = options.current_user if options?
+    locals = options
+    locals.current_user = current_user = locals.current_user
+    locals.heading_title = locals.heading_title
+    locals.Markz = Markz
     # TODO could be a property of Record
-    upvoted =
+    locals.upvoted =
       if window?
         App.upvoted.indexOf(@object._id) != -1
       else if current_user
         @object.upvoters? and @object.upvoters.indexOf(current_user._id) != -1
     # TODO could be a property of Record
-    following =
+    locals.following =
       if window?
         App.following.indexOf(@object._id) != -1
       else if current_user
         @object.followers? and @object.followers.indexOf(current_user._id) != -1
-    CoffeeKup.render @render_kup, context: this, locals: {Markz: Markz, is_root: is_root, upvoted: upvoted, following: following, current_user: current_user}, dynamic_locals: true
+    CoffeeKup.render @render_kup, context: this, locals: locals, dynamic_locals: true
 
   render_headline_kup: ->
     div class: "record", id: @object._id, ->

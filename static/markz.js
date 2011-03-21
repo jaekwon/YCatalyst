@@ -3,9 +3,9 @@
   # YCatalyst
   # Copyright(c) 2011 Jae Kwon (jae@ycatalyst.com)
   # MIT Licensed
-  */  var Markz, REPLACE_LOOKUP, coffeekup, hE, re_blockquote, re_bold, re_codeblock, re_email, re_header, re_link, re_newline, re_olbullets, re_ulbullets, re_url;
+  */  var Markz, REPLACE_LOOKUP, coffeekup, hE, re_blockquote, re_bold, re_codeblock, re_email, re_heading, re_link, re_newline, re_olbullets, re_ulbullets, re_url;
   coffeekup = typeof CoffeeKup != "undefined" && CoffeeKup !== null ? CoffeeKup : require('./coffeekup');
-  re_header = /^(\#{1,6})(.*)$\n?|^(.*)$\n^(={4,}|-{4,})$\n?/m;
+  re_heading = /^(\#{1,6})(.*)$\n?|^(.*)$\n^(={4,}|-{4,})$\n?/m;
   re_email = /(?:[\w\!\#\$\%\&\'\*\+\-\/\=\?\^\`\{\|\}\~]+\.)*[\w\!\#\$\%\&\'\*\+\-\/\=\?\^\`\{\|\}\~]+@(?:(?:(?:[a-zA-Z0-9](?:[a-zA-Z0-9\-](?!\.)){0,61}[a-zA-Z0-9]?\.)+[a-zA-Z0-9](?:[a-zA-Z0-9\-](?!$)){0,61}[a-zA-Z0-9]?)|(?:\[(?:(?:[01]?\d{1,2}|2[0-4]\d|25[0-5])\.){3}(?:[01]?\d{1,2}|2[0-4]\d|25[0-5])\]))/;
   re_url = /((?:ht|f)tp(?:s?)\:\/\/|~\/|\/)?(?:\w+:\w+@)?((?:(?:[-\w\d{1-3}]+\.)+(?:com|org|net|gov|mil|biz|info|mobi|name|aero|jobs|edu|co\.uk|ac\.uk|it|fr|tv|museum|asia|local|travel|[a-z]{2}))|((\b25[0-5]\b|\b[2][0-4][0-9]\b|\b[0-1]?[0-9]?[0-9]\b)(\.(\b25[0-5]\b|\b[2][0-4][0-9]\b|\b[0-1]?[0-9]?[0-9]\b)){3}))(?::[\d]{1,5})?(?:(?:(?:\/(?:[-\w~!$+|.,=]|%[a-f\d]{2})+)+|\/)+|\?|#)?(?:(?:\?(?:[-\w~!$+|.,*:]|%[a-f\d{2}])+=?(?:[-\w~!$+|.,*:=]|%[a-f\d]{2})*)(?:&(?:[-\w~!$+|.,*:]|%[a-f\d{2}])+=?(?:[-\w~!$+|.,*:=]|%[a-f\d]{2})*)*)*(?:#(?:[-\w~!$ |\/.,*:;=]|%[a-f\d]{2})*)?/;
   re_link = /\[([^\n\[\]]+)\] *\(([^\n\[\]]+)(?: +"([^\n\[\]]+)")?\)/;
@@ -21,13 +21,13 @@
   };
   REPLACE_LOOKUP = [
     [
-      'header', re_header, function(match) {
-        var header_type;
+      'heading', re_heading, function(match) {
+        var heading_type;
         if (match[1]) {
           return "<h" + match[1].length + ">" + (hE(match[2])) + "</h" + match[1].length + ">";
         } else {
-          header_type = match[4][0] === '=' ? 'h1' : 'h2';
-          return "<" + header_type + ">" + (hE(match[3])) + "</" + header_type + ">";
+          heading_type = match[4][0] === '=' ? 'h1' : 'h2';
+          return "<" + heading_type + ">" + (hE(match[3])) + "</" + heading_type + ">";
         }
       }
     ], [

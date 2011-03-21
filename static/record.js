@@ -4,6 +4,7 @@
   # Copyright(c) 2011 Jae Kwon (jae@ycatalyst.com)
   # MIT Licensed
   */  var CoffeeKup, Markz, Record;
+  var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
   CoffeeKup = typeof window != "undefined" && window !== null ? window.CoffeeKup : require('./coffeekup');
   Markz = typeof window != "undefined" && window !== null ? window.Markz : require('./markz').Markz;
   Date.prototype.time_ago = function() {
@@ -61,6 +62,7 @@
         "data-upvoted": upvoted,
         "data-following": following
       }, function() {
+        var title_line;
         if (!(this.object.deleted_at != null)) {
           if (current_user) {
             if (this.object.created_by === current_user.username && this.object.type !== 'choice') {
@@ -80,31 +82,42 @@
             }
           }
           if (this.object.title) {
-            if (this.object.url) {
-              a({
-                href: this.object.url,
-                "class": "title"
-              }, function() {
-                return this.object.title;
-              });
-              if (this.object.host) {
-                span({
-                  "class": "host"
+            title_line = __bind(function() {
+              if (this.object.url) {
+                a({
+                  href: this.object.url,
+                  "class": "title"
                 }, function() {
-                  return "&nbsp;(" + this.object.host + ")";
+                  return this.object.title;
+                });
+                if (this.object.host) {
+                  return span({
+                    "class": "host"
+                  }, function() {
+                    return "&nbsp;(" + this.object.host + ")";
+                  });
+                }
+              } else {
+                return a({
+                  href: "/r/" + this.object._id,
+                  "class": "title"
+                }, function() {
+                  return this.object.title;
                 });
               }
-            } else {
-              a({
-                href: "/r/" + this.object._id,
+            }, this);
+            if (heading_title) {
+              h1({
                 "class": "title"
               }, function() {
-                return this.object.title;
+                return title_line();
+              });
+            } else {
+              title_line();
+              br({
+                foo: "bar"
               });
             }
-            br({
-              foo: "bar"
-            });
           }
           span({
             "class": "item_info"
@@ -277,22 +290,16 @@
       });
     };
     Record.prototype.render = function(options) {
-      var current_user, following, is_root, upvoted;
-      is_root = !(options != null) || options.is_root;
-      if (options != null) {
-        current_user = options.current_user;
-      }
-      upvoted = typeof window != "undefined" && window !== null ? App.upvoted.indexOf(this.object._id) !== -1 : current_user ? (this.object.upvoters != null) && this.object.upvoters.indexOf(current_user._id) !== -1 : void 0;
-      following = typeof window != "undefined" && window !== null ? App.following.indexOf(this.object._id) !== -1 : current_user ? (this.object.followers != null) && this.object.followers.indexOf(current_user._id) !== -1 : void 0;
+      var current_user, locals;
+      locals = options;
+      locals.current_user = current_user = locals.current_user;
+      locals.heading_title = locals.heading_title;
+      locals.Markz = Markz;
+      locals.upvoted = typeof window != "undefined" && window !== null ? App.upvoted.indexOf(this.object._id) !== -1 : current_user ? (this.object.upvoters != null) && this.object.upvoters.indexOf(current_user._id) !== -1 : void 0;
+      locals.following = typeof window != "undefined" && window !== null ? App.following.indexOf(this.object._id) !== -1 : current_user ? (this.object.followers != null) && this.object.followers.indexOf(current_user._id) !== -1 : void 0;
       return CoffeeKup.render(this.render_kup, {
         context: this,
-        locals: {
-          Markz: Markz,
-          is_root: is_root,
-          upvoted: upvoted,
-          following: following,
-          current_user: current_user
-        },
+        locals: locals,
         dynamic_locals: true
       });
     };
