@@ -62,17 +62,20 @@ App.poll = (root) ->
     dataType: "json"
     error: ->
       App.poll_errors += 1
+      console.log "polling again in 10: error"
       setTimeout(( -> App.poll(root)), 10*1000)
     success: (data) ->
       try
         App.poll_errors = 0
         if data
           App.handle_updates data
+          console.log "polling again immediately"
           App.poll(root)
         else
           # might be a broken connection.
           # ajax requests should at least come back with a {status}
           App.poll_errors += 1
+          console.log "polling again in 10: error?"
           setTimeout(( -> App.poll(root)), 10*1000)
       catch e
         console.log(e)

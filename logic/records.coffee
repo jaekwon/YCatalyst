@@ -65,7 +65,7 @@ exports.score_record = (record) ->
   record.object.score = score
 
 # recdata: the record data object
-# parent: the data object for the parent
+# parent: the data object for the parent, may be null or undefined
 # returns: a new Record object
 exports.create_record = (recdata, parent) ->
   parents = []
@@ -76,6 +76,7 @@ exports.create_record = (recdata, parent) ->
       parents = [parent.object._id].concat(parent.object.parents[0..5])
     else
       parents = [parent.object._id]
+    recdata.parent_followers = parent.object.followers if parent.object.followers
   else
     recdata.parent_id = null # need this for mongodb indexing
   if not recdata._id?
@@ -83,7 +84,6 @@ exports.create_record = (recdata, parent) ->
   recdata.created_at = new Date()
   recdata.parents = parents
   recdata.points = if recdata.upvoters then recdata.upvoters.length else 0
-  recdata.parent_followers = parent.object.followers if parent.object.followers
   record = new rec.Record(recdata)
   record.is_new = true
   exports.score_record(record)

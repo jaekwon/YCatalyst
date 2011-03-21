@@ -85,6 +85,8 @@ body {
       margin: 2px 0px; }
       body .record .contents.deleted {
         color: gray; }
+      body .record .contents h1, body .record .contents h2, body .record .contents h3, body .record .contents h4, body .record .contents h5, body .record .contents h6, body .record .contents pre {
+        margin: 5px 0px; }
     body .record .reply, body .record .addchoice {
       color: #999999;
       text-decoration: underline;
@@ -117,13 +119,14 @@ body {
     font-size: 0.8em;
     color: gray; }
   body ol, body ul {
-    color: #6666ff;
     padding-left: 20px;
     margin: 0px;
-    list-style-type: decimal; }
+    color: #999999; }
     body ol li, body ul li {
       padding: 0px;
       margin: 0px; }
+      body ol li > .back_to_black, body ul li > .back_to_black {
+        color: black; }
       body ol li > div, body ul li > div {
         color: #999999;
         position: relative;
@@ -131,6 +134,11 @@ body {
         margin: 5px 0px; }
       body ol li a, body ul li a {
         text-decoration: none; }
+  body blockquote {
+    border-left: 2px solid #999999;
+    margin: 0px 0px 0px 5px;
+    padding: 0px 0px 0px 5px;
+    color: #999999; }
   body table th {
     font-weight: 200;
     color: gray; }

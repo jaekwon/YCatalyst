@@ -10,6 +10,7 @@ url = require 'url'
 www_forms = require 'www-forms'
 http = require 'http'
 fs = require 'fs'
+XRegExp = require('./static/xregexp').XRegExp
 
 exports.ipRE = (() ->
   octet = '(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9][0-9]|[0-9])'
@@ -68,8 +69,8 @@ http.ServerResponse.prototype.writeHead = (statusCode) ->
 # and also sets req.path_data / req.query_data / req.post_data
 # routes: an array of ['/route', fn(req, res)] pairs
 exports.Rowter = (routes) ->
-  # convert [route, fn] to [regex, param_names, fn]
-  # or, [options, route, fn] to [regex, param_names, fn, options]
+  # convert [route, fn] to [xregex, fn]
+  # or, [options, route, fn] to [xregex, fn, options]
   parsed = []
   for route_fn in routes
     if route_fn.length > 2
@@ -77,27 +78,21 @@ exports.Rowter = (routes) ->
     else
       [route, fn] = route_fn
       options = undefined
-    symbols = (x.substr(1) for x in (route.match(/:[^\/]+/g) or []))
-    regex = new RegExp("^"+route.replace(/:[^\/]+/g, "([^\/]+)")+"$")
-    regex._re_string = route.replace(/:[^\/]+/g, "([^\/]+)")
-    parsed.push([regex, symbols, fn, options])
+    xregex = new XRegExp("^"+route.replace(/:([^\/]+)/g, "(?<$1>[^\/]+)")+"$")
+    parsed.push([xregex, fn, options])
 
   # create a giant function that takes a (req, res) pair and finds the right fn to call.
   # we need a giant function for each server because that's how node.js works.
   giant_function = (req, res) ->
     # find matching route
-    for regex_symbols_fn in parsed
-      [regex, symbols, fn, options] = regex_symbols_fn
-      matched = regex(req.url.split("?", 1))
-      #console.log "/#{regex._re_string}/ matched #{req.url.split("?", 1)} to get #{matched}"
+    for [xregex, fn, options] in parsed
+      matched = xregex.exec(req.url.split("?", 1))
+      #console.log "/#{xregex}/ matched #{req.url.split("?", 1)} to get #{matched}"
       if not matched?
         continue
       # otherwise, we found our match.
       # construct the req.path_data object
-      req.path_data = {}
-      if symbols.length > 0
-        for i in [0..symbols.length]
-          req.path_data[symbols[i]] = matched[i+1]
+      req.path_data = matched
       chain = if options and options.wrappers then options.wrappers.slice(0) else []
       chain.push(default_wrapper(fn))
       # This function will get passed through the wrapper chain like a hot potato.

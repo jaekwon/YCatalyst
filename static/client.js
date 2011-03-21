@@ -45,6 +45,7 @@
       dataType: "json",
       error: function() {
         App.poll_errors += 1;
+        console.log("polling again in 10: error");
         return setTimeout((function() {
           return App.poll(root);
         }), 10 * 1000);
@@ -54,9 +55,11 @@
           App.poll_errors = 0;
           if (data) {
             App.handle_updates(data);
+            console.log("polling again immediately");
             return App.poll(root);
           } else {
             App.poll_errors += 1;
+            console.log("polling again in 10: error?");
             return setTimeout((function() {
               return App.poll(root);
             }), 10 * 1000);

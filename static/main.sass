@@ -104,6 +104,8 @@ body
       margin: 2px 0px
       &.deleted
         color: gray
+      h1, h2, h3, h4, h5, h6, pre
+        margin: 5px 0px
     .reply, .addchoice
       color: $light_text
       text-decoration: underline
@@ -138,11 +140,14 @@ body
     color: gray
 
   ol, ul
-    color: $light_blue_text
     padding-left: 20px
     margin: 0px
-    list-style-type: decimal
+    // make the bullets light colored
+    color: $light_text
     li
+      // a hack to make just the bullets light
+      &>.back_to_black
+        color: black
       padding: 0px
       margin: 0px
       &>div
@@ -152,6 +157,12 @@ body
         margin: 5px 0px
       a
         text-decoration: none
+
+  blockquote
+    border-left: 2px solid $light_text
+    margin: 0px 0px 0px 5px
+    padding: 0px 0px 0px 5px
+    color: $light_text
 
   table
     th

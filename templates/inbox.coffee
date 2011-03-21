@@ -1,5 +1,5 @@
 exports.template = ->
-  ul class: 'records', ->
+  ol class: 'records light_bullets', ->
     @records.forEach (record) ->
       li ->
         record.render current_user: @current_user, is_root: true
