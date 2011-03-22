@@ -3,10 +3,33 @@
   # YCatalyst
   # Copyright(c) 2011 Jae Kwon (jae@ycatalyst.com)
   # MIT Licensed
-  */  var CoffeeKup, Markz, Record;
-  var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
+  */  var CoffeeKup, Markz, Record, coffeekup_locals, compose;
+  var __slice = Array.prototype.slice, __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
   CoffeeKup = typeof window != "undefined" && window !== null ? window.CoffeeKup : require('./coffeekup');
   Markz = typeof window != "undefined" && window !== null ? window.Markz : require('./markz').Markz;
+  compose = function() {
+    var fns, next_gen, _this;
+    fns = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
+    _this = typeof fns[0] === 'function' ? null : fns.shift();
+    next_gen = function(index) {
+      return function() {
+        var next_block;
+        if (!((0 <= index && index < fns.length))) {
+          throw new Error("should not happen: 0 <= " + index + " < " + fns.length);
+        }
+        next_block = fns[index];
+        if (index < fns.length - 1) {
+          Array.prototype.unshift.call(arguments, next_gen(index + 1));
+        }
+        return next_block.apply(_this, arguments);
+      };
+    };
+    return next_gen(0)();
+  };
+  coffeekup_locals = {
+    Markz: Markz,
+    compose: compose
+  };
   Date.prototype.time_ago = function() {
     var difference;
     difference = (new Date()) - this;
@@ -40,127 +63,150 @@
     return Math.floor(difference / (365 * 24 * 60 * 60 * 1000)) + " years ago";
   };
   Record = (function() {
-    function Record(object) {
-      this.object = object;
-      if (!(this.object.points != null)) {
-        this.object.points = 0;
+    function Record(recdata) {
+      this.recdata = recdata;
+      if (!(this.recdata.points != null)) {
+        this.recdata.points = 0;
       }
-      if (!(this.object.num_children != null)) {
-        this.object.num_children = 0;
+      if (!(this.recdata.num_children != null)) {
+        this.recdata.num_children = 0;
       }
-      if (!(this.object.created_at != null)) {
-        this.object.created_at = new Date();
-      } else if (typeof this.object.created_at === 'string') {
-        this.object.created_at = new Date(this.object.created_at);
+      if (!(this.recdata.created_at != null)) {
+        this.recdata.created_at = new Date();
+      } else if (typeof this.recdata.created_at === 'string') {
+        this.recdata.created_at = new Date(this.recdata.created_at);
       }
     }
-    Record.prototype.render_kup = function() {
+    Record.prototype.set_render_options = function(options) {
+      this.is_root = options.is_root || false;
+      this.heading_title = options.heading_title || false;
+      this.current_user = options.current_user || null;
+      this.upvoted = typeof window != "undefined" && window !== null ? App.upvoted.indexOf(this.recdata._id) !== -1 : this.current_user ? (this.recdata.upvoters != null) && this.recdata.upvoters.indexOf(this.current_user._id) !== -1 : void 0;
+      return this.following = typeof window != "undefined" && window !== null ? App.following.indexOf(this.recdata._id) !== -1 : this.current_user ? (this.recdata.followers != null) && this.recdata.followers.indexOf(this.current_user._id) !== -1 : void 0;
+    };
+    Record.prototype.render = function(coffeekup_name, options) {
+      var coffeekup_fn;
+      if (!(typeof coffeekup_name === "string")) {
+        throw "invalid template name " + (JSON.stringify(coffeekup_name));
+      }
+      if (options) {
+        this.set_render_options(options);
+      }
+      coffeekup_fn = this[coffeekup_name + "_kup"];
+      return CoffeeKup.render(coffeekup_fn, {
+        context: this,
+        locals: coffeekup_locals,
+        dynamic_locals: true
+      });
+    };
+    Record.prototype.default_kup = function() {
       return div({
         "class": "record",
-        id: this.object._id,
-        "data-root": is_root,
-        "data-upvoted": upvoted,
-        "data-following": following
+        id: this.recdata._id,
+        "data-root": this.is_root,
+        "data-upvoted": this.upvoted,
+        "data-following": this.following,
+        "data-heading-title": this.heading_title
       }, function() {
-        var title_line;
-        if (!(this.object.deleted_at != null)) {
-          if (current_user) {
-            if (this.object.created_by === current_user.username && this.object.type !== 'choice') {
+        if (!(this.recdata.deleted_at != null)) {
+          if (this.current_user) {
+            if (this.recdata.created_by === this.current_user.username && this.recdata.type !== 'choice') {
               span({
                 "class": "self_made"
               }, function() {
                 return "*";
               });
-            } else if (!upvoted) {
+            } else if (!this.upvoted) {
               a({
                 "class": "upvote",
                 href: '#',
-                onclick: "Record.upvote('" + this.object._id + "'); return false;"
+                onclick: "Record.upvote('" + this.recdata._id + "'); return false;"
               }, function() {
                 return "&#9650;";
               });
             }
           }
-          if (this.object.title) {
-            title_line = __bind(function() {
-              if (this.object.url) {
-                a({
-                  href: this.object.url,
+          if (this.recdata.title) {
+            compose(__bind(function(next) {
+              if (this.heading_title) {
+                return h1({
                   "class": "title"
                 }, function() {
-                  return this.object.title;
+                  return next();
                 });
-                if (this.object.host) {
+              } else {
+                next();
+                return br({
+                  foo: "bar"
+                });
+              }
+            }, this), __bind(function() {
+              if (this.recdata.url) {
+                a({
+                  href: this.recdata.url,
+                  "class": "title"
+                }, function() {
+                  return this.recdata.title;
+                });
+                if (this.recdata.host) {
                   return span({
                     "class": "host"
                   }, function() {
-                    return "&nbsp;(" + this.object.host + ")";
+                    return "&nbsp;(" + this.recdata.host + ")";
                   });
                 }
               } else {
                 return a({
-                  href: "/r/" + this.object._id,
+                  href: "/r/" + this.recdata._id,
                   "class": "title"
                 }, function() {
-                  return this.object.title;
+                  return this.recdata.title;
                 });
               }
-            }, this);
-            if (heading_title) {
-              h1({
-                "class": "title"
-              }, function() {
-                return title_line();
-              });
-            } else {
-              title_line();
-              br({
-                foo: "bar"
-              });
-            }
+            }, this));
           }
           span({
             "class": "item_info"
           }, function() {
             span(function() {
-              return " " + (this.object.points || 0) + " pts ";
+              return " " + (this.recdata.points || 0) + " pts ";
             });
-            if (this.object.type !== 'choice') {
+            if (this.recdata.type !== 'choice') {
               text(" by ");
               a({
-                href: "/user/" + (h(this.object.created_by))
+                href: "/user/" + (h(this.recdata.created_by))
               }, function() {
-                return h(this.object.created_by);
+                return h(this.recdata.created_by);
               });
               span(function() {
-                return " " + this.object.created_at.time_ago();
+                return " " + this.recdata.created_at.time_ago();
               });
               text(" | ");
             }
-            if (is_root && this.object.parent_id) {
+            if (this.is_root && this.recdata.parent_id) {
               a({
                 "class": "parent",
-                href: "/r/" + this.object.parent_id
+                href: "/r/" + this.recdata.parent_id
               }, function() {
                 return "parent";
               });
               text(" | ");
             }
-            if (this.object.type !== 'choice') {
+            if (this.recdata.type !== 'choice') {
               a({
                 "class": "link",
-                href: "/r/" + this.object._id
+                href: "/r/" + this.recdata._id
               }, function() {
                 return "link";
               });
             }
-            if (current_user && this.object.type !== 'choice') {
+            if (this.current_user && this.recdata.type !== 'choice') {
               text(" | ");
-              if (following) {
+              if (this.following) {
                 a({
                   "class": "follow unfollow",
                   href: "#",
-                  onclick: "Record.follow('" + this.object._id + "', false); return false;"
+                  onclick: "Record.follow('" + this.recdata._id + "', false); return false;"
                 }, function() {
                   return "unfollow";
                 });
@@ -168,18 +214,18 @@
                 a({
                   "class": "follow",
                   href: "#",
-                  onclick: "Record.follow('" + this.object._id + "', true); return false;"
+                  onclick: "Record.follow('" + this.recdata._id + "', true); return false;"
                 }, function() {
                   return "follow";
                 });
               }
             }
-            if (current_user && this.object.created_by === current_user.username) {
+            if (this.current_user && this.recdata.created_by === this.current_user.username) {
               text(" | ");
               a({
                 "class": "edit",
                 href: "#",
-                onclick: "Record.show_edit_box('" + this.object._id + "'); return false;"
+                onclick: "Record.show_edit_box('" + this.recdata._id + "'); return false;"
               }, function() {
                 return "edit";
               });
@@ -187,7 +233,7 @@
               return a({
                 "class": "delete",
                 href: "#",
-                onclick: "Record.delete('" + this.object._id + "'); return false;"
+                onclick: "Record.delete('" + this.recdata._id + "'); return false;"
               }, function() {
                 return "delete";
               });
@@ -196,8 +242,8 @@
           div({
             "class": "contents"
           }, function() {
-            if (this.object.comment) {
-              text(Markz.prototype.markup(this.object.comment));
+            if (this.recdata.comment) {
+              text(Markz.prototype.markup(this.recdata.comment));
             }
             if (this.choices) {
               return div({
@@ -208,12 +254,11 @@
                 _results = [];
                 for (_i = 0, _len = _ref.length; _i < _len; _i++) {
                   choice = _ref[_i];
-                  if (choice.object.deleted_at != null) {
+                  if (choice.recdata.deleted_at != null) {
                     continue;
                   }
-                  _results.push(text(choice.render({
-                    is_root: false,
-                    current_user: current_user
+                  _results.push(text(choice.render("default", {
+                    current_user: this.current_user
                   })));
                 }
                 return _results;
@@ -223,20 +268,20 @@
           div({
             "class": "footer"
           }, function() {
-            if (current_user && this.object.type === 'poll' && this.object.created_by === current_user.username) {
+            if (this.current_user && this.recdata.type === 'poll' && this.recdata.created_by === this.current_user.username) {
               a({
                 "class": "addchoice",
                 href: "#",
-                onclick: "Record.show_reply_box('" + this.object._id + "', {choice: true}); return false;"
+                onclick: "Record.show_reply_box('" + this.recdata._id + "', {is_choice: true}); return false;"
               }, function() {
                 return "add choice";
               });
             }
-            if (this.object.type !== 'choice') {
+            if (this.recdata.type !== 'choice') {
               a({
                 "class": "reply",
-                href: "/r/" + this.object._id + "/reply",
-                onclick: "Record.show_reply_box('" + this.object._id + "'); return false;"
+                href: "/r/" + this.recdata._id + "/reply",
+                onclick: "Record.show_reply_box('" + this.recdata._id + "'); return false;"
               }, function() {
                 return "reply";
               });
@@ -244,7 +289,7 @@
             div({
               "class": "edit_box_container"
             });
-            if (this.object.type !== 'choice') {
+            if (this.recdata.type !== 'choice') {
               return div({
                 "class": "reply_box_container"
               });
@@ -257,7 +302,7 @@
             return "[deleted]";
           });
         }
-        if (this.object.type !== 'choice') {
+        if (this.recdata.type !== 'choice') {
           return div({
             "class": "children"
           }, function() {
@@ -266,22 +311,21 @@
               _ref = this.children;
               for (_i = 0, _len = _ref.length; _i < _len; _i++) {
                 child = _ref[_i];
-                text(child.render({
-                  is_root: false,
-                  current_user: current_user
+                text(child.render("default", {
+                  current_user: this.current_user
                 }));
               }
             }
             loaded_children = this.children ? this.children.length : 0;
-            show_more_link = loaded_children < this.object.num_children;
+            show_more_link = loaded_children < this.recdata.num_children;
             return a({
               "class": "more " + (!show_more_link ? 'hidden' : void 0),
-              href: "/r/" + this.object._id
+              href: "/r/" + this.recdata._id
             }, function() {
               span({
                 "class": "number"
               }, function() {
-                return "" + (this.object.num_children - loaded_children);
+                return "" + (this.recdata.num_children - loaded_children);
               });
               return text(" more replies");
             });
@@ -289,62 +333,48 @@
         }
       });
     };
-    Record.prototype.render = function(options) {
-      var current_user, locals;
-      locals = options;
-      locals.current_user = current_user = locals.current_user;
-      locals.heading_title = locals.heading_title;
-      locals.Markz = Markz;
-      locals.upvoted = typeof window != "undefined" && window !== null ? App.upvoted.indexOf(this.object._id) !== -1 : current_user ? (this.object.upvoters != null) && this.object.upvoters.indexOf(current_user._id) !== -1 : void 0;
-      locals.following = typeof window != "undefined" && window !== null ? App.following.indexOf(this.object._id) !== -1 : current_user ? (this.object.followers != null) && this.object.followers.indexOf(current_user._id) !== -1 : void 0;
-      return CoffeeKup.render(this.render_kup, {
-        context: this,
-        locals: locals,
-        dynamic_locals: true
-      });
-    };
-    Record.prototype.render_headline_kup = function() {
+    Record.prototype.headline_kup = function() {
       return div({
         "class": "record",
-        id: this.object._id
+        id: this.recdata._id
       }, function() {
-        if (current_user) {
-          if (this.object.created_by === current_user.username && this.object.type !== 'choice') {
+        if (this.current_user) {
+          if (this.recdata.created_by === this.current_user.username && this.recdata.type !== 'choice') {
             span({
               "class": "self_made"
             }, function() {
               return "*";
             });
-          } else if (!upvoted) {
+          } else if (!this.upvoted) {
             a({
               "class": "upvote",
               href: '#',
-              onclick: "Record.upvote('" + this.object._id + "'); $(this).parent().find('>.item_info>.points').increment(); $(this).remove(); return false;"
+              onclick: "Record.upvote('" + this.recdata._id + "'); $(this).parent().find('>.item_info>.points').increment(); $(this).remove(); return false;"
             }, function() {
               return "&#9650;";
             });
           }
         }
-        if (this.object.url) {
+        if (this.recdata.url) {
           a({
-            href: this.object.url,
+            href: this.recdata.url,
             "class": "title"
           }, function() {
-            return this.object.title;
+            return this.recdata.title;
           });
-          if (this.object.host) {
+          if (this.recdata.host) {
             span({
               "class": "host"
             }, function() {
-              return "&nbsp;(" + this.object.host + ")";
+              return "&nbsp;(" + this.recdata.host + ")";
             });
           }
         } else {
           a({
-            href: "/r/" + this.object._id,
+            href: "/r/" + this.recdata._id,
             "class": "title"
           }, function() {
-            return this.object.title;
+            return this.recdata.title;
           });
         }
         br({
@@ -356,29 +386,29 @@
           span({
             "class": "points"
           }, function() {
-            return "" + (this.object.points || 0);
+            return "" + (this.recdata.points || 0);
           });
           span(function() {
             return " pts by ";
           });
           a({
-            href: "/user/" + (h(this.object.created_by))
+            href: "/user/" + (h(this.recdata.created_by))
           }, function() {
-            return h(this.object.created_by);
+            return h(this.recdata.created_by);
           });
           span(function() {
-            return " " + this.object.created_at.time_ago();
+            return " " + this.recdata.created_at.time_ago();
           });
           text(" | ");
-          if (this.object.num_discussions) {
+          if (this.recdata.num_discussions) {
             return a({
-              href: "/r/" + this.object._id
+              href: "/r/" + this.recdata._id
             }, function() {
-              return "" + this.object.num_discussions + " comments";
+              return "" + this.recdata.num_discussions + " comments";
             });
           } else {
             return a({
-              href: "/r/" + this.object._id
+              href: "/r/" + this.recdata._id
             }, function() {
               return "discuss";
             });
@@ -386,37 +416,21 @@
         });
       });
     };
-    Record.prototype.render_headline = function(options) {
-      var current_user, upvoted;
-      if (options != null) {
-        current_user = options.current_user;
-      }
-      upvoted = typeof window != "undefined" && window !== null ? App.upvoted.indexOf(this.object._id) !== -1 : current_user ? (this.object.upvoters != null) && this.object.upvoters.indexOf(current_user._id) !== -1 : void 0;
-      return CoffeeKup.render(this.render_headline_kup, {
-        context: this,
-        locals: {
-          Markz: Markz,
-          upvoted: upvoted,
-          current_user: current_user
-        },
-        dynamic_locals: true
-      });
-    };
     Record.prototype.comment_url = function() {
-      return "/r/" + this.object._id + "/reply";
+      return "/r/" + this.recdata._id + "/reply";
     };
     Record.prototype.redraw = function(options) {
-      var children, choices, old, old_is_root;
-      old = $("\#" + this.object._id);
-      old_is_root = old.attr('data-root') === "true";
+      var children, choices, old;
+      old = $("\#" + this.recdata._id);
       choices = old.find('>.contents>.choices').detach();
       children = old.find('>.children').detach();
-      options.is_root = old_is_root;
-      old.replaceWith(this.render(options));
+      options.is_root = old.attr('data-root') === 'true';
+      options.heading_title = old.attr('data-heading-title') === 'true';
+      old.replaceWith(this.render("default", options));
       if (choices.length > 0) {
-        $("\#" + this.object._id).find('>.contents').append(choices);
+        $("\#" + this.recdata._id).find('>.contents').append(choices);
       }
-      return $("\#" + this.object._id).find('>.children').replaceWith(children);
+      return $("\#" + this.recdata._id).find('>.children').replaceWith(children);
     };
     Record.prototype.upvote = function(rid) {
       App.upvoted.push(rid);
@@ -437,6 +451,7 @@
     };
     Record.prototype.show_reply_box = function(rid, options) {
       var container, kup, record_e;
+      options || (options = {});
       if (!App.current_user) {
         window.location = "/login?goto=/r/" + rid + "/reply";
         return;
@@ -453,15 +468,15 @@
             br({
               foo: 'bar'
             });
-            if ((options != null) && options.choice) {
+            if (this.is_choice) {
               button({
-                onclick: "Record.post_reply('" + rid + "', 'choice')"
+                onclick: "Record.post_reply('" + this.rid + "', 'choice')"
               }, function() {
                 return 'add choice';
               });
             } else {
               button({
-                onclick: "Record.post_reply('" + rid + "')"
+                onclick: "Record.post_reply('" + this.rid + "')"
               }, function() {
                 return 'post comment';
               });
@@ -474,12 +489,10 @@
           });
         };
         container = record_e.find('>.footer>.reply_box_container').append(CoffeeKup.render(kup, {
-          context: this,
-          locals: {
+          context: {
             rid: rid,
-            options: options
-          },
-          dynamic_locals: true
+            is_choice: options.is_choice
+          }
         }));
         return container.find('textarea').make_autoresizable();
       }
@@ -502,11 +515,11 @@
               return div({
                 "class": "edit_box"
               }, function() {
-                if (!data.record.parent_id) {
+                if (!this.data.record.parent_id) {
                   input({
                     type: "text",
                     name: "title",
-                    value: hE(data.record.title || '')
+                    value: hE(this.data.record.title || '')
                   });
                   br({
                     foo: 'bar'
@@ -514,7 +527,7 @@
                   input({
                     type: "text",
                     name: "url",
-                    value: hE(data.record.url || '')
+                    value: hE(this.data.record.url || '')
                   });
                   br({
                     foo: 'bar'
@@ -522,20 +535,20 @@
                   textarea({
                     name: "comment"
                   }, function() {
-                    return hE(data.record.comment || '');
+                    return hE(this.data.record.comment || '');
                   });
                 } else {
                   textarea({
                     name: "comment"
                   }, function() {
-                    return hE(data.record.comment || '');
+                    return hE(this.data.record.comment || '');
                   });
                 }
                 br({
                   foo: 'bar'
                 });
                 button({
-                  onclick: "Record.post_edit('" + rid + "')"
+                  onclick: "Record.post_edit('" + this.rid + "')"
                 }, function() {
                   return 'update';
                 });
@@ -547,12 +560,10 @@
               });
             };
             container = record_e.find('>.footer>.edit_box_container').append(CoffeeKup.render(kup, {
-              context: this,
-              locals: {
+              context: {
                 rid: rid,
                 data: data
-              },
-              dynamic_locals: true
+              }
             }));
             container.find('textarea').make_autoresizable();
             container.find('input[name="title"]').set_default_text('title');
@@ -625,7 +636,10 @@
         },
         success: function(data) {
           if (data != null) {
-            return record_e.find('>.footer>.edit_box_container>.edit_box').remove();
+            record_e.find('>.footer>.edit_box_container>.edit_box').remove();
+            if (data.updates && !App.is_longpolling) {
+              return App.handle_updates(data.updates);
+            }
           } else {
             return alert('uh oh, server might be down. try again later?');
           }

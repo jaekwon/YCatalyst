@@ -136,6 +136,9 @@ default_wrapper = (fn) ->
             try
               if req.headers['content-type'].toLowerCase().indexOf('application/x-www-form-urlencoded') != -1
                 req.post_data = www_forms.decodeForm(body)
+                # SCRUB CARRIAGE RETURNS
+                for key, value of req.post_data
+                  req.post_data[key] = value.replace(/\r\n/g, "\n")
               else
                 req.post_data = body
             catch e
@@ -241,5 +244,5 @@ compose = (fns...) ->
       next_block = fns[index]
       if index < fns.length - 1
         Array::unshift.call(arguments, next_gen(index+1))
-      next_block.apply(_this, arguments)
-  next_gen(0)()
+      return next_block.apply(_this, arguments)
+  return next_gen(0)()

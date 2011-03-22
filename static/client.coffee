@@ -44,10 +44,10 @@ App.handle_updates = (recdatas) ->
       else
         # render it
         record = new Record(recdata)
-        if record.object.type == 'choice'
-          parent.find('>.contents>.choices').append(record.render(is_root: false, current_user: App.current_user))
+        if record.recdata.type == 'choice'
+          parent.find('>.contents>.choices').append(record.render("default", is_root: false, current_user: App.current_user))
         else
-          parent.find('>.children').prepend(record.render(is_root: false, current_user: App.current_user))
+          parent.find('>.children').prepend(record.render("default", is_root: false, current_user: App.current_user))
     # otherwise we're updating possibly an existing record
     else
       record = new Record(recdata)

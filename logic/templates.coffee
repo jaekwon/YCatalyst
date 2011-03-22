@@ -24,10 +24,12 @@ template_require = (filename) ->
   return require(path)
 
 exports.render_layout = (template, context, req, res) ->
-  # helper to render with layout, mind the closure
+  # helper to render with layout, mind the closure. much like 'render :partial' in rails.
   # this way you can always call 'render' from within template code, and
-  # the closure will be carreid through.
+  # the closure will be carried through.
   _render = (template, context) ->
+    # these should be rather static entities that extend the language as a DSL.
+    # typical dynamic parameters should go in 'context'.
     locals =
       require: require
       render: _render

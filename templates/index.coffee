@@ -2,7 +2,7 @@ exports.template = ->
   ol class: 'records light_bullets', ->
     @records.forEach (record) ->
       li ->
-        record.render_headline current_user: @current_user
+        record.render "headline", current_user: @current_user
 
 exports.sass = """
   body

@@ -45,7 +45,7 @@ exports.get_one_record = (rid, fn) ->
 # any time you need to send a record to the client through ajax, 
 # scrub it here
 exports.scrubbed_recdata = (record) ->
-  object = utils.deep_clone(record.object)
+  object = utils.deep_clone(record.recdata)
   delete object.upvoters
   return object
 
@@ -56,13 +56,13 @@ exports.score_record = (record) ->
   gravity = 1.8
   timebase_hours = 2.0
   # variables
-  t = record.object.created_at.getTime()
+  t = record.recdata.created_at.getTime()
   h = t / (60*60*1000)
-  d_h = ((new Date()) - record.object.created_at) / (60*60*1000)
-  points = record.object.points
+  d_h = ((new Date()) - record.recdata.created_at) / (60*60*1000)
+  points = record.recdata.points
   score = h*newness_factor + (points-1) / (Math.pow((d_h+timebase_hours),gravity))
   # console.log "t: #{t} h: #{h} d_h: #{d_h} points: #{points} score: #{score}"
-  record.object.score = score
+  record.recdata.score = score
 
 # recdata: the record data object
 # parent: the data object for the parent, may be null or undefined
@@ -71,12 +71,12 @@ exports.create_record = (recdata, parent) ->
   parents = []
   if parent?
     if not recdata.parent_id?
-      recdata.parent_id = parent.object._id
-    if parent.object.parents?
-      parents = [parent.object._id].concat(parent.object.parents[0..5])
+      recdata.parent_id = parent.recdata._id
+    if parent.recdata.parents?
+      parents = [parent.recdata._id].concat(parent.recdata.parents[0..5])
     else
-      parents = [parent.object._id]
-    recdata.parent_followers = parent.object.followers if parent.object.followers
+      parents = [parent.recdata._id]
+    recdata.parent_followers = parent.recdata.followers if parent.recdata.followers
   else
     recdata.parent_id = null # need this for mongodb indexing
   if not recdata._id?
@@ -94,19 +94,19 @@ exports.create_record = (recdata, parent) ->
 exports.dangle = (records, root_id) ->
   root = records[root_id]
   for id, record of records
-    parent = records[record.object.parent_id]
+    parent = records[record.recdata.parent_id]
     if parent
       if not parent.children
         parent.children = []
       parent.children.push(record)
   # we now have the root...
   # pull out poll items and put them in a different spot.
-  if root.object.type == 'poll'
+  if root.recdata.type == 'poll'
     orig_children = root.children
     root.children = []
     root.choices = []
     for child in orig_children
-      if child.object.type == 'choice'
+      if child.recdata.type == 'choice'
         root.choices.push(child)
       else
         root.children.push(child)

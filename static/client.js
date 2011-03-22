@@ -25,10 +25,10 @@
     for (_i = 0, _len = recdatas.length; _i < _len; _i++) {
       recdata = recdatas[_i];
       parent = $('#' + recdata.parent_id);
-      _results.push($('#' + recdata.parent_id).length > 0 && $('#' + recdata._id).length === 0 ? parent.parents('.record').length >= App.DEFAULT_DEPTH ? parent.find('>.children>.more').removeClass('hidden').find('>.number').increment() : (record = new Record(recdata), record.object.type === 'choice' ? parent.find('>.contents>.choices').append(record.render({
+      _results.push($('#' + recdata.parent_id).length > 0 && $('#' + recdata._id).length === 0 ? parent.parents('.record').length >= App.DEFAULT_DEPTH ? parent.find('>.children>.more').removeClass('hidden').find('>.number').increment() : (record = new Record(recdata), record.recdata.type === 'choice' ? parent.find('>.contents>.choices').append(record.render("default", {
         is_root: false,
         current_user: App.current_user
-      })) : parent.find('>.children').prepend(record.render({
+      })) : parent.find('>.children').prepend(record.render("default", {
         is_root: false,
         current_user: App.current_user
       }))) : (record = new Record(recdata), record.redraw({

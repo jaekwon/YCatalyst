@@ -1,5 +1,5 @@
 exports.template = ->
-  text @parent.render is_root: true, current_user: @current_user
+  text @parent.render "default", is_root: true, current_user: @current_user
 
   form action: @parent.comment_url(), method: "POST", ->
     textarea name: "comment"

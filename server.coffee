@@ -58,14 +58,14 @@ setInterval (->
 # 
 # TODO we need to keep track of more state
 # NOTE it is assumed that the records are in proximity to each other,
-# specifically that the union of r.object.parents is small in size.
+# specifically that the union of r.recdata.parents is small in size.
 trigger_update = (records) ->
   # compute the keys to notify
   notify_keys = []
   for record in records
     if not record.is_new
-      notify_keys.push(record.object._id)
-    notify_keys = notify_keys.concat(record.object.parents or [])
+      notify_keys.push(record.recdata._id)
+    notify_keys = notify_keys.concat(record.recdata.parents or [])
   notify_keys = _.uniq(notify_keys)
 
   recdatas = (logic.records.scrubbed_recdata(record) for record in records)
@@ -154,24 +154,24 @@ server = utils.Rowter([
             res.writeHead 404, status: 'error'
             res.end()
             return
-          if record.object.created_by != req.current_user.username
+          if record.recdata.created_by != req.current_user.username
             res.simpleJSON 400, status: 'unauthorized'
             return
-          if not record.object.parent_id
-            record.object.title = req.post_data.title
-            record.object.url = req.post_data.url
+          if not record.recdata.parent_id
+            record.recdata.title = req.post_data.title
+            record.recdata.url = req.post_data.url
             if req.post_data.url
               try
-                record.object.host = utils.url_hostname(req.post_data.url)
+                record.recdata.host = utils.url_hostname(req.post_data.url)
               catch e
-                record.object.host = 'unknown'
+                record.recdata.host = 'unknown'
                 console.log "record with url #{req.post_data.url}: couldn't parse the hostname"
             else
-              delete record.object.host
-          record.object.comment = req.post_data.comment
-          record.object.updated_at = new Date()
-          mongo.records.save record.object, (err, stuff) ->
-            res.simpleJSON 200, status: 'ok'
+              delete record.recdata.host
+          record.recdata.comment = req.post_data.comment
+          record.recdata.updated_at = new Date()
+          mongo.records.save record.recdata, (err, stuff) ->
+            res.simpleJSON 200, status: 'ok', updates: [logic.records.scrubbed_recdata(record)]
             trigger_update [record]
   ]
 
@@ -190,9 +190,9 @@ server = utils.Rowter([
         rid = req.path_data.id
         logic.records.get_one_record rid, (err, record) ->
           if record
-            record.object.deleted_at = new Date()
-            record.object.deleted_by = req.current_user.username
-            mongo.records.save record.object, (err, stuff) ->
+            record.recdata.deleted_at = new Date()
+            record.recdata.deleted_by = req.current_user.username
+            mongo.records.save record.recdata, (err, stuff) ->
               res.simpleJSON 200, status: 'ok'
               trigger_update [record]
           else
@@ -212,30 +212,30 @@ server = utils.Rowter([
         comment = req.post_data.comment
         logic.records.get_one_record parent_id, (err, parent) ->
           if parent
-            root_id = if parent.object.root_id? then parent.object.root_id else parent.object._id
+            root_id = if parent.recdata.root_id? then parent.recdata.root_id else parent.recdata._id
             recdata = _id: utils.randid(), comment: comment, created_by: req.current_user.username, root_id: root_id, upvoters: [req.current_user._id]
             if req.post_data.type == 'choice'
               # only the parent's creator can add a poll choice
-              if parent.object.created_by != req.current_user.username
+              if parent.recdata.created_by != req.current_user.username
                 res.writeHead 401, status: 'unauthorized'
                 res.end "I can't let you do that"
                 return
               recdata.type = 'choice'
             record = logic.records.create_record(recdata, parent)
-            mongo.records.save record.object, (err, stuff) ->
+            mongo.records.save record.recdata, (err, stuff) ->
               if req.headers['x-requested-with'] == 'XMLHttpRequest'
                 res.simpleJSON 200, status: 'ok', updates: [logic.records.scrubbed_recdata(record)]
               else
                 res.writeHead 302, Location: '/r/'+parent_id
                 res.end()
-              if record.object.type == 'choice'
+              if record.recdata.type == 'choice'
                 # we could trigger a live update, but
                 # needs an update of the process.
                 trigger_update [record]
               else
                 # update the parent as well, specifically num_children
-                parent.object.num_children += 1
-                mongo.records.save parent.object, (err, stuff) ->
+                parent.recdata.num_children += 1
+                mongo.records.save parent.recdata, (err, stuff) ->
                   if err
                     console.err "failed to update parent.num_children: #{parent_id}"
                 # update the root, num_discussions.
@@ -243,11 +243,11 @@ server = utils.Rowter([
                   if err
                     console.err "failed ot update root.num_discussions: #{root_id}"
                     return
-                  if not root.object.num_discussions?
-                    root.object.num_discussions = 1
+                  if not root.recdata.num_discussions?
+                    root.recdata.num_discussions = 1
                   else
-                    root.object.num_discussions += 1
-                  mongo.records.save root.object, (err, stuff) ->
+                    root.recdata.num_discussions += 1
+                  mongo.records.save root.recdata, (err, stuff) ->
                     if err
                       console.err "failed to update root.num_discussions: #{root_id}"
                 # notify clients
@@ -279,15 +279,15 @@ server = utils.Rowter([
       when 'POST'
         rid = req.path_data.id
         logic.records.get_one_record rid, (err, record) ->
-          if not record.object.upvoters?
-            record.object.upvoters = []
-          if record.object.upvoters.indexOf(req.current_user._id) == -1
-            record.object.upvoters.push(req.current_user._id)
-          record.object.points = record.object.upvoters.length
+          if not record.recdata.upvoters?
+            record.recdata.upvoters = []
+          if record.recdata.upvoters.indexOf(req.current_user._id) == -1
+            record.recdata.upvoters.push(req.current_user._id)
+          record.recdata.points = record.recdata.upvoters.length
           # rescore the record
           logic.records.score_record(record)
           # save this record
-          mongo.records.save record.object, (err, stuff) ->
+          mongo.records.save record.recdata, (err, stuff) ->
             res.simpleJSON 200, status: 'ok', updates: [logic.records.scrubbed_recdata(record)]
             # notify clients
             trigger_update [record]
@@ -369,7 +369,7 @@ server = utils.Rowter([
           if data.choices
             _v.check(data.choices, 'choices must be less than 10K characters for now').len(0, 10000)
           if data.type == 'poll'
-            choices = data.choices = (data.choices or '').replace(/\r\n/g, "\n").split("\n\n")
+            choices = data.choices = (data.choices or '').split("\n\n")
             if choices.length < 2
               throw 'you must enter some choices separated by newlines'
           else
@@ -391,14 +391,14 @@ server = utils.Rowter([
           recdata.type = 'poll'
           
         record = logic.records.create_record(recdata)
-        mongo.records.save record.object, (err, stuff) ->
-          record.object = stuff
+        mongo.records.save record.recdata, (err, stuff) ->
+          record.recdata = stuff
           # if data.choices, then add the choices too
           if data.choices
             for choice in data.choices
               choice_recdata = {comment: choice, created_by: req.current_user.username, type: 'choice'}
               choice_record = logic.records.create_record(choice_recdata, record)
-              mongo.records.save choice_record.object, (err, stuff) ->
+              mongo.records.save choice_record.recdata, (err, stuff) ->
                 # nothing to do
             # TODO assume it worked.
             res.redirect "/r/#{stuff._id}"
