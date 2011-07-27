@@ -3,7 +3,7 @@ exports.template = ->
   p "Membership requires screening by existing members. Please fill out the form below."
   
   form action: "/apply", method: "POST", ->
-    if typeof application != 'undefined'
+    if typeof @application != 'undefined'
       input type: "hidden", name: "application_id", value: @application._id
       @referral = {}
     else
