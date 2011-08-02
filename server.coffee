@@ -627,6 +627,7 @@ server = utils.Rowter([
               salt = utils.randid()
               hashtimes = 10000 # runs about 80ms on my laptop
               user.password = [utils.passhash(user.password, salt, hashtimes), salt, hashtimes]
+              delete user.password2
               user.created_at = new Date()
               user.application_id = invite.application_id if invite.application_id
               mongo.users.save user, (err, stuff) ->
