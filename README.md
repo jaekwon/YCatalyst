@@ -1,3 +1,8 @@
+DEAD PROJECT
+============
+
+  This project is dead. A new web framework for node.js+coffeescript is in the works.
+
 YCatalyst
 =========
 
@@ -5,7 +10,7 @@ YCatalyst
   You can view the original site at http://ycatalyst.com.  
 
   Please note that this is alpha quality and very much a work in progress.  
-  If you would like to contribute, please email me at jae@ycatalyst.com.  
+  If you would like to contribute, please email me at jkwon.work@gmail.com.
 
   If you want to check out the real-time features, you can create a test  
   account at our staging server: http://staging.ycatalyst.com:8080/.  
