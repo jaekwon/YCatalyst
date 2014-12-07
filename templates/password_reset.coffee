@@ -16,8 +16,8 @@ exports.template = ->
     p "Enter your new desired password"
 
     form action: "/password_reset", method: "POST", ->
-      input type: "hidden", name: "username", value: user.username
-      input type: "hidden", name: "password_reset_nonce", value: user.password_reset_nonce
+      input type: "hidden", name: "username", value: @user.username
+      input type: "hidden", name: "password_reset_nonce", value: @user.password_reset_nonce
       table ->
         tr ->
           td ->
